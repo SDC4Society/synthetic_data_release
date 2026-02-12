@@ -8,7 +8,7 @@ from os import mkdir, path
 from numpy import mean
 from numpy.random import choice, seed
 from argparse import ArgumentParser
-
+import pandas as pd
 from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
@@ -174,7 +174,7 @@ def main():
         # Get utility from raw with each target
         for tid in targetIDs:
             target = targets.loc[[tid]]
-            rawIn = rawTout.append(target)
+            rawIn = pd.concat([rawTout, target])
 
             for ut in utilityTasks:
                 predErrorTargets = []
@@ -222,7 +222,7 @@ def main():
                 LOGGER.info(f'Target: {tid}')
                 target = targets.loc[[tid]]
 
-                rawTin = rawTout.append(target)
+                rawTin = pd.concat([rawTout, target])
                 GenModel.fit(rawTin)
                 synTwithTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
 
@@ -273,7 +273,7 @@ def main():
                 LOGGER.info(f'Target: {tid}')
                 target = targets.loc[[tid]]
 
-                rawTin = rawTout.append(target)
+                rawTin = pd.concat([rawTout, target])
                 sanIn = San.sanitise(rawTin)
 
                 for ut in utilityTasks:

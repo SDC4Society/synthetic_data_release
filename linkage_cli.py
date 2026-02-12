@@ -8,7 +8,7 @@ from os import mkdir, path
 from numpy.random import choice, seed
 from argparse import ArgumentParser
 from pandas import DataFrame
-
+import pandas as pd
 from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
@@ -200,7 +200,7 @@ def main():
                 target = targets.loc[[tid]]
                 resultsTargetPrivacy[tid][f'{GenModel.__name__}'][nr] = {}
 
-                rawTin = rawTout.append(target)
+                rawTin = pd.concat([rawTout, target])
                 GenModel.fit(rawTin)
                 synTwithTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
                 synLabelsIn = [LABEL_IN for _ in range(runconfig['nSynT'])]
@@ -232,7 +232,7 @@ def main():
                 target = targets.loc[[tid]]
                 resultsTargetPrivacy[tid][San.__name__][nr] = {}
 
-                rawTin = rawTout.append(target)
+                rawTin = pd.concat([rawTout, target])
                 sanIn = San.sanitise(rawTin)
 
                 sanT = [sanOut, sanIn]

@@ -2,7 +2,7 @@
 from pandas import DataFrame
 from pandas.api.types import CategoricalDtype
 from numpy import ndarray, concatenate, stack, array, round, zeros, arange
-
+import pandas as pd
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -273,7 +273,7 @@ def worker_train_shadow(rawA, train_index, GenModel, target, sizeSyn, numCopies,
 
     # Insert targets into training data
     if isinstance(rawA, DataFrame):
-        rawAin = rawAout.append(target)
+        rawAin = pd.concat([rawAout, target])
     else:
         if len(target.shape) == 1:
             target = target.reshape(1, len(target))
@@ -318,7 +318,7 @@ def worker_sanitise_data(rawA, train_index, Sanitiser, target, sanA, labelsA):
 
     # Insert targets into training data
     if isinstance(rawA, DataFrame):
-        rawAin = rawAout.append(target)
+        rawAin = pd.concat([rawAout, target])
     else:
         if len(target.shape) == 1:
             target = target.reshape(1, len(target))
