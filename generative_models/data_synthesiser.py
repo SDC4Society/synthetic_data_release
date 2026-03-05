@@ -104,7 +104,7 @@ class BayesianNet(GenerativeModel):
         self.DataDescriber = None
         self.trained = False
 
-        self.__name__ = 'BayesianNet'
+        self.__name__ = f'BayesianNetBins{histogram_bins}'
 
     def fit(self, data):
         assert isinstance(data, self.datatype), f'{self.__class__.__name__} expects {self.datatype} as input data but got {type(data)}'
