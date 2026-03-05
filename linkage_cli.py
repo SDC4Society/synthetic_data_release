@@ -2,6 +2,11 @@
 Command-line interface for running privacy evaluation with respect to the risk of linkability
 """
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import tensorflow as tf
+tf.get_logger().setLevel('ERROR')
+
 import json
 
 from os import mkdir, path
