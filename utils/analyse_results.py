@@ -287,13 +287,8 @@ def pointplot(data, x, y, hue, ax, order):
     # Set x- and y-label
     ax.set_xlabel('')
 
-    # Resize y-tick labels
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(FSIZETICKS)
-
-    # Resize x-tick labels
-    for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(FSIZETICKS)
+    # Resize tick labels
+    ax.tick_params(axis='both', labelsize=FSIZETICKS)
 
 
 def boxplot(data, x, y, hue, ax, order, hue_order=None):
