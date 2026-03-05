@@ -297,10 +297,5 @@ def boxplot(data, x, y, hue, ax, order, hue_order=None):
                   order=order, hue_order=hue_order,
                   ax=ax, dodge=True)
 
-    # Resize y-tick labels
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(FSIZETICKS)
+    ax.tick_params(axis='both', labelsize=FSIZETICKS)
 
-    # Resize x-tick labels
-    for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(FSIZETICKS)
