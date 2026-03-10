@@ -5,7 +5,7 @@
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 10,
-  "nTargets": 0,
+  "nTargets": 15,
   "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
   "generativeModels": {
     "BayesianNet": [[2, 1], [5, 1], [10, 1], [25, 1]],
