@@ -16,10 +16,14 @@ def get_accuracy(guesses, labels, targetPresence):
 
 
 def get_tp_fp_rates(guesses, labels):
-    targetIn = where(labels == LABEL_IN)[0]
-    targetOut = where(labels == LABEL_OUT)[0]
-    return sum(guesses[targetIn] == LABEL_IN)/len(targetIn), sum(guesses[targetOut] == LABEL_IN)/len(targetOut)
-
+    labels_arr = labels.values
+    guesses_arr = guesses.values
+    
+    targetIn  = where(labels_arr == LABEL_IN)[0]
+    targetOut = where(labels_arr == LABEL_OUT)[0]
+    
+    return (sum(guesses_arr[targetIn]  == LABEL_IN) / len(targetIn),
+            sum(guesses_arr[targetOut] == LABEL_IN) / len(targetOut))
 
 def get_probs_correct(pdf, targetPresence):
     idxIn = where(targetPresence == LABEL_IN)[0]
