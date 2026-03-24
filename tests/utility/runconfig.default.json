@@ -3,7 +3,7 @@
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 10,
-  "nTargets": 15,
+  "nTargets": 0,
   "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
   "TestRecords": ["ID71120", "ID84282", "ID88763", "ID79216", "ID92777"],
   "generativeModels": {
