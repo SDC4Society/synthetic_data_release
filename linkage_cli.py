@@ -18,6 +18,7 @@ from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
+from utils.parallel import create_model, is_generative_model, run_parallel_models
 
 from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
@@ -43,6 +44,94 @@ cwd = path.dirname(__file__)
 
 
 SEED = 42
+
+
+def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
+    """Train MIA attacks for one (target, model) pair."""
+    model = create_model(model_config, metadata)
+    trained_attacks = {}
+
+    if is_generative_model(model):
+        synA, labelsA = generate_mia_shadow_data(
+            model, target, rawA,
+            runconfig['sizeRawT'], runconfig['sizeSynT'],
+            runconfig['nShadows'], runconfig['nSynA'])
+
+        for Feature in [NaiveFeatureSet(model.datatype),
+                        HistogramFeatureSet(model.datatype, metadata),
+                        CorrelationsFeatureSet(model.datatype, metadata)]:
+            Attack = MIAttackClassifierRandomForest(metadata, Feature)
+            Attack.train(synA, labelsA)
+            trained_attacks[Feature.__name__] = Attack
+    else:
+        sanA, labelsA = generate_mia_anon_data(
+            model, target, rawA,
+            runconfig['sizeRawT'],
+            runconfig['nShadows'] * runconfig['nSynA'])
+
+        for Feature in [NaiveFeatureSet(DataFrame),
+                        HistogramFeatureSet(DataFrame, metadata,
+                                           nbins=model.histogram_size, quids=model.quids),
+                        CorrelationsFeatureSet(DataFrame, metadata, quids=model.quids),
+                        EnsembleFeatureSet(DataFrame, metadata,
+                                          nbins=model.histogram_size,
+                                          quasi_id_cols=model.quids)]:
+            Attack = MIAttackClassifierRandomForest(metadata=metadata, FeatureSet=Feature, quids=model.quids)
+            Attack.train(sanA, labelsA)
+            trained_attacks[Feature.__name__] = Attack
+
+    return (tid, model.__name__, trained_attacks)
+
+
+def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
+                        attacks_for_model, metadata, runconfig):
+    """Evaluate one model across all targets for one game iteration."""
+    model = create_model(model_config, metadata)
+    nSynT = runconfig['nSynT']
+    sizeSynT = runconfig['sizeSynT']
+    per_target_results = {}
+
+    if is_generative_model(model):
+        model.fit(rawTout)
+        synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+        synLabelsOut = [LABEL_OUT for _ in range(nSynT)]
+
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            rawTin = pd.concat([rawTout, target])
+            model.fit(rawTin)
+            synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+            synLabelsIn = [LABEL_IN for _ in range(nSynT)]
+
+            synT = synTwithoutTarget + synTwithTarget
+            synTlabels = synLabelsOut + synLabelsIn
+
+            per_target_results[tid] = {}
+            for feature, Attack in attacks_for_model[tid].items():
+                attackerGuesses = Attack.attack(synT)
+                per_target_results[tid][feature] = {
+                    'Secret': synTlabels,
+                    'AttackerGuess': attackerGuesses
+                }
+    else:
+        sanOut = model.sanitise(rawTout)
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            rawTin = pd.concat([rawTout, target])
+            sanIn = model.sanitise(rawTin)
+
+            sanT = [sanOut, sanIn]
+            sanTLabels = [LABEL_OUT, LABEL_IN]
+
+            per_target_results[tid] = {}
+            for feature, Attack in attacks_for_model[tid].items():
+                attackerGuesses = Attack.attack(sanT, attemptLinkage=True, target=target)
+                per_target_results[tid][feature] = {
+                    'Secret': sanTLabels,
+                    'AttackerGuess': attackerGuesses
+                }
+
+    return (model.__name__, per_target_results)
 
 
 def main():
@@ -98,38 +187,6 @@ def main():
     rawAidx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawA'], replace=False).tolist()
     rawA = rawPop.loc[rawAidx, :]
 
-    # List of candidate generative models to evaluate
-    gmList = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            if gm == 'IndependentHistogram':
-                for params in paramsList:
-                    gmList.append(IndependentHistogram(metadata, *params))
-            elif gm == 'BayesianNet':
-                for params in paramsList:
-                    gmList.append(BayesianNet(metadata, *params))
-            elif gm == 'PrivBayes':
-                for params in paramsList:
-                    gmList.append(PrivBayes(metadata, *params))
-            elif gm == 'CTGAN':
-                for params in paramsList:
-                    gmList.append(CTGAN(metadata, *params))
-            elif gm == 'PATEGAN':
-                for params in paramsList:
-                    gmList.append(PATEGAN(metadata, *params))
-            else:
-                raise ValueError(f'Unknown GM {gm}')
-
-    # List of candidate sanitisation techniques to evaluate
-    sanList = []
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            if name == 'SanitiserNHS':
-                for params in paramsList:
-                    sanList.append(SanitiserNHS(metadata, *params))
-            else:
-                raise ValueError(f'Unknown sanitisation technique {name}')
-
     # Build serializable model configs for parallel execution
     all_model_configs = []
     if 'generativeModels' in runconfig.keys():
@@ -146,131 +203,48 @@ def main():
     #### ATTACK TRAINING #############
     ##################################
     print('\n---- Attack training ----')
+
+    attack_tasks = [
+        (cfg, tid, targets.loc[[tid]], rawA, metadata, runconfig)
+        for tid in targetIDs
+        for cfg in all_model_configs
+    ]
+    attack_results = run_parallel_models(
+        linkage_attack_worker, attack_tasks, max_workers=args.workers)
+
     attacks = {}
-
-    for tid in targetIDs:
-        print(f'\n--- Adversary picks target {tid} ---')
-        target = targets.loc[[tid]]
-        attacks[tid] = {}
-
-        for San in sanList:
-            LOGGER.info(f'Start: Attack training for {San.__name__}...')
-
-            attacks[tid][San.__name__] = {}
-
-            # Generate example datasets for training attack classifier
-            sanA, labelsA = generate_mia_anon_data(San, target, rawA, runconfig['sizeRawT'], runconfig['nShadows'] * runconfig['nSynA'])
-
-            # Train attack on shadow data
-            for Feature in [NaiveFeatureSet(DataFrame),
-                            HistogramFeatureSet(DataFrame, metadata, nbins=San.histogram_size, quids=San.quids),
-                            CorrelationsFeatureSet(DataFrame, metadata, quids=San.quids),
-                            EnsembleFeatureSet(DataFrame, metadata, nbins=San.histogram_size, quasi_id_cols=San.quids)]:
-
-                Attack = MIAttackClassifierRandomForest(metadata=metadata, FeatureSet=Feature, quids=San.quids)
-                Attack.train(sanA, labelsA)
-                attacks[tid][San.__name__][f'{Feature.__name__}'] = Attack
-
-            # Clean up
-            del sanA, labelsA
-
-            LOGGER.info(f'Finished: Attack training.')
-
-        for GenModel in gmList:
-            LOGGER.info(f'Start: Attack training for {GenModel.__name__}...')
-
-            attacks[tid][GenModel.__name__] = {}
-
-            # Generate shadow model data for training attacks on this target
-            synA, labelsSA = generate_mia_shadow_data(GenModel, target, rawA, runconfig['sizeRawT'], runconfig['sizeSynT'], runconfig['nShadows'], runconfig['nSynA'])
-
-            # Train attack on shadow data
-            for Feature in [NaiveFeatureSet(GenModel.datatype), HistogramFeatureSet(GenModel.datatype, metadata), CorrelationsFeatureSet(GenModel.datatype, metadata)]:
-                Attack  = MIAttackClassifierRandomForest(metadata, Feature)
-                Attack.train(synA, labelsSA)
-                attacks[tid][GenModel.__name__][f'{Feature.__name__}'] = Attack
-
-            # Clean up
-            del synA, labelsSA
-
-            LOGGER.info(f'Finished: Attack training.')
+    for tid, model_name, trained in attack_results:
+        attacks.setdefault(tid, {})[model_name] = trained
 
     ##################################
     ######### EVALUATION #############
     ##################################
-    resultsTargetPrivacy = {tid: {gm.__name__: {} for gm in gmList + sanList} for tid in targetIDs}
+    # Build model_name lookup from configs
+    _model_names = {}
+    for cfg in all_model_configs:
+        m = create_model(cfg, metadata)
+        _model_names[cfg] = m.__name__
+
+    resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
 
     print('\n---- Start the game ----')
     for nr in range(runconfig['nIter']):
         print(f'\n--- Game iteration {nr + 1} ---')
-        # Draw a raw dataset
         rIdx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawPopDropTargets.loc[rIdx]
 
-        for GenModel in gmList:
-            LOGGER.info(f'Start: Evaluation for model {GenModel.__name__}...')
-            # Train a generative model
-            GenModel.fit(rawTout)
-            synTwithoutTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
-            synLabelsOut = [LABEL_OUT for _ in range(runconfig['nSynT'])]
+        eval_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             {tid: attacks[tid][_model_names[cfg]] for tid in targetIDs},
+             metadata, runconfig)
+            for cfg in all_model_configs
+        ]
+        eval_results = run_parallel_models(
+            linkage_eval_worker, eval_tasks, max_workers=args.workers)
 
-            for tid in targetIDs:
-                LOGGER.info(f'Target: {tid}')
-                target = targets.loc[[tid]]
-                resultsTargetPrivacy[tid][f'{GenModel.__name__}'][nr] = {}
-
-                rawTin = pd.concat([rawTout, target])
-                GenModel.fit(rawTin)
-                synTwithTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
-                synLabelsIn = [LABEL_IN for _ in range(runconfig['nSynT'])]
-
-                synT = synTwithoutTarget + synTwithTarget
-                synTlabels = synLabelsOut + synLabelsIn
-
-                # Run attacks
-                for feature, Attack in attacks[tid][f'{GenModel.__name__}'].items():
-                    # Produce a guess for each synthetic dataset
-                    attackerGuesses = Attack.attack(synT)
-
-                    resDict = {
-                        'Secret': synTlabels,
-                        'AttackerGuess': attackerGuesses
-                    }
-                    resultsTargetPrivacy[tid][f'{GenModel.__name__}'][nr][feature] = resDict
-
-            del synT, synTwithoutTarget, synTwithTarget
-
-            LOGGER.info(f'Finished: Evaluation for model {GenModel.__name__}.')
-
-        for San in sanList:
-            LOGGER.info(f'Start: Evaluation for sanitiser {San.__name__}...')
-            sanOut = San.sanitise(rawTout)
-
-            for tid in targetIDs:
-                LOGGER.info(f'Target: {tid}')
-                target = targets.loc[[tid]]
-                resultsTargetPrivacy[tid][San.__name__][nr] = {}
-
-                rawTin = pd.concat([rawTout, target])
-                sanIn = San.sanitise(rawTin)
-
-                sanT = [sanOut, sanIn]
-                sanTLabels = [LABEL_OUT, LABEL_IN]
-
-                # Run attacks
-                for feature, Attack in attacks[tid][San.__name__].items():
-                    # Produce a guess for each synthetic dataset
-                    attackerGuesses = Attack.attack(sanT, attemptLinkage=True, target=target)
-
-                    resDict = {
-                        'Secret': sanTLabels,
-                        'AttackerGuess': attackerGuesses
-                    }
-                    resultsTargetPrivacy[tid][San.__name__][nr][feature] = resDict
-
-            del sanT, sanOut, sanIn
-
-            LOGGER.info(f'Finished: Evaluation for model {San.__name__}.')
+        for model_name, per_target in eval_results:
+            for tid, feature_results in per_target.items():
+                resultsTargetPrivacy[tid][model_name][nr] = feature_results
 
     outfile = f"ResultsMIA_{dname}"
     LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
