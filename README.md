@@ -49,39 +49,18 @@ and opening the notebook with your favourite web browser at the url `http://127.
 ## Direct Installation
 
 ### Requirements
-The framework and its building blocks have been developed and tested under Python 3.9 .
+The framework and its building blocks have been developed and tested under Python 3.9+.
 
-We recommend to create a virtual environment for installing all dependencies and running the code
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management. All dependencies (including the CTGAN fork) are declared in `pyproject.toml`.
+
 ```
-python3 -m venv pyvenv3
-source pyvenv3/bin/activate
-pip install numpy==1.19.5 && pip install -r requirements.txt
-```
-
-Note: Some people encountered problems due to the API of Numpy having changed between versions, to ensure all dependencies are compiled against the same Numpy version, it needs to be installed first.
-
-### Dependencies
-The `CTGAN` model depends on a fork of the original model training algorithm that can be found here
-[CTGAN-SPRING](https://github.com/spring-epfl/CTGAN.git)
-
-To install the correct version clone the repository above and run
-```
-cd CTGAN
-make install
-```
-
-Add the path to this directory to your python path. You can also add this line
-in your shell configuration file (e.g., `~/.bashrc`) to load it automatically.
-```bash
-# Execute this in the CTGAN folder, otherwise replace `pwd` with the actual path
-export PYTHONPATH=$PYTHONPATH:`pwd`
+uv sync
 ```
 
 To test your installation try to run
 ```
-import ctgan
+uv run python -c "import ctgan"
 ```
-from within your virtualenv `python`
 
 # Example runs
 To run a privacy evaluation with respect to the privacy concern of linkability you can run
