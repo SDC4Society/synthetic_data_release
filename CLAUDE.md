@@ -8,9 +8,7 @@ Privacy evaluation framework for synthetic data publishing, based on the paper "
 
 ## Environment Setup
 
-The project uses **uv** for dependency management (Python 3.9+). A `.venv` already exists in the repo root. Dependencies are declared in `pyproject.toml` (core) and `requirements.txt` (full, includes TensorFlow/PyTorch).
-
-The CTGAN model requires a forked version at `CTGAN/` (subdir). Install it with `cd CTGAN && make install` and ensure `CTGAN/` is on `PYTHONPATH`.
+The project uses **uv** for dependency management (Python 3.9+). A `.venv` already exists in the repo root. Dependencies are declared in `pyproject.toml`。CTGANはフォーク版（`git+https://github.com/SDC4Society/CTGAN.git`）を使用しており、pyproject.tomlに含まれている。
 
 ## Running Evaluations
 
