@@ -12,12 +12,7 @@ import pandas as pd
 from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
-
-from sanitisation_techniques.sanitiser import SanitiserNHS
-from generative_models.data_synthesiser import BayesianNet, PrivBayes, IndependentHistogram
-from generative_models.ctgan import CTGAN
-from generative_models.pate_gan import PATEGAN
-from predictive_models.predictive_model import RandForestClassTask, LogRegClassTask, LinRegTask
+from utils.parallel import create_model, create_utility_task, is_generative_model, run_parallel_models
 
 from warnings import simplefilter
 simplefilter('ignore', category=FutureWarning)
@@ -26,6 +21,111 @@ simplefilter('ignore', category=DeprecationWarning)
 cwd = path.dirname(__file__)
 
 SEED = 42
+
+
+def utility_eval_gm_worker(model_config, rawTout, targets, targetIDs,
+                           utility_task_configs, testRecords, testRecordIDs,
+                           rawTest, metadata, runconfig):
+    """Evaluate one generative model's utility across all targets.
+    :return: tuple: (model_name, results_target dict, results_agg dict)
+    """
+    model = create_model(model_config, metadata)
+    utility_tasks = [create_utility_task(cfg, metadata) for cfg in utility_task_configs]
+    nSynT = runconfig['nSynT']
+    sizeSynT = runconfig['sizeSynT']
+
+    results_target = {}
+    results_agg = {}
+
+    model.fit(rawTout)
+    synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+
+    for ut in utility_tasks:
+        predErrorTargets = []
+        predErrorAggr = []
+        for syn in synTwithoutTarget:
+            ut.train(syn)
+            predErrorTargets.append(ut.evaluate(testRecords))
+            predErrorAggr.append(ut.evaluate(rawTest))
+
+        results_target[(ut.__name__, 'OUT')] = {
+            'TestRecordID': testRecordIDs,
+            'Accuracy': list(mean(predErrorTargets, axis=0))
+        }
+        results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
+
+    for tid in targetIDs:
+        target = targets.loc[[tid]]
+        rawTin = pd.concat([rawTout, target])
+        model.fit(rawTin)
+        synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+
+        for ut in utility_tasks:
+            predErrorTargets = []
+            predErrorAggr = []
+            for syn in synTwithTarget:
+                ut.train(syn)
+                predErrorTargets.append(ut.evaluate(testRecords))
+                predErrorAggr.append(ut.evaluate(rawTest))
+
+            results_target[(ut.__name__, tid)] = {
+                'TestRecordID': testRecordIDs,
+                'Accuracy': list(mean(predErrorTargets, axis=0))
+            }
+            results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+
+    return (model.__name__, results_target, results_agg)
+
+
+def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
+                            utility_task_configs, testRecords, testRecordIDs,
+                            rawTest, metadata, runconfig):
+    """Evaluate one sanitiser's utility across all targets.
+    :return: tuple: (model_name, results_target dict, results_agg dict)
+    """
+    model = create_model(model_config, metadata)
+    utility_tasks = [create_utility_task(cfg, metadata) for cfg in utility_task_configs]
+    nSynT = runconfig['nSynT']
+
+    results_target = {}
+    results_agg = {}
+
+    sanOut = model.sanitise(rawTout)
+
+    for ut in utility_tasks:
+        predErrorTargets = []
+        predErrorAggr = []
+        for _ in range(nSynT):
+            ut.train(sanOut)
+            predErrorTargets.append(ut.evaluate(testRecords))
+            predErrorAggr.append(ut.evaluate(rawTest))
+
+        results_target[(ut.__name__, 'OUT')] = {
+            'TestRecordID': testRecordIDs,
+            'Accuracy': list(mean(predErrorTargets, axis=0))
+        }
+        results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
+
+    for tid in targetIDs:
+        target = targets.loc[[tid]]
+        rawTin = pd.concat([rawTout, target])
+        sanIn = model.sanitise(rawTin)
+
+        for ut in utility_tasks:
+            predErrorTargets = []
+            predErrorAggr = []
+            for _ in range(nSynT):
+                ut.train(sanIn)
+                predErrorTargets.append(ut.evaluate(testRecords))
+                predErrorAggr.append(ut.evaluate(rawTest))
+
+            results_target[(ut.__name__, tid)] = {
+                'TestRecordID': testRecordIDs,
+                'Accuracy': list(mean(predErrorTargets, axis=0))
+            }
+            results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+
+    return (model.__name__, results_target, results_agg)
 
 
 def main():
@@ -89,38 +189,6 @@ def main():
 
     testRecords = rawTest.loc[testRecordIDs, :]
 
-    # List of candidate generative models to evaluate
-    gmList = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            if gm == 'IndependentHistogram':
-                for params in paramsList:
-                    gmList.append(IndependentHistogram(metadata, *params))
-            elif gm == 'BayesianNet':
-                for params in paramsList:
-                    gmList.append(BayesianNet(metadata, *params))
-            elif gm == 'PrivBayes':
-                for params in paramsList:
-                    gmList.append(PrivBayes(metadata, *params))
-            elif gm == 'CTGAN':
-                for params in paramsList:
-                    gmList.append(CTGAN(metadata, *params))
-            elif gm == 'PATEGAN':
-                for params in paramsList:
-                    gmList.append(PATEGAN(metadata, *params))
-            else:
-                raise ValueError(f'Unknown GM {gm}')
-
-    # List of candidate sanitisation techniques to evaluate
-    sanList = []
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            if name == 'SanitiserNHS':
-                for params in paramsList:
-                    sanList.append(SanitiserNHS(metadata, *params))
-            else:
-                raise ValueError(f'Unknown sanitisation technique {name}')
-
     # Build serializable model configs for parallel execution
     all_model_configs = []
     if 'generativeModels' in runconfig.keys():
@@ -139,41 +207,47 @@ def main():
         for params in paramsList:
             utility_task_configs.append((taskName, *params))
 
-    utilityTasks = []
-    for taskName, paramsList in runconfig['utilityTasks'].items():
-        if taskName == 'RandForestClass':
-            for params in paramsList:
-                utilityTasks.append(RandForestClassTask(metadata, *params))
-        elif taskName == 'LogRegClass':
-            for params in paramsList:
-                utilityTasks.append(LogRegClassTask(metadata, *params))
-        elif taskName == 'LinReg':
-            for params in paramsList:
-                utilityTasks.append(LinRegTask(metadata, *params))
-
     ##################################
     ######### EVALUATION #############
     ##################################
-    resultsTargetUtility = {ut.__name__: {gm.__name__: {} for gm in gmList + sanList} for ut in utilityTasks}
-    resultsAggUtility = {ut.__name__: {gm.__name__: {'TargetID': [],
-                                                     'Accuracy': []} for gm in gmList + sanList} for ut in utilityTasks}
+    # Build model_name lookup from configs
+    _model_names = {}
+    for cfg in all_model_configs:
+        m = create_model(cfg, metadata)
+        _model_names[cfg] = m.__name__
 
-    # Add entry for raw
-    for ut in utilityTasks:
-        resultsTargetUtility[ut.__name__]['Raw'] = {}
-        resultsAggUtility[ut.__name__]['Raw'] = {'TargetID': [],
-                                                 'Accuracy': []}
+    # Separate gm and san configs
+    gm_configs = [(cfg, name) for cfg, name in _model_names.items()
+                  if is_generative_model(create_model(cfg, metadata))]
+    san_configs = [(cfg, name) for cfg, name in _model_names.items()
+                   if not is_generative_model(create_model(cfg, metadata))]
+
+    # Build utility task names
+    ut_names = []
+    for cfg in utility_task_configs:
+        ut = create_utility_task(cfg, metadata)
+        ut_names.append(ut.__name__)
+
+    resultsTargetUtility = {ut_name: {name: {} for name in list(_model_names.values()) + ['Raw']}
+                           for ut_name in ut_names}
+    resultsAggUtility = {ut_name: {name: {'TargetID': [], 'Accuracy': []}
+                                   for name in list(_model_names.values()) + ['Raw']}
+                         for ut_name in ut_names}
 
     print('\n---- Start the game ----')
     for nr in range(runconfig['nIter']):
         print(f'\n--- Game iteration {nr + 1} ---')
-        # Draw a raw dataset
         rIdx = choice(list(rawTrainWoTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawTrain.loc[rIdx]
 
+        ###############
+        ## RAW EVALUATION (keep serial - small computation)
+        ###############
         LOGGER.info('Start: Utility evaluation on Raw...')
-        # Get utility from raw without targets
-        for ut in utilityTasks:
+
+        for ut_cfg in utility_task_configs:
+            ut = create_utility_task(ut_cfg, metadata)
+
             resultsTargetUtility[ut.__name__]['Raw'][nr] = {}
 
             predErrorTargets = []
@@ -187,16 +261,16 @@ def main():
                 'TestRecordID': testRecordIDs,
                 'Accuracy': list(mean(predErrorTargets, axis=0))
             }
-
             resultsAggUtility[ut.__name__]['Raw']['TargetID'].append('OUT')
             resultsAggUtility[ut.__name__]['Raw']['Accuracy'].append(mean(predErrorAggr))
 
-        # Get utility from raw with each target
         for tid in targetIDs:
             target = targets.loc[[tid]]
             rawIn = pd.concat([rawTout, target])
 
-            for ut in utilityTasks:
+            for ut_cfg in utility_task_configs:
+                ut = create_utility_task(ut_cfg, metadata)
+
                 predErrorTargets = []
                 predErrorAggr = []
                 for _ in range(runconfig['nSynT']):
@@ -208,113 +282,45 @@ def main():
                     'TestRecordID': testRecordIDs,
                     'Accuracy': list(mean(predErrorTargets, axis=0))
                 }
-
                 resultsAggUtility[ut.__name__]['Raw']['TargetID'].append(tid)
                 resultsAggUtility[ut.__name__]['Raw']['Accuracy'].append(mean(predErrorAggr))
 
         LOGGER.info('Finished: Utility evaluation on Raw.')
 
-        for GenModel in gmList:
-            LOGGER.info(f'Start: Evaluation for model {GenModel.__name__}...')
-            GenModel.fit(rawTout)
-            synTwithoutTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
+        ###############
+        ## PARALLEL MODEL EVALUATION
+        ###############
+        gm_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
+            for cfg, _ in gm_configs
+        ]
+        san_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
+            for cfg, _ in san_configs
+        ]
 
-            # Util evaluation for synthetic without all targets
-            for ut in utilityTasks:
-                resultsTargetUtility[ut.__name__][GenModel.__name__][nr] = {}
+        all_results = []
+        if gm_tasks:
+            all_results.extend(run_parallel_models(
+                utility_eval_gm_worker, gm_tasks, max_workers=args.workers))
+        if san_tasks:
+            all_results.extend(run_parallel_models(
+                utility_eval_san_worker, san_tasks, max_workers=args.workers))
 
-                predErrorTargets = []
-                predErrorAggr = []
-                for syn in synTwithoutTarget:
-                    ut.train(syn)
-                    predErrorTargets.append(ut.evaluate(testRecords))
-                    predErrorAggr.append(ut.evaluate(rawTest))
+        for model_name, results_target, results_agg in all_results:
+            for (ut_name, tid_or_out), result_dict in results_target.items():
+                if ut_name not in resultsTargetUtility:
+                    continue
+                if nr not in resultsTargetUtility[ut_name][model_name]:
+                    resultsTargetUtility[ut_name][model_name][nr] = {}
+                resultsTargetUtility[ut_name][model_name][nr][tid_or_out] = result_dict
 
-                resultsTargetUtility[ut.__name__][GenModel.__name__][nr]['OUT'] = {
-                    'TestRecordID': testRecordIDs,
-                    'Accuracy': list(mean(predErrorTargets, axis=0))
-                }
-
-                resultsAggUtility[ut.__name__][GenModel.__name__]['TargetID'].append('OUT')
-                resultsAggUtility[ut.__name__][GenModel.__name__]['Accuracy'].append(mean(predErrorAggr))
-
-            for tid in targetIDs:
-                LOGGER.info(f'Target: {tid}')
-                target = targets.loc[[tid]]
-
-                rawTin = pd.concat([rawTout, target])
-                GenModel.fit(rawTin)
-                synTwithTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
-
-                # Util evaluation for synthetic with this target
-                for ut in utilityTasks:
-                    predErrorTargets = []
-                    predErrorAggr = []
-                    for syn in synTwithTarget:
-                        ut.train(syn)
-                        predErrorTargets.append(ut.evaluate(testRecords))
-                        predErrorAggr.append(ut.evaluate(rawTest))
-
-                    resultsTargetUtility[ut.__name__][GenModel.__name__][nr][tid] = {
-                        'TestRecordID': testRecordIDs,
-                        'Accuracy': list(mean(predErrorTargets, axis=0))
-                    }
-
-                    resultsAggUtility[ut.__name__][GenModel.__name__]['TargetID'].append(tid)
-                    resultsAggUtility[ut.__name__][GenModel.__name__]['Accuracy'].append(mean(predErrorAggr))
-
-            del synTwithoutTarget, synTwithTarget
-
-            LOGGER.info(f'Finished: Evaluation for model {GenModel.__name__}.')
-
-        for San in sanList:
-            LOGGER.info(f'Start: Evaluation for sanitiser {San.__name__}...')
-            sanOut = San.sanitise(rawTout)
-
-            for ut in utilityTasks:
-                resultsTargetUtility[ut.__name__][San.__name__][nr] = {}
-
-                predErrorTargets = []
-                predErrorAggr = []
-                for _ in range(runconfig['nSynT']):
-                    ut.train(sanOut)
-                    predErrorTargets.append(ut.evaluate(testRecords))
-                    predErrorAggr.append(ut.evaluate(rawTest))
-
-                resultsTargetUtility[ut.__name__][San.__name__][nr]['OUT'] = {
-                    'TestRecordID': testRecordIDs,
-                    'Accuracy': list(mean(predErrorTargets, axis=0))
-                }
-
-                resultsAggUtility[ut.__name__][San.__name__]['TargetID'].append('OUT')
-                resultsAggUtility[ut.__name__][San.__name__]['Accuracy'].append(mean(predErrorAggr))
-
-            for tid in targetIDs:
-                LOGGER.info(f'Target: {tid}')
-                target = targets.loc[[tid]]
-
-                rawTin = pd.concat([rawTout, target])
-                sanIn = San.sanitise(rawTin)
-
-                for ut in utilityTasks:
-                    predErrorTargets = []
-                    predErrorAggr = []
-                    for _ in range(runconfig['nSynT']):
-                        ut.train(sanIn)
-                        predErrorTargets.append(ut.evaluate(testRecords))
-                        predErrorAggr.append(ut.evaluate(rawTest))
-
-                    resultsTargetUtility[ut.__name__][San.__name__][nr][tid] = {
-                        'TestRecordID': testRecordIDs,
-                        'Accuracy': list(mean(predErrorTargets, axis=0))
-                    }
-
-                    resultsAggUtility[ut.__name__][San.__name__]['TargetID'].append(tid)
-                    resultsAggUtility[ut.__name__][San.__name__]['Accuracy'].append(mean(predErrorAggr))
-
-            del sanOut, sanIn
-
-            LOGGER.info(f'Finished: Evaluation for model {San.__name__}.')
+            for ut_name, entries in results_agg.items():
+                for tid_or_out, accuracy in entries:
+                    resultsAggUtility[ut_name][model_name]['TargetID'].append(tid_or_out)
+                    resultsAggUtility[ut_name][model_name]['Accuracy'].append(accuracy)
 
     outfile = f"ResultsUtilTargets_{dname}"
     LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
