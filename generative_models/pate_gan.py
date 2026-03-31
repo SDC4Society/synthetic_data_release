@@ -54,7 +54,7 @@ class PATEGAN(GenerativeModel):
 
         # Configure device
         device_name = tf.test.gpu_device_name()
-        if device_name is '':
+        if device_name == '':
             self.device_spec = tf.DeviceSpec(device_type='CPU', device_index=0)
         else:
             self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=0)
@@ -178,7 +178,7 @@ class PATEGAN(GenerativeModel):
 
             # Replacement of Clipping algorithm to Penalty term
             # 1. Line 6 in Algorithm 1
-            noisy_vals = tf.random_uniform([self.batch_size, 1], minval=0., maxval=1.)
+            noisy_vals = tf.random.uniform([self.batch_size, 1], minval=0., maxval=1.)
             X_inter = noisy_vals * self.X + (1. - noisy_vals) * self.GDist
 
             # 2. Line 7 in Algorithm 1
@@ -266,7 +266,7 @@ class PATEGAN(GenerativeModel):
         in_dim = size[0]
         xavier_stddev = 1. / tf.sqrt(in_dim / 2.)
 
-        return tf.random_normal(shape=size, stddev=xavier_stddev)
+        return tf.random.normal(shape=size, stddev=xavier_stddev)
 
     def _sample_latent_z(self, nsamples, ndims):
         return np.random.uniform(-1., 1., size=[nsamples, ndims])
