@@ -35,6 +35,8 @@ def main():
     datasource.add_argument('--datapath', '-D', type=str, help='Relative path to cwd of a local data file')
     argparser.add_argument('--runconfig', '-RC', default='runconfig_mia.json', type=str, help='Path relative to cwd of runconfig file')
     argparser.add_argument('--outdir', '-O', default='outputs/test', type=str, help='Path relative to cwd for storing output files')
+    argparser.add_argument('--workers', '-W', type=int, default=None,
+                           help='Number of parallel workers (default: CPU count)')
     args = argparser.parse_args()
 
     seed(SEED)
@@ -118,6 +120,24 @@ def main():
                     sanList.append(SanitiserNHS(metadata, *params))
             else:
                 raise ValueError(f'Unknown sanitisation technique {name}')
+
+    # Build serializable model configs for parallel execution
+    all_model_configs = []
+    if 'generativeModels' in runconfig.keys():
+        for gm, paramsList in runconfig['generativeModels'].items():
+            for params in paramsList:
+                all_model_configs.append((gm, *params))
+
+    if 'sanitisationTechniques' in runconfig.keys():
+        for name, paramsList in runconfig['sanitisationTechniques'].items():
+            for params in paramsList:
+                all_model_configs.append((name, *params))
+
+    # Build serializable utility task configs
+    utility_task_configs = []
+    for taskName, paramsList in runconfig['utilityTasks'].items():
+        for params in paramsList:
+            utility_task_configs.append((taskName, *params))
 
     utilityTasks = []
     for taskName, paramsList in runconfig['utilityTasks'].items():
