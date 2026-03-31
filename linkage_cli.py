@@ -210,7 +210,8 @@ def main():
         for cfg in all_model_configs
     ]
     attack_results = run_parallel_models(
-        linkage_attack_worker, attack_tasks, max_workers=args.workers)
+        linkage_attack_worker, attack_tasks, max_workers=args.workers,
+        desc="Attack training")
 
     attacks = {}
     for tid, model_name, trained in attack_results:
@@ -240,7 +241,8 @@ def main():
             for cfg in all_model_configs
         ]
         eval_results = run_parallel_models(
-            linkage_eval_worker, eval_tasks, max_workers=args.workers)
+            linkage_eval_worker, eval_tasks, max_workers=args.workers,
+            desc=f"Eval iter {nr+1}/{runconfig['nIter']}")
 
         for model_name, per_target in eval_results:
             for tid, feature_results in per_target.items():
