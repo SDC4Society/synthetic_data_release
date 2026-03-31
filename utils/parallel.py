@@ -2,6 +2,7 @@
 import os
 from multiprocessing import Pool, cpu_count
 from numpy.random import seed
+from tqdm import tqdm
 
 from generative_models.generative_model import GenerativeModel
 from generative_models.data_synthesiser import IndependentHistogram, BayesianNet, PrivBayes
@@ -53,13 +54,34 @@ def _worker_init():
     seed(os.getpid())
 
 
-def run_parallel_models(worker_fn, tasks, max_workers=None):
-    """Run tasks in parallel using multiprocessing.Pool."""
+class _StarmapHelper:
+    """Picklable wrapper that unpacks a tuple arg for imap_unordered."""
+    def __init__(self, fn):
+        self.fn = fn
+
+    def __call__(self, args):
+        return self.fn(*args)
+
+
+def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
+    """Run tasks in parallel using multiprocessing.Pool with tqdm progress bar.
+
+    :param worker_fn: callable: Worker function to execute
+    :param tasks: list[tuple]: List of argument tuples for worker_fn
+    :param max_workers: int or None: Number of worker processes (default: min(cpu_count, len(tasks)))
+    :param desc: str: Description for the progress bar
+    :return: list: Results from each worker
+    """
     if not tasks:
         return []
     if max_workers == 1:
-        return [worker_fn(*task) for task in tasks]
+        return [worker_fn(*task) for task in tqdm(tasks, desc=desc)]
     if max_workers is None:
         max_workers = min(cpu_count(), len(tasks))
     with Pool(max_workers, initializer=_worker_init) as pool:
-        return pool.starmap(worker_fn, tasks)
+        results = list(tqdm(
+            pool.imap_unordered(_StarmapHelper(worker_fn), tasks),
+            total=len(tasks),
+            desc=desc
+        ))
+    return results

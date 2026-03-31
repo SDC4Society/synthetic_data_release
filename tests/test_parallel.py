@@ -68,7 +68,7 @@ class TestRunParallelModels(TestCase):
         from utils.parallel import run_parallel_models
         tasks = [(i,) for i in range(5)]
         results = run_parallel_models(_double, tasks, max_workers=2)
-        self.assertEqual(results, [0, 2, 4, 6, 8])
+        self.assertEqual(sorted(results), [0, 2, 4, 6, 8])
 
     def test_empty_tasks(self):
         from utils.parallel import run_parallel_models

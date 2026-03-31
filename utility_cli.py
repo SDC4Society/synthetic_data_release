@@ -304,10 +304,12 @@ def main():
         all_results = []
         if gm_tasks:
             all_results.extend(run_parallel_models(
-                utility_eval_gm_worker, gm_tasks, max_workers=args.workers))
+                utility_eval_gm_worker, gm_tasks, max_workers=args.workers,
+                desc=f"GM eval {nr+1}/{runconfig['nIter']}"))
         if san_tasks:
             all_results.extend(run_parallel_models(
-                utility_eval_san_worker, san_tasks, max_workers=args.workers))
+                utility_eval_san_worker, san_tasks, max_workers=args.workers,
+                desc=f"San eval {nr+1}/{runconfig['nIter']}"))
 
         for model_name, results_target, results_agg in all_results:
             for (ut_name, tid_or_out), result_dict in results_target.items():
