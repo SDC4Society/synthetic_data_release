@@ -12,6 +12,7 @@ from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
+from utils.parallel import create_model, is_generative_model, run_parallel_models
 
 from generative_models.ctgan import CTGAN
 from generative_models.data_synthesiser import IndependentHistogram, BayesianNet, PrivBayes
@@ -26,6 +27,126 @@ simplefilter('ignore', category=DeprecationWarning)
 cwd = path.dirname(__file__)
 
 SEED = 42
+
+
+def inference_eval_gm_worker(model_config, rawTout, targets, targetIDs,
+                             sensitive_attrs, metadata, runconfig):
+    """Evaluate one generative model for inference attack across all targets.
+    :return: tuple: (model_name, {(tid, sa): result_dict})
+    """
+    model = create_model(model_config, metadata)
+    nSynT = runconfig['nSynT']
+    sizeSynT = runconfig['sizeSynT']
+
+    attacks = {}
+    for sa, atype in sensitive_attrs.items():
+        if atype == 'LinReg':
+            attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=metadata)
+        elif atype == 'Classification':
+            attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=metadata)
+
+    results = {}
+
+    model.fit(rawTout)
+    synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+
+    for sa, Attack in attacks.items():
+        for tid in targetIDs:
+            results[(tid, sa)] = {
+                'AttackerGuess': [], 'ProbCorrect': [],
+                'TargetPresence': [LABEL_OUT for _ in range(nSynT)]
+            }
+
+        for syn in synTwithoutTarget:
+            Attack.train(syn)
+            for tid in targetIDs:
+                target = targets.loc[[tid]]
+                targetAux = target.loc[[tid], Attack.knownAttributes]
+                targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+
+                guess = Attack.attack(targetAux)
+                pCorrect = Attack.get_likelihood(targetAux, targetSecret)
+
+                results[(tid, sa)]['AttackerGuess'].append(guess)
+                results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+
+    for tid in targetIDs:
+        target = targets.loc[[tid]]
+        rawTin = pd.concat([rawTout, target])
+
+        model.fit(rawTin)
+        synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+
+        for sa, Attack in attacks.items():
+            targetAux = target.loc[[tid], Attack.knownAttributes]
+            targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+
+            for syn in synTwithTarget:
+                Attack.train(syn)
+
+                guess = Attack.attack(targetAux)
+                pCorrect = Attack.get_likelihood(targetAux, targetSecret)
+
+                results[(tid, sa)]['AttackerGuess'].append(guess)
+                results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+                results[(tid, sa)]['TargetPresence'].append(LABEL_IN)
+
+    return (model.__name__, results)
+
+
+def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
+                              sensitive_attrs, metadata, runconfig):
+    """Evaluate one sanitiser for inference attack across all targets.
+    :return: tuple: (model_name, {(tid, sa): result_dict})
+    """
+    model = create_model(model_config, metadata)
+
+    attacks = {}
+    for sa, atype in sensitive_attrs.items():
+        if atype == 'LinReg':
+            attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=metadata, quids=model.quids)
+        elif atype == 'Classification':
+            attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=metadata, quids=model.quids)
+
+    results = {}
+
+    sanOut = model.sanitise(rawTout)
+
+    for sa, Attack in attacks.items():
+        Attack.train(sanOut)
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            targetAux = target.loc[[tid], Attack.knownAttributes]
+            targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+
+            guess = Attack.attack(targetAux, attemptLinkage=True, data=sanOut)
+            pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanOut)
+
+            results[(tid, sa)] = {
+                'AttackerGuess': [guess],
+                'ProbCorrect': [pCorrect],
+                'TargetPresence': [LABEL_OUT]
+            }
+
+    for tid in targetIDs:
+        target = targets.loc[[tid]]
+        rawTin = pd.concat([rawTout, target])
+        sanIn = model.sanitise(rawTin)
+
+        for sa, Attack in attacks.items():
+            targetAux = target.loc[[tid], Attack.knownAttributes]
+            targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+
+            Attack.train(sanIn)
+
+            guess = Attack.attack(targetAux, attemptLinkage=True, data=sanIn)
+            pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanIn)
+
+            results[(tid, sa)]['AttackerGuess'].append(guess)
+            results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+            results[(tid, sa)]['TargetPresence'].append(LABEL_IN)
+
+    return (model.__name__, results)
 
 
 def main():
@@ -77,38 +198,6 @@ def main():
     # Drop targets from population
     rawPopDropTargets = rawPop.drop(targetIDs)
 
-    # List of candidate generative models to evaluate
-    gmList = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            if gm == 'IndependentHistogram':
-                for params in paramsList:
-                    gmList.append(IndependentHistogram(metadata, *params))
-            elif gm == 'BayesianNet':
-                for params in paramsList:
-                    gmList.append(BayesianNet(metadata, *params))
-            elif gm == 'PrivBayes':
-                for params in paramsList:
-                    gmList.append(PrivBayes(metadata, *params))
-            elif gm == 'CTGAN':
-                for params in paramsList:
-                    gmList.append(CTGAN(metadata, *params))
-            elif gm == 'PATEGAN':
-                for params in paramsList:
-                    gmList.append(PATEGAN(metadata, *params))
-            else:
-                raise ValueError(f'Unknown GM {gm}')
-
-    # List of candidate sanitisation techniques to evaluate
-    sanList = []
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            if name == 'SanitiserNHS':
-                for params in paramsList:
-                    sanList.append(SanitiserNHS(metadata, *params))
-            else:
-                raise ValueError(f'Unknown sanitisation technique {name}')
-
     # Build serializable model configs for parallel execution
     all_model_configs = []
     if 'generativeModels' in runconfig.keys():
@@ -124,21 +213,32 @@ def main():
     ##################################
     ######### EVALUATION #############
     ##################################
-    resultsTargetPrivacy = {tid: {sa: {gm.__name__: {} for gm in gmList + sanList} for sa in runconfig['sensitiveAttributes']} for tid in targetIDs}
-    # Add entry for raw
-    for tid in targetIDs:
-        for sa in runconfig['sensitiveAttributes']:
-            resultsTargetPrivacy[tid][sa]['Raw'] = {}
+    # Build model_name lookup from configs
+    _model_names = {}
+    for cfg in all_model_configs:
+        m = create_model(cfg, metadata)
+        _model_names[cfg] = m.__name__
+
+    # Separate gm and san configs
+    gm_configs = [(cfg, name) for cfg, name in _model_names.items()
+                  if is_generative_model(create_model(cfg, metadata))]
+    san_configs = [(cfg, name) for cfg, name in _model_names.items()
+                   if not is_generative_model(create_model(cfg, metadata))]
+
+    resultsTargetPrivacy = {
+        tid: {sa: {name: {} for name in list(_model_names.values()) + ['Raw']}
+              for sa in runconfig['sensitiveAttributes']}
+        for tid in targetIDs
+    }
 
     print('\n---- Start the game ----')
     for nr in range(runconfig['nIter']):
         print(f'\n--- Game iteration {nr + 1} ---')
-        # Draw a raw dataset
         rIdx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawPopDropTargets.loc[rIdx]
 
         ###############
-        ## ATTACKS ####
+        ## RAW ATTACKS (keep serial - small computation)
         ###############
         attacks = {}
         for sa, atype in runconfig['sensitiveAttributes'].items():
@@ -147,10 +247,8 @@ def main():
             elif atype == 'Classification':
                 attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=metadata)
 
-        #### Assess advantage raw
         for sa, Attack in attacks.items():
             Attack.train(rawTout)
-
             for tid in targetIDs:
                 target = targets.loc[[tid]]
                 targetAux = target.loc[[tid], Attack.knownAttributes]
@@ -180,106 +278,31 @@ def main():
                 resultsTargetPrivacy[tid][sa]['Raw'][nr]['ProbCorrect'].append(pCorrect)
                 resultsTargetPrivacy[tid][sa]['Raw'][nr]['TargetPresence'].append(LABEL_IN)
 
-        ##### Assess advantage Syn
-        for GenModel in gmList:
-            LOGGER.info(f'Start: Evaluation for model {GenModel.__name__}...')
-            GenModel.fit(rawTout)
-            synTwithoutTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
+        ###############
+        ## PARALLEL MODEL EVALUATION
+        ###############
+        gm_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             runconfig['sensitiveAttributes'], metadata, runconfig)
+            for cfg, _ in gm_configs
+        ]
+        san_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             runconfig['sensitiveAttributes'], metadata, runconfig)
+            for cfg, _ in san_configs
+        ]
 
-            for sa, Attack in attacks.items():
-                for tid in targetIDs:
-                    resultsTargetPrivacy[tid][sa][GenModel.__name__][nr] = {
-                        'AttackerGuess': [],
-                        'ProbCorrect': [],
-                        'TargetPresence': [LABEL_OUT for _ in range(runconfig['nSynT'])]
-                    }
+        all_results = []
+        if gm_tasks:
+            all_results.extend(run_parallel_models(
+                inference_eval_gm_worker, gm_tasks, max_workers=args.workers))
+        if san_tasks:
+            all_results.extend(run_parallel_models(
+                inference_eval_san_worker, san_tasks, max_workers=args.workers))
 
-                for syn in synTwithoutTarget:
-                    Attack.train(syn)
-
-                    for tid in targetIDs:
-                        target = targets.loc[[tid]]
-                        targetAux = target.loc[[tid], Attack.knownAttributes]
-                        targetSecret = target.loc[tid, Attack.sensitiveAttribute]
-
-                        guess = Attack.attack(targetAux)
-                        pCorrect = Attack.get_likelihood(targetAux, targetSecret)
-
-                        resultsTargetPrivacy[tid][sa][GenModel.__name__][nr]['AttackerGuess'].append(guess)
-                        resultsTargetPrivacy[tid][sa][GenModel.__name__][nr]['ProbCorrect'].append(pCorrect)
-
-            del synTwithoutTarget
-
-            for tid in targetIDs:
-                LOGGER.info(f'Target: {tid}')
-                target = targets.loc[[tid]]
-                rawTin = pd.concat([rawTout, target])
-
-                GenModel.fit(rawTin)
-                synTwithTarget = [GenModel.generate_samples(runconfig['sizeSynT']) for _ in range(runconfig['nSynT'])]
-
-                for sa, Attack in attacks.items():
-                    targetAux = target.loc[[tid], Attack.knownAttributes]
-                    targetSecret = target.loc[tid, Attack.sensitiveAttribute]
-
-                    for syn in synTwithTarget:
-                        Attack.train(syn)
-
-                        guess = Attack.attack(targetAux)
-                        pCorrect = Attack.get_likelihood(targetAux, targetSecret)
-
-                        resultsTargetPrivacy[tid][sa][GenModel.__name__][nr]['AttackerGuess'].append(guess)
-                        resultsTargetPrivacy[tid][sa][GenModel.__name__][nr]['ProbCorrect'].append(pCorrect)
-                        resultsTargetPrivacy[tid][sa][GenModel.__name__][nr]['TargetPresence'].append(LABEL_IN)
-            del synTwithTarget
-
-        for San in sanList:
-            LOGGER.info(f'Start: Evaluation for sanitiser {San.__name__}...')
-            attacks = {}
-            for sa, atype in runconfig['sensitiveAttributes'].items():
-                if atype == 'LinReg':
-                    attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=metadata, quids=San.quids)
-                elif atype == 'Classification':
-                    attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=metadata, quids=San.quids)
-
-            sanOut = San.sanitise(rawTout)
-
-            for sa, Attack in attacks.items():
-                Attack.train(sanOut)
-
-                for tid in targetIDs:
-                    target = targets.loc[[tid]]
-                    targetAux = target.loc[[tid], Attack.knownAttributes]
-                    targetSecret = target.loc[tid, Attack.sensitiveAttribute]
-
-                    guess = Attack.attack(targetAux, attemptLinkage=True, data=sanOut)
-                    pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanOut)
-
-                    resultsTargetPrivacy[tid][sa][San.__name__][nr] = {
-                        'AttackerGuess': [guess],
-                        'ProbCorrect': [pCorrect],
-                        'TargetPresence': [LABEL_OUT]
-                }
-
-            for tid in targetIDs:
-                LOGGER.info(f'Target: {tid}')
-                target = targets.loc[[tid]]
-                rawTin = pd.concat([rawTout, target])
-                sanIn = San.sanitise(rawTin)
-
-                for sa, Attack in attacks.items():
-                    targetAux = target.loc[[tid], Attack.knownAttributes]
-                    targetSecret = target.loc[tid, Attack.sensitiveAttribute]
-
-
-                    Attack.train(sanIn)
-
-                    guess = Attack.attack(targetAux, attemptLinkage=True, data=sanIn)
-                    pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanIn)
-
-                    resultsTargetPrivacy[tid][sa][San.__name__][nr]['AttackerGuess'].append(guess)
-                    resultsTargetPrivacy[tid][sa][San.__name__][nr]['ProbCorrect'].append(pCorrect)
-                    resultsTargetPrivacy[tid][sa][San.__name__][nr]['TargetPresence'].append(LABEL_IN)
+        for model_name, results in all_results:
+            for (tid, sa), result_dict in results.items():
+                resultsTargetPrivacy[tid][sa][model_name][nr] = result_dict
 
     outfile = f"ResultsMLEAI_{dname}"
     LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
