@@ -49,6 +49,7 @@ SEED = 42
 def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     """Train MIA attacks for one (target, model) pair."""
     model = create_model(model_config, metadata)
+    model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
     trained_attacks = {}
 
     if is_generative_model(model):
@@ -87,6 +88,7 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
                         attacks_for_model, metadata, runconfig):
     """Evaluate one model across all targets for one game iteration."""
     model = create_model(model_config, metadata)
+    model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
     nSynT = runconfig['nSynT']
     sizeSynT = runconfig['sizeSynT']
     per_target_results = {}
