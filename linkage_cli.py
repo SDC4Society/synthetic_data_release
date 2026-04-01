@@ -190,16 +190,20 @@ def main():
     rawA = rawPop.loc[rawAidx, :]
 
     # Build serializable model configs for parallel execution
-    all_model_configs = []
+    all_model_configs = {}
     if 'generativeModels' in runconfig.keys():
         for gm, paramsList in runconfig['generativeModels'].items():
             for params in paramsList:
-                all_model_configs.append((gm, *params))
+                cfg = (gm, *params)
+                m = create_model(cfg, metadata)
+                all_model_configs[m.__name__] = cfg
 
     if 'sanitisationTechniques' in runconfig.keys():
         for name, paramsList in runconfig['sanitisationTechniques'].items():
             for params in paramsList:
-                all_model_configs.append((name, *params))
+                cfg = (name, *params)
+                m = create_model(cfg, metadata)
+                all_model_configs[m.__name__] = cfg
 
     ###################################
     #### ATTACK TRAINING #############
@@ -209,7 +213,7 @@ def main():
     attack_tasks = [
         (cfg, tid, targets.loc[[tid]], rawA, metadata, runconfig)
         for tid in targetIDs
-        for cfg in all_model_configs
+        for cfg in all_model_configs.values()
     ]
     attack_results = run_parallel_models(
         linkage_attack_worker, attack_tasks, max_workers=args.workers,
@@ -222,13 +226,7 @@ def main():
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Build model_name lookup from configs
-    _model_names = {}
-    for cfg in all_model_configs:
-        m = create_model(cfg, metadata)
-        _model_names[cfg] = m.__name__
-
-    resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
+    resultsTargetPrivacy = {tid: {name: {} for name in all_model_configs.keys()} for tid in targetIDs}
 
     print('\n---- Start the game ----')
     for nr in range(runconfig['nIter']):
@@ -238,9 +236,9 @@ def main():
 
         eval_tasks = [
             (cfg, rawTout, targets, targetIDs,
-             {tid: attacks[tid][_model_names[cfg]] for tid in targetIDs},
+             {tid: attacks[tid][model_name] for tid in targetIDs},
              metadata, runconfig)
-            for cfg in all_model_configs
+            for model_name, cfg in all_model_configs.items()
         ]
         eval_results = run_parallel_models(
             linkage_eval_worker, eval_tasks, max_workers=args.workers,
