@@ -226,7 +226,7 @@ def main():
     _model_names = {}
     for cfg in all_model_configs:
         m = create_model(cfg, metadata)
-        _model_names[cfg] = m.__name__
+        _model_names[tuple(cfg)] = m.__name__
 
     resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
 
@@ -238,7 +238,7 @@ def main():
 
         eval_tasks = [
             (cfg, rawTout, targets, targetIDs,
-             {tid: attacks[tid][_model_names[cfg]] for tid in targetIDs},
+             {tid: attacks[tid][_model_names[tuple(cfg)]] for tid in targetIDs},
              metadata, runconfig)
             for cfg in all_model_configs
         ]
