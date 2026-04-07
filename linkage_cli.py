@@ -13,6 +13,13 @@ from os import mkdir, path
 from numpy.random import choice, seed
 from argparse import ArgumentParser
 from pandas import DataFrame
+
+
+def _deep_tuple(obj):
+    """Recursively convert lists to tuples so nested configs are hashable."""
+    if isinstance(obj, (list, tuple)):
+        return tuple(_deep_tuple(x) for x in obj)
+    return obj
 import pandas as pd
 from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
@@ -226,19 +233,17 @@ def main():
     _model_names = {}
     for cfg in all_model_configs:
         m = create_model(cfg, metadata)
-        _model_names[tuple(cfg)] = m.__name__
+        _model_names[_deep_tuple(cfg)] = m.__name__
 
     resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
 
-    print('\n---- Start the game ----')
     for nr in range(runconfig['nIter']):
-        print(f'\n--- Game iteration {nr + 1} ---')
         rIdx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawPopDropTargets.loc[rIdx]
 
         eval_tasks = [
             (cfg, rawTout, targets, targetIDs,
-             {tid: attacks[tid][_model_names[tuple(cfg)]] for tid in targetIDs},
+             {tid: attacks[tid][_model_names[_deep_tuple(cfg)]] for tid in targetIDs},
              metadata, runconfig)
             for cfg in all_model_configs
         ]

@@ -123,7 +123,7 @@ def load_results_inference(dirname, dpath):
 
     resAdv = []
     for gameParams, game in results.groupby(['Dataset', 'TargetID', 'SensitiveAttribute', 'Run']):
-        rawRes = game.groupby(['TargetModel']).get_group('Raw')
+        rawRes = game.groupby('TargetModel').get_group('Raw')
         if all(game['SensitiveType'].isin([INTEGER, FLOAT])):
             pCorrectRIn, pCorrectROut = get_probs_correct(rawRes['ProbCorrect'], rawRes['TargetPresence'])
 
@@ -135,7 +135,7 @@ def load_results_inference(dirname, dpath):
 
         advR = get_ai_advantage(pCorrectRIn, pCorrectROut)
 
-        for gm, gmRes in game.groupby(['TargetModel']):
+        for gm, gmRes in game.groupby('TargetModel'):
             if gm != 'Raw':
                 if all(gmRes['SensitiveType'].isin([INTEGER, FLOAT])):
                     pCorrectSIn, pCorrectSOut = get_probs_correct(gmRes['ProbCorrect'], gmRes['TargetPresence'])
