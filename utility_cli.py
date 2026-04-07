@@ -14,6 +14,12 @@ from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.parallel import create_model, create_utility_task, is_generative_model, run_parallel_models
 
+def _deep_tuple(obj):
+    """Recursively convert lists to tuples so nested configs are hashable."""
+    if isinstance(obj, (list, tuple)):
+        return tuple(_deep_tuple(x) for x in obj)
+    return obj
+
 from warnings import simplefilter
 simplefilter('ignore', category=FutureWarning)
 simplefilter('ignore', category=DeprecationWarning)
@@ -214,12 +220,12 @@ def main():
     _model_names = {}
     for cfg in all_model_configs:
         m = create_model(cfg, metadata)
-        _model_names[cfg] = m.__name__
+        _model_names[_deep_tuple(cfg)] = m.__name__
 
     # Separate gm and san configs
-    gm_configs = [(cfg, name) for cfg, name in _model_names.items()
+    gm_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
                   if is_generative_model(create_model(cfg, metadata))]
-    san_configs = [(cfg, name) for cfg, name in _model_names.items()
+    san_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
                    if not is_generative_model(create_model(cfg, metadata))]
 
     # Build utility task names
@@ -234,9 +240,7 @@ def main():
                                    for name in list(_model_names.values()) + ['Raw']}
                          for ut_name in ut_names}
 
-    print('\n---- Start the game ----')
     for nr in range(runconfig['nIter']):
-        print(f'\n--- Game iteration {nr + 1} ---')
         rIdx = choice(list(rawTrainWoTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawTrain.loc[rIdx]
 
