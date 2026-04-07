@@ -8,7 +8,7 @@ from generative_models.generative_model import GenerativeModel
 from generative_models.data_synthesiser import IndependentHistogram, BayesianNet, PrivBayes
 from generative_models.ctgan import CTGAN
 from generative_models.pate_gan import PATEGAN
-from sanitisation_techniques.sanitiser import SanitiserNHS
+from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 from predictive_models.predictive_model import RandForestClassTask, LogRegClassTask, LinRegTask
 
 
