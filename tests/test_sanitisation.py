@@ -7,7 +7,7 @@ filterwarnings('ignore')
 from os import path
 cwd = path.dirname(__file__)
 
-from sanitisation_techniques.sanitiser import SanitiserNHS
+from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 
 from utils.datagen import load_local_data_as_df
 from utils.constants import *

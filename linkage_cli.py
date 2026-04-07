@@ -31,7 +31,7 @@ from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
 from feature_sets.bayes import CorrelationsFeatureSet
 
-from sanitisation_techniques.sanitiser import SanitiserNHS
+from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 
 from generative_models.ctgan import CTGAN
 from generative_models.pate_gan import PATEGAN

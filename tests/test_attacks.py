@@ -15,7 +15,7 @@ from attack_models.mia_classifier import (MIAttackClassifierLinearSVC,
                                           generate_mia_anon_data)
 
 from generative_models.data_synthesiser import IndependentHistogram
-from sanitisation_techniques.sanitiser import SanitiserNHS
+from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 from feature_sets.independent_histograms import HistogramFeatureSet
 from utils.datagen import load_local_data_as_df
 
