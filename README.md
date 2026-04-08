@@ -1,7 +1,7 @@
 # Privacy evaluation framework for synthetic data publishing
 A practical framework to evaluate the privacy-utility tradeoff of synthetic data publishing 
 
-Based on "Synthetic Data - Anonymisation Groundhog Day, Theresa Stadler, Bristena Oprisanu, and Carmela Troncoso, [arXiv](https://arxiv.org/abs/2011.07018), 2020"
+Based on "Stadler, T., Oprisanu, B., and Troncoso, C. (2022). In 31st USENIX Security Symposium (USENIX Security22), pages 1451–1468, Boston, MA. USENIX Association.", [official paper](https://www.usenix.org/conference/usenixsecurity22/presentation/stadler), [arXiv](https://arxiv.org/abs/2011.07018), [github](https://github.com/spring-epfl/synthetic_data_release)
 
 # Attack models
 The module `attack_models` so far includes
@@ -20,9 +20,9 @@ The module `generative_models` so far includes:
 
 # Setup
 
-## Docker Distribution
+## Docker Distribution (not recommended)
 
-For your convenience, Synthetic Data is also distributed as a ready-to-use Docker image containing Python 3.9 and CUDA 11.4.2, along with all dependencies required by Synthetic Data, including jupyter notebook to visualise and analyse the results.
+For your convenience, Synthetic Data is also distributed as a ~~ready-to-use~~ Docker image containing Python 3.9 and CUDA 11.4.2, along with all dependencies required by Synthetic Data, including jupyter notebook to visualise and analyse the results.
 
 **Note:** This distribution includes CUDA binaries, before downloading the image, ensure to read [its EULA](https://docs.nvidia.com/cuda/eula/index.html) and to agree to its terms.
 
@@ -66,7 +66,7 @@ uv run python -c "import ctgan"
 To run a privacy evaluation with respect to the privacy concern of linkability you can run
 
 ```
-python3 linkage_cli.py -D data/texas -RC tests/linkage/runconfig.json -O tests/linkage
+python3 linkage_cli.py -D data/texas -RC tests/linkage/runconfig.default.json -O tests/linkage
 ```
 
 The results file produced after successfully running the script will be written to `tests/linkage` and can be parsed with the function `load_results_linkage` provided in `utils/analyse_results.py`. 
@@ -76,7 +76,7 @@ A jupyter notebook to visualise and analyse the results is included at `notebook
 To run a privacy evaluation with respect to the privacy concern of inference you can run
 
 ```
-python3 inference_cli.py -D data/texas -RC tests/inference/runconfig.json -O tests/inference
+python3 inference_cli.py -D data/texas -RC tests/inference/runconfig.default.json -O tests/inference
 ```
 
 The results file produced after successfully running the script can be parsed with the function `load_results_inference` provided in `utils/analyse_results.py`.
@@ -86,7 +86,7 @@ A jupyter notebook to visualise and analyse the results is included at `notebook
 To run a utility evaluation with respect to a simple classification task as utility function run
 
 ```
-python3 utility_cli.py -D data/texas -RC tests/utility/runconfig.json -O tests/utility
+python3 utility_cli.py -D data/texas -RC tests/utility/runconfig.default.json -O tests/utility
 ```
 
 The results file produced after successfully running the script can be parsed with the function `load_results_utility` provided in `utils/analyse_results.py`.
