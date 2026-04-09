@@ -273,6 +273,14 @@ class RandForestAttack(AttributeInferenceAttack):
 
         return self.labelsInv[guess[0]]
 
+    def _get_proba(self, targetFeaturesScaled, targetSensitive):
+        probs = self.PredictionModel.predict_proba(targetFeaturesScaled).flatten()
+        target_label = self.labels[targetSensitive]
+        classes = list(self.PredictionModel.classes_)
+        if target_label in classes:
+            return probs[classes.index(target_label)]
+        return 0.0
+
     def get_likelihood(self, targetAux, targetSensitive, attemptLinkage=False, data=None):
         assert self.trained, 'Attack must first be trained on some data before can predict sensitive target value'
 
@@ -289,14 +297,11 @@ class RandForestAttack(AttributeInferenceAttack):
                     pCorrect = 1.
 
                 else:
-                    probs = self.PredictionModel.predict_proba(targetFeaturesScaled).flatten()
-                    pCorrect = probs[self.labels[targetSensitive]]
+                    pCorrect = self._get_proba(targetFeaturesScaled, targetSensitive)
 
             except:
-                probs = self.PredictionModel.predict_proba(targetFeaturesScaled).flatten()
-                pCorrect = probs[self.labels[targetSensitive]]
+                pCorrect = self._get_proba(targetFeaturesScaled, targetSensitive)
         else:
-            probs = self.PredictionModel.predict_proba(targetFeaturesScaled).flatten()
-            pCorrect = probs[self.labels[targetSensitive]]
+            pCorrect = self._get_proba(targetFeaturesScaled, targetSensitive)
 
         return pCorrect
