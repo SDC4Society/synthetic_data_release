@@ -1,0 +1,32 @@
+{
+  "nIter": 5,
+  "sizeRawA": 10000,
+  "nSynA": 10,
+  "nShadows": 10,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 5,
+  "Targets": null,
+  "generativeModels": {
+    "IndependentHistogram": [[10], [25]],
+    "BayesianNet": [[2, 1], [5, 1], [10, 1], [25, 1]],
+    "PrivBayes": [[25, 1, 0.1], [25, 1, 1.0], [25, 1, 10.0]],
+    "CTGAN": [[]],
+    "PATEGAN": [[1], [10]]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [10, 1, 0.99, 2, [], ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"]],
+      [10, 1, 0.99, 5, [], ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"]],
+      [10, 1, 0.99, 10, [], ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"]],
+      [10, 1, 0.99, 25, [], ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"]]
+    ],
+    "SanitiserMondrian": [
+      [2, ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"], []],
+      [5, ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"], []],
+      [10, ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"], []],
+      [25, ["Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"], []]
+    ]
+  }
+}
