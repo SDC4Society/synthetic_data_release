@@ -56,7 +56,7 @@ def load_results_linkage(dirname):
 
     resAgg = []
 
-    games = results.groupby(['TargetID', 'TargetModel', 'FeatureSet', 'Run'])
+    games = results.groupby(['Dataset', 'TargetID', 'TargetModel', 'FeatureSet', 'Run'])
     for gameParams, gameRes in games:
         tpSyn, fpSyn = get_tp_fp_rates(gameRes['AttackerGuess'], gameRes['Secret'])
         advantageSyn = get_mia_advantage(tpSyn, fpSyn)
@@ -66,7 +66,7 @@ def load_results_linkage(dirname):
 
     resAgg = DataFrame(resAgg)
 
-    resAgg.columns = ['TargetID','TargetModel', 'FeatureSet', 'Run', 'TPSyn', 'FPSyn', 'AdvantageSyn', 'AdvantageRaw']
+    resAgg.columns = ['Dataset', 'TargetID','TargetModel', 'FeatureSet', 'Run', 'TPSyn', 'FPSyn', 'AdvantageSyn', 'AdvantageRaw']
 
     resAgg['PrivacyGain'] = resAgg['AdvantageRaw'] - resAgg['AdvantageSyn']
 
