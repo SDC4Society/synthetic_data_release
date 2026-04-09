@@ -144,10 +144,12 @@ class SanitiserNHS(Sanitiser):
                 elif cdict['type'] in NUMERICAL:
                     num_cols.append(col)
 
-        self.ImputerCat.fit(df[cat_cols])
-        df_impute[cat_cols] = self.ImputerCat.transform(df[cat_cols])
+        if cat_cols:
+            self.ImputerCat.fit(df[cat_cols])
+            df_impute[cat_cols] = self.ImputerCat.transform(df[cat_cols])
 
-        self.ImputerNum.fit(df[num_cols])
-        df_impute[num_cols] = self.ImputerNum.transform(df[num_cols])
+        if num_cols:
+            self.ImputerNum.fit(df[num_cols])
+            df_impute[num_cols] = self.ImputerNum.transform(df[num_cols])
 
         return df_impute
