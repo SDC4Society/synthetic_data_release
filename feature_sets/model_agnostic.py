@@ -30,6 +30,10 @@ class NaiveFeatureSet(FeatureSet):
                     raise ValueError('Data to filter does not match expected schema')
             else:
                 self.attributes = list(data)
+
+            if len(data) == 0:
+                return array([0.0] * (len(self.attributes) * 3))
+
             features = DataFrame(columns=self.attributes)
             for c in self.attributes:
                 col = data[c]
