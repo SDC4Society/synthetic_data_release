@@ -66,7 +66,7 @@ uv run python -c "import ctgan"
 To run a privacy evaluation with respect to the privacy concern of linkability you can run
 
 ```
-python3 linkage_cli.py -D data/texas -RC tests/linkage/runconfig.default.json -O tests/linkage
+uv run python linkage_cli.py -D data/texas -RC tests/linkage/runconfig.default.json -O tests/linkage
 ```
 
 The results file produced after successfully running the script will be written to `tests/linkage` and can be parsed with the function `load_results_linkage` provided in `utils/analyse_results.py`. 
@@ -76,7 +76,7 @@ A jupyter notebook to visualise and analyse the results is included at `notebook
 To run a privacy evaluation with respect to the privacy concern of inference you can run
 
 ```
-python3 inference_cli.py -D data/texas -RC tests/inference/runconfig.default.json -O tests/inference
+uv run python inference_cli.py -D data/texas -RC tests/inference/runconfig.default.json -O tests/inference
 ```
 
 The results file produced after successfully running the script can be parsed with the function `load_results_inference` provided in `utils/analyse_results.py`.
@@ -86,7 +86,7 @@ A jupyter notebook to visualise and analyse the results is included at `notebook
 To run a utility evaluation with respect to a simple classification task as utility function run
 
 ```
-python3 utility_cli.py -D data/texas -RC tests/utility/runconfig.default.json -O tests/utility
+uv run python utility_cli.py -D data/texas -RC tests/utility/runconfig.default.json -O tests/utility
 ```
 
 The results file produced after successfully running the script can be parsed with the function `load_results_utility` provided in `utils/analyse_results.py`.
