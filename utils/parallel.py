@@ -9,6 +9,7 @@ from generative_models.data_synthesiser import IndependentHistogram, BayesianNet
 from generative_models.ctgan import CTGAN
 from generative_models.pate_gan import PATEGAN
 from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
+from sanitisation_techniques.sanitiser_mondrian import SanitiserMondrian
 from predictive_models.predictive_model import RandForestClassTask, LogRegClassTask, LinRegTask
 
 
@@ -19,6 +20,7 @@ MODEL_REGISTRY = {
     "CTGAN": CTGAN,
     "PATEGAN": PATEGAN,
     "SanitiserNHS": SanitiserNHS,
+    "SanitiserMondrian": SanitiserMondrian,
 }
 
 UTILITY_TASK_REGISTRY = {

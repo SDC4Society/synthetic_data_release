@@ -57,6 +57,7 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     """Train MIA attacks for one (target, model) pair."""
     model = create_model(model_config, metadata)
     model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
+    attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
     trained_attacks = {}
 
     if is_generative_model(model):
@@ -78,13 +79,13 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
             runconfig['nShadows'] * runconfig['nSynA'])
 
         for Feature in [NaiveFeatureSet(DataFrame),
-                        HistogramFeatureSet(DataFrame, metadata,
+                        HistogramFeatureSet(DataFrame, attack_metadata,
                                            nbins=model.histogram_size, quids=model.quids),
-                        CorrelationsFeatureSet(DataFrame, metadata, quids=model.quids),
-                        EnsembleFeatureSet(DataFrame, metadata,
+                        CorrelationsFeatureSet(DataFrame, attack_metadata, quids=model.quids),
+                        EnsembleFeatureSet(DataFrame, attack_metadata,
                                           nbins=model.histogram_size,
                                           quasi_id_cols=model.quids)]:
-            Attack = MIAttackClassifierRandomForest(metadata=metadata, FeatureSet=Feature, quids=model.quids)
+            Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=model.quids)
             Attack.train(sanA, labelsA)
             trained_attacks[Feature.__name__] = Attack
 
@@ -96,6 +97,7 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
     """Evaluate one model across all targets for one game iteration."""
     model = create_model(model_config, metadata)
     model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
+    attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
     nSynT = runconfig['nSynT']
     sizeSynT = runconfig['sizeSynT']
     per_target_results = {}

@@ -33,6 +33,15 @@ class TestCreateModel(TestCase):
         self.assertTrue(model.__name__.startswith('SanitiserNHS'))
         self.assertFalse(is_generative_model(model))
 
+    def test_create_sanitiser_mondrian(self):
+        from utils.parallel import create_model, is_generative_model
+        model = create_model(
+            ("SanitiserMondrian", 5, ["Sex", "Job"], []),
+            self.metadata
+        )
+        self.assertEqual(model.__name__, 'SanitiserMondrianK5')
+        self.assertFalse(is_generative_model(model))
+
     def test_create_model_unknown_raises(self):
         from utils.parallel import create_model
         with self.assertRaises(ValueError):
