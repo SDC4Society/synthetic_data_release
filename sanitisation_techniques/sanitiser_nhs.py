@@ -77,7 +77,7 @@ class SanitiserNHS(Sanitiser):
             anonymity_sets = san_data.groupby(self.quids).size()
             groups = anonymity_sets[anonymity_sets < self.anonymity_set_size].index
             for g in groups:
-                conditions = [f"{k} == '{v}'" for k,v in zip(self.quids, g)]
+                conditions = [f"`{k}` == '{v}'" for k,v in zip(self.quids, g)]
                 query = " and ".join(conditions)
                 didx = san_data.query(query).index
                 san_data = san_data.drop(didx)
