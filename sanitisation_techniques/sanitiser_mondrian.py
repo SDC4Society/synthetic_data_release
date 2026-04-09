@@ -131,7 +131,11 @@ class SanitiserMondrian(Sanitiser):
         return result
 
     def _impute(self, df):
-        """Impute missing values: most_frequent for categorical, median for numerical."""
+        """Impute missing values: most_frequent for categorical, median for numerical.
+
+        Returns a new DataFrame; does not mutate the input.
+        """
+        df = df.copy()
         cat_cols, num_cols = [], []
         for cdict in self.metadata["columns"]:
             col = cdict["name"]
