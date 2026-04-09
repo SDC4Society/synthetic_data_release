@@ -145,11 +145,22 @@ class TestSanitiserMondrian(TestCase):
         with self.assertRaises(ValueError):
             san.sanitise(self.raw)
 
-    def test_get_output_metadata_identity(self):
-        """get_output_metadata returns input metadata unchanged."""
+    def test_get_output_metadata_no_integer_qid(self):
+        """get_output_metadata returns equal metadata when no Integer QIDs."""
         san = SanitiserMondrian(self.metadata, k=2, quids=self.quids)
         result = san.get_output_metadata(self.metadata)
-        self.assertIs(result, self.metadata)
+        self.assertEqual(result, self.metadata)
+        self.assertIsNot(result, self.metadata)  # deep copy
+
+    def test_get_output_metadata_integer_qid_becomes_float(self):
+        """get_output_metadata converts Integer QIDs to Float."""
+        san = SanitiserMondrian(self.metadata, k=2, quids=['Sex', 'Age'])
+        result = san.get_output_metadata(self.metadata)
+        age_col = next(c for c in result['columns'] if c['name'] == 'Age')
+        self.assertEqual(age_col['type'], 'Float')
+        # non-QID Integer columns should remain unchanged
+        sex_col = next(c for c in result['columns'] if c['name'] == 'Sex')
+        self.assertEqual(sex_col['type'], 'Categorical')
 
     def test_name_includes_k(self):
         """Model name includes k value for result identification."""
