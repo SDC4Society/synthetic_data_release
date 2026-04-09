@@ -17,6 +17,12 @@
       [10, 1, 0.99, 5, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]],
       [10, 1, 0.99, 10, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]],
       [10, 1, 0.99, 25, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]]
+    ],
+    "SanitiserMondrian": [
+      [2, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []],
+      [5, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []],
+      [10, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []],
+      [25, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []]
     ]
   }
 }
