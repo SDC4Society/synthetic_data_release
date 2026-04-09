@@ -97,7 +97,6 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
     """Evaluate one model across all targets for one game iteration."""
     model = create_model(model_config, metadata)
     model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
-    attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
     nSynT = runconfig['nSynT']
     sizeSynT = runconfig['sizeSynT']
     per_target_results = {}
