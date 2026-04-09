@@ -17,6 +17,7 @@ from pandas import DataFrame
 _MODEL_PATTERNS = [
     (r'^BayesianNetBins(\d+\.?\d*)$', 'BayesianNet', 'bins'),
     (r'^PrivBayesEps(\d+\.?\d*)$', 'PrivBayes', 'eps'),
+    (r'^PateGanEps(\d+\.?\d*)$', 'PATEGAN', 'eps'),
     (r'^SanitiserNHSk(\d+\.?\d*)$', 'SanitiserNHS', 'k'),
     (r'^SanitiserMondrianK(\d+\.?\d*)$', 'SanitiserMondrian', 'k'),
 ]
@@ -24,6 +25,7 @@ _MODEL_PATTERNS = [
 _PARAM_SYMBOLS = {
     'BayesianNet': 'bins',
     'PrivBayes': r'$\varepsilon$',
+    'PATEGAN': r'$\varepsilon$',
     'SanitiserNHS': r'$k$',
     'SanitiserMondrian': r'$k$',
 }
