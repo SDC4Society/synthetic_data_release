@@ -1,4 +1,6 @@
 """Mondrian k-anonymization sanitiser."""
+import copy
+
 from pandas import DataFrame
 from sklearn.impute import SimpleImputer
 
@@ -9,7 +11,7 @@ from k_anonymization.algorithms.local_recoding.local_recoding_algorithm import (
 from k_anonymization.core.frame import ITableDF
 
 from sanitisation_techniques.sanitiser import Sanitiser
-from utils.constants import CATEGORICAL, ORDINAL, NUMERICAL
+from utils.constants import CATEGORICAL, FLOAT, INTEGER, ORDINAL, NUMERICAL
 
 
 class _FlatHierarchy:
@@ -111,6 +113,14 @@ class SanitiserMondrian(Sanitiser):
         anon = DataFrame(algo.anon_data.values, columns=original_columns)
         anon.index = original_index[: len(anon)]
         return anon
+
+    def get_output_metadata(self, input_metadata):
+        """Integer QIDs become Float after MEAN_MODE generalization."""
+        output = copy.deepcopy(input_metadata)
+        for col in output["columns"]:
+            if col["name"] in self.quids and col["type"] == INTEGER:
+                col["type"] = FLOAT
+        return output
 
     def _resolve_is_categorical(self):
         """Determine is_categorical flags for each QID from metadata."""
