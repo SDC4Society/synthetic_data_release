@@ -18,12 +18,14 @@ _MODEL_PATTERNS = [
     (r'^BayesianNetBins(\d+\.?\d*)$', 'BayesianNet', 'bins'),
     (r'^PrivBayesEps(\d+\.?\d*)$', 'PrivBayes', 'eps'),
     (r'^SanitiserNHSk(\d+\.?\d*)$', 'SanitiserNHS', 'k'),
+    (r'^SanitiserMondrianK(\d+\.?\d*)$', 'SanitiserMondrian', 'k'),
 ]
 
 _PARAM_SYMBOLS = {
     'BayesianNet': 'bins',
     'PrivBayes': r'$\varepsilon$',
     'SanitiserNHS': r'$k$',
+    'SanitiserMondrian': r'$k$',
 }
 
 
