@@ -1,7 +1,7 @@
 """A set of features that a Bayesian Net model is expected to extract from the raw data"""
 from pandas import DataFrame, get_dummies
 from pandas.api.types import CategoricalDtype
-from numpy import ndarray, all, corrcoef, concatenate, nan_to_num, zeros_like, triu_indices_from
+from numpy import ndarray, all, corrcoef, concatenate, nan_to_num, zeros, zeros_like, triu_indices_from
 from itertools import combinations
 
 from utils.constants import *
@@ -49,6 +49,16 @@ class CorrelationsFeatureSet(FeatureSet):
 
     def extract(self, data, flatten=True):
         assert isinstance(data, self.datatype), f'Feature extraction expects {self.datatype} as input type'
+
+        if len(data) == 0:
+            # drop_first=True produces len(cats)-1 columns per attribute
+            n_onehot = self.nfeatures - len(self.cat_attributes)
+            n_encoded = len(self.num_attributes) + n_onehot
+            n_corr = n_encoded * (n_encoded - 1) // 2
+            if flatten:
+                return zeros(n_corr)
+            else:
+                return zeros((n_encoded, n_encoded))
 
         assert all([c in list(data) for c in self.cat_attributes]), 'Missing some categorical attributes in input data'
         assert all([c in list(data) for c in self.num_attributes]), 'Missing some numerical attributes in input data'

@@ -53,6 +53,9 @@ class HistogramFeatureSet(FeatureSet):
     def extract(self, data):
         assert isinstance(data, self.datatype), f'Feature extraction expects {self.datatype} as input type'
 
+        if len(data) == 0:
+            return array([0.0] * self.nfeatures)
+
         assert all([c in list(data) for c in self.cat_attributes]), 'Missing some categorical attributes in input data'
         assert all([c in list(data) for c in self.num_attributes]), 'Missing some numerical attributes in input data'
 
