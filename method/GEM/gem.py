@@ -2,6 +2,7 @@ import time
 import copy
 import pickle
 import argparse
+import os
 
 import numpy as np
 from torch import optim
@@ -118,7 +119,7 @@ class GEM(object):
         past_real_answers = self.past_measurements.clone()
 
         errors = past_real_answers - past_fake_answers
-        errors = torch.clamp(errors.abs(), 0, np.infty)
+        errors = torch.clamp(errors.abs(), 0, np.inf)
         return errors, q_t_idxs
 
     def fit(self, T, eps0, sensitivity, qm, real_answers,
@@ -148,8 +149,8 @@ class GEM(object):
         for t in tqdm(range(T)):
             # get max error query /w exponential mechanism (https://arxiv.org/pdf/2004.07223.pdf Lemma 3.2)
             score = answer_diffs.abs().cpu().numpy()
-            score[self.past_query_idxs.cpu()] = -np.infty # to ensure we don't resample past queries (though unlikely)
-            EM_dist_0 = np.exp(2 * alpha * eps0 * score / (2 * sensitivity), dtype=np.float128) 
+            score[self.past_query_idxs.cpu()] = -np.inf # to ensure we don't resample past queries (though unlikely)
+            EM_dist_0 = np.exp(2 * alpha * eps0 * score / (2 * sensitivity), dtype=np.float64) 
             EM_dist = EM_dist_0 / EM_dist_0.sum()
             max_query_idx = util.sample(EM_dist)
 
@@ -235,9 +236,10 @@ class GEM(object):
 
             self.true_max_errors.append(true_max_error)
 
-            save_path = os.path.join(self.save_dir, 'epoch_{}.pkl'.format(t + 1))
-            if ((t + 1) % save_interval == 0) or (t + 1 > T - save_num):
-                self.save(save_path)
+            if self.save_dir is not None:
+                save_path = os.path.join(self.save_dir, 'epoch_{}.pkl'.format(t + 1))
+                if ((t + 1) % save_interval == 0) or (t + 1 > T - save_num):
+                    self.save(save_path)
 
             if verbose and step > 0:
                 print("Epoch {}:\tTrue Error: {:.4f}\tEM Error: {:.4f}\n"
@@ -249,7 +251,8 @@ class GEM(object):
                 tvd_tracker.loc[len(tvd_tracker)] = [t+1,tvd1,tvd2,tvd3]
 
         if self.args.test:
-            tvd_tracker.to_csv(os.path.join(self.save_dir, 'tvd_track.csv'))
+            if self.save_dir is not None:
+                tvd_tracker.to_csv(os.path.join(self.save_dir, 'tvd_track.csv'))
         
     def syn(self, n_sample, preprocesser, parent_dir, resample=False):
         n_batch = int(np.ceil(n_sample/self.batch_size))

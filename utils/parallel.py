@@ -10,6 +10,7 @@ from generative_models.ctgan import CTGAN
 from generative_models.pate_gan import PATEGAN
 from generative_models.aim import AIM
 from generative_models.dp_merf import DP_MERF
+from generative_models.gem import GEM
 
 from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 from sanitisation_techniques.sanitiser_mondrian import SanitiserMondrian
@@ -26,6 +27,7 @@ MODEL_REGISTRY = {
     "SanitiserMondrian": SanitiserMondrian,
     "AIM": AIM,
     "DP_MERF": DP_MERF,
+    "GEM": GEM,
 }
 
 UTILITY_TASK_REGISTRY = {
