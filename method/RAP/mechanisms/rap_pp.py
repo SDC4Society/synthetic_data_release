@@ -23,12 +23,17 @@ from method.RAP.privacy_budget_tracking import privacy_util
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
+from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo, NVMLError
+
 def print_gpu_memory_pynvml(message=""):
-    nvmlInit()
-    handle = nvmlDeviceGetHandleByIndex(0)  
-    info = nvmlDeviceGetMemoryInfo(handle)
-    print(f"{message} Memory Used: {info.used / 1024**3:.2f} GB, Total: {info.total / 1024**3:.2f} GB")
+    try:
+        nvmlInit()
+        handle = nvmlDeviceGetHandleByIndex(0)
+        info = nvmlDeviceGetMemoryInfo(handle)
+        print(f"{message} Memory Used: {info.used / 1024**3:.2f} GB, Total: {info.total / 1024**3:.2f} GB")
+    except (OSError, NVMLError):
+        # NVML unavailable on this host; skip GPU memory reporting.
+        return
 
 @dataclass
 class RAPppConfiguration(BaseConfiguration):
