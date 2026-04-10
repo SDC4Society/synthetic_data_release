@@ -116,6 +116,9 @@
       [
         1.0
       ]
+    ],
+    "TabDDPM": [
+      []
     ]
   },
   "sanitisationTechniques": {
