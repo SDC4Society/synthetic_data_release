@@ -5,14 +5,11 @@ from generative_models.generative_model import GenerativeModel
 from utils.constants import CATEGORICAL, ORDINAL
 from utils.logging import LOGGER
 
-try:
-    from jax.random import PRNGKey
-    from method.private_gsd.models import GSD as PrivateGSDMechanism
-    from method.private_gsd.utils.utils_data import Dataset, Domain
-    from method.private_gsd.stats import Marginals, ChainedStatistics
-    from method.private_gsd.utils.cdp2adp import cdp_rho
-except ImportError:
-    PrivateGSDMechanism = None
+from jax.random import PRNGKey
+from method.private_gsd.models import GSD as PrivateGSDMechanism
+from method.private_gsd.utils.utils_data import Dataset, Domain
+from method.private_gsd.stats import Marginals, ChainedStatistics
+from method.private_gsd.utils.cdp2adp import cdp_rho
 
 class PrivateGSD(GenerativeModel):
     """A wrapper for the Private-GSD synthetic data mechanism."""
@@ -40,9 +37,6 @@ class PrivateGSD(GenerativeModel):
         
         data = data.reset_index(drop=True)
         encoded_data = self._encode_data(data)
-
-        if PrivateGSDMechanism is None:
-            raise ImportError("Could not import PrivateGSD mechanism from method.private_gsd")
 
         domain_dict = {col: len(self._reverse_maps[col]) for col in encoded_data.columns}
         domain = Domain.fromdict(domain_dict)

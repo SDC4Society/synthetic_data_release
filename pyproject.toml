@@ -6,8 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "autodp>=0.2.3.1",
+    "chex>=0.1.91",
     "ctgan @ git+https://github.com/SDC4Society/CTGAN.git",
+    "flax>=0.12.6",
     "husl>=4.0.3",
+    "jax>=0.9.2",
     "k-anonymization",
     "loguru>=0.5.3",
     "matplotlib>=3.9.4",
