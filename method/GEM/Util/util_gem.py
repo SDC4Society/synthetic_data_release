@@ -25,7 +25,8 @@ def get_missing_rows(train_data, discrete_columns, domain):
     extra_rows = []
     if len(missing_cols) != 0:
         num_extra_rows = max([len(x) for x in missing_cols.values()])
-        extra_rows = train_data.loc[:num_extra_rows - 1].copy()
+        extra_rows = train_data.iloc[:num_extra_rows].copy()
+        extra_rows = extra_rows.reset_index(drop=True)
         for col, missing_vals in missing_cols.items():
             extra_rows.loc[:len(missing_vals) - 1, col] = missing_vals
 
