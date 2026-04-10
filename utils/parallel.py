@@ -24,6 +24,7 @@ MODEL_REGISTRY = {
     "RAPpp": "generative_models.rappp.RAPpp",
     "PrivMRF": "generative_models.privmrf.PrivMRF",
     "TabDDPM": "generative_models.tabddpm.TabDDPM",
+    "PrivSyn": "generative_models.privsyn.PrivSyn",
 }
 
 UTILITY_TASK_REGISTRY = {
