@@ -12,6 +12,7 @@ from generative_models.aim import AIM
 from generative_models.dp_merf import DP_MERF
 from generative_models.gem import GEM
 from generative_models.private_gsd import PrivateGSD
+from generative_models.rappp import RAPpp
 
 from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 from sanitisation_techniques.sanitiser_mondrian import SanitiserMondrian
@@ -30,6 +31,7 @@ MODEL_REGISTRY = {
     "DP_MERF": DP_MERF,
     "GEM": GEM,
     "PrivateGSD": PrivateGSD,
+    "RAPpp": RAPpp,
 }
 
 UTILITY_TASK_REGISTRY = {
