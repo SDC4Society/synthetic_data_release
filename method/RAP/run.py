@@ -159,7 +159,13 @@ def run_experiment(
 
         # debug_fn = get_debug_fn(dataset_container) if get_debug_fn is not None else None
 
-    domain = Domain.fromdict(domain, targets = ['y_attr'])
+    target_cols = ['y_attr'] if 'y_attr' in domain else []
+    domain = Domain.fromdict(domain, targets=target_cols)
+    dataset = Dataset(df, domain)
+
+
+
+
     dataset = Dataset(df, domain)
 
 

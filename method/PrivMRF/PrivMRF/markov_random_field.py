@@ -1,6 +1,5 @@
 from .factor import Factor, Potential
 import numpy as np
-import cupy as cp
 import networkx as nx
 from .utils import tools
 import math
@@ -13,6 +12,7 @@ from .domain import Domain
 from .attribute_hierarchy import Attribute
 import os
 import json
+from ._cupy_compat import cp
 
 
 class MarkovRandomField:

@@ -6,8 +6,8 @@ from .domain import Domain
 import scipy
 from collections.abc import Iterable
 
-import cupy as cp
 import numpy as np
+from ._cupy_compat import cp
 
 if gpu:
     xp = cp
