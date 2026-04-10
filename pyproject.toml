@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "autodp>=0.2.3.1",
     "ctgan @ git+https://github.com/SDC4Society/CTGAN.git",
     "husl>=4.0.3",
     "k-anonymization",

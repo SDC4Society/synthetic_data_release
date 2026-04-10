@@ -8,6 +8,9 @@ from generative_models.generative_model import GenerativeModel
 from generative_models.data_synthesiser import IndependentHistogram, BayesianNet, PrivBayes
 from generative_models.ctgan import CTGAN
 from generative_models.pate_gan import PATEGAN
+from generative_models.aim import AIM
+from generative_models.dp_merf import DP_MERF
+
 from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 from sanitisation_techniques.sanitiser_mondrian import SanitiserMondrian
 from predictive_models.predictive_model import RandForestClassTask, LogRegClassTask, LinRegTask
@@ -21,6 +24,8 @@ MODEL_REGISTRY = {
     "PATEGAN": PATEGAN,
     "SanitiserNHS": SanitiserNHS,
     "SanitiserMondrian": SanitiserMondrian,
+    "AIM": AIM,
+    "DP_MERF": DP_MERF,
 }
 
 UTILITY_TASK_REGISTRY = {
