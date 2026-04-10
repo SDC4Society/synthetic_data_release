@@ -1,6 +1,7 @@
 from itertools import combinations
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 
 from utils.constants import CATEGORICAL, ORDINAL
@@ -101,7 +102,7 @@ class AIM(GenerativeModel):
         for column in data.columns:
             if column in self._reverse_maps:
                 reverse_map = self._reverse_maps[column]
-                decoded[column] = data[column].map(reverse_map)
+                decoded[column] = pd.to_numeric(data[column], errors='coerce').round().astype(int).map(reverse_map)
             else:
                 decoded[column] = data[column]
         return decoded

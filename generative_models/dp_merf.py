@@ -8,7 +8,6 @@ from pandas import DataFrame
 from sklearn.preprocessing import MinMaxScaler
 
 from generative_models.generative_model import GenerativeModel
-from method.DP_MERF.single_generator_priv_all import merf_main
 from preprocess_common.preprocess import discretizer, rare_merger
 from utils.constants import CATEGORICAL, ORDINAL, FLOAT, INTEGER
 from utils.logging import LOGGER
@@ -130,6 +129,8 @@ class DP_MERF(GenerativeModel):
             'y': [len(np.unique(y))],
         }
 
+        from method.DP_MERF.single_generator_priv_all import merf_main
+
         args = SimpleNamespace(
             device=self.device,
             n_features_arg=self.num_features,
@@ -219,20 +220,14 @@ class DP_MERF(GenerativeModel):
         return x_num, x_cat, y
 
     def _arrays_to_dataframe(self, x_num, x_cat, y):
-        parts = []
-        columns = []
-        if x_num is not None:
-            parts.append(x_num)
-            columns.extend(self._numeric_columns)
-        if x_cat is not None:
-            parts.append(x_cat)
-            columns.extend(self._categorical_columns)
+        synthetic = DataFrame(index=range(len(y) if y is not None else len(x_num) if x_num is not None else len(x_cat)))
 
-        if parts:
-            data = np.concatenate(parts, axis=1)
-            synthetic = DataFrame(data, columns=columns)
-        else:
-            synthetic = DataFrame()
+        if x_num is not None:
+            for idx, column in enumerate(self._numeric_columns):
+                synthetic[column] = x_num[:, idx]
+        if x_cat is not None:
+            for idx, column in enumerate(self._categorical_columns):
+                synthetic[column] = x_cat[:, idx]
 
         if self._original_label_column is not None and y is not None:
             synthetic[self._original_label_column] = y

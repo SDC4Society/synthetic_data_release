@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 
 from generative_models.generative_model import GenerativeModel
@@ -6,20 +7,6 @@ from utils.constants import CATEGORICAL, ORDINAL
 from utils.logging import LOGGER
 
 from method.AIM.cdp2adp import cdp_rho
-from method.RAP.run import run_experiment
-
-try:
-    from method.RAP.mechanisms.rap_pp import RAPpp as RAPMechanism
-    from method.RAP.mechanisms.rap_pp import RAPppConfiguration
-except ImportError:
-    try:
-        from method.RAP.mechanisms.rap_pp import RAP_PP as RAPMechanism
-        from method.RAP.mechanisms.rap_pp import RAPppConfiguration
-    except ImportError:
-        from method.RAP.mechanisms.rap_pp import RAPPlusPlus as RAPMechanism
-        from method.RAP.mechanisms.rap_pp import RAPppConfiguration
-
-from method.RAP.modules.marginal_queries import MarginalQueryClass
 
 class DummyEncoder:
     def inverse_transform(self, df):
@@ -53,6 +40,19 @@ class RAPpp(GenerativeModel):
         
         data = data.reset_index(drop=True)
         encoded_data = self._encode_data(data)
+
+        from method.RAP.run import run_experiment
+        from method.RAP.modules.marginal_queries import MarginalQueryClass
+        try:
+            from method.RAP.mechanisms.rap_pp import RAPpp as RAPMechanism
+            from method.RAP.mechanisms.rap_pp import RAPppConfiguration
+        except ImportError:
+            try:
+                from method.RAP.mechanisms.rap_pp import RAP_PP as RAPMechanism
+                from method.RAP.mechanisms.rap_pp import RAPppConfiguration
+            except ImportError:
+                from method.RAP.mechanisms.rap_pp import RAPPlusPlus as RAPMechanism
+                from method.RAP.mechanisms.rap_pp import RAPppConfiguration
 
         domain_dict = {col: len(self._reverse_maps[col]) for col in encoded_data.columns}
 
@@ -96,13 +96,21 @@ class RAPpp(GenerativeModel):
         assert self.trained, 'Model must first be fitted to some data.'
         LOGGER.debug(f'Generate synthetic dataset of size {nsamples}')
 
+        synthetic_data = None
         class DummyPreprocesser:
-            def reverse_data(self, df, path): pass
+            def __init__(self):
+                self.synthetic_df = None
 
-        synthetic_data = self.generator.syn(nsamples, preprocesser=DummyPreprocesser())
+            def reverse_data(self, df, path):
+                self.synthetic_df = df.copy()
+
+        preprocesser = DummyPreprocesser()
+        result = self.generator.syn(nsamples, preprocesser=preprocesser)
+        synthetic_data = preprocesser.synthetic_df if preprocesser.synthetic_df is not None else result
 
         if not isinstance(synthetic_data, DataFrame):
-            synthetic_data = DataFrame(synthetic_data, columns=self.metadata['columns'])
+            column_names = [column['name'] for column in self.metadata['columns']] if self.metadata else None
+            synthetic_data = DataFrame(synthetic_data, columns=column_names)
 
         decoded_data = self._decode_data(synthetic_data)
 
@@ -130,7 +138,7 @@ class RAPpp(GenerativeModel):
         decoded = DataFrame(index=data.index)
         for column in data.columns:
             if column in self._reverse_maps:
-                decoded[column] = data[column].round().astype(int).map(self._reverse_maps[column])
+                decoded[column] = pd.to_numeric(data[column], errors='coerce').round().astype(int).map(self._reverse_maps[column])
             else:
                 decoded[column] = data[column]
         return decoded

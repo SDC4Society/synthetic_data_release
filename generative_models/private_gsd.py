@@ -1,15 +1,10 @@
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 
 from generative_models.generative_model import GenerativeModel
 from utils.constants import CATEGORICAL, ORDINAL
 from utils.logging import LOGGER
-
-from jax.random import PRNGKey
-from method.private_gsd.models import GSD as PrivateGSDMechanism
-from method.private_gsd.utils.utils_data import Dataset, Domain
-from method.private_gsd.stats import Marginals, ChainedStatistics
-from method.private_gsd.utils.cdp2adp import cdp_rho
 
 class PrivateGSD(GenerativeModel):
     """A wrapper for the Private-GSD synthetic data mechanism."""
@@ -37,6 +32,12 @@ class PrivateGSD(GenerativeModel):
         
         data = data.reset_index(drop=True)
         encoded_data = self._encode_data(data)
+
+        from jax.random import PRNGKey
+        from method.private_gsd.models import GSD as PrivateGSDMechanism
+        from method.private_gsd.utils.utils_data import Dataset, Domain
+        from method.private_gsd.stats import Marginals, ChainedStatistics
+        from method.private_gsd.utils.cdp2adp import cdp_rho
 
         domain_dict = {col: len(self._reverse_maps[col]) for col in encoded_data.columns}
         domain = Domain.fromdict(domain_dict)
@@ -70,19 +71,28 @@ class PrivateGSD(GenerativeModel):
         assert self.trained, 'Model must first be fitted to some data.'
         LOGGER.debug(f'Generate synthetic dataset of size {nsamples}')
 
+        synthetic_data = None
         if hasattr(self.mechanism, 'generate'):
             synthetic_data = self.mechanism.generate(nsamples)
         elif hasattr(self.mechanism, 'syn'):
             class DummyPreprocesser:
-                def reverse_data(self, df, path): pass
-            synthetic_data = self.mechanism.syn(nsamples, DummyPreprocesser())
+                def __init__(self):
+                    self.synthetic_df = None
+
+                def reverse_data(self, df, path):
+                    self.synthetic_df = df.copy()
+
+            preprocesser = DummyPreprocesser()
+            result = self.mechanism.syn(nsamples, preprocesser)
+            synthetic_data = preprocesser.synthetic_df if preprocesser.synthetic_df is not None else result
         elif hasattr(self.mechanism, 'sample'):
             synthetic_data = self.mechanism.sample(nsamples)
         else:
             raise NotImplementedError("The underlying mechanism does not have a known generate/sample method.")
 
         if not isinstance(synthetic_data, DataFrame):
-            synthetic_data = DataFrame(synthetic_data, columns=self.metadata['columns'])
+            column_names = [column['name'] for column in self.metadata['columns']] if self.metadata else None
+            synthetic_data = DataFrame(synthetic_data, columns=column_names)
 
         decoded_data = self._decode_data(synthetic_data)
 
@@ -110,7 +120,7 @@ class PrivateGSD(GenerativeModel):
         decoded = DataFrame(index=data.index)
         for column in data.columns:
             if column in self._reverse_maps:
-                decoded[column] = data[column].round().astype(int).map(self._reverse_maps[column])
+                decoded[column] = pd.to_numeric(data[column], errors='coerce').round().astype(int).map(self._reverse_maps[column])
             else:
                 decoded[column] = data[column]
         return decoded
