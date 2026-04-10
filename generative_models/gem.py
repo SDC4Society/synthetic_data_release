@@ -2,17 +2,11 @@ from itertools import combinations
 from types import SimpleNamespace
 
 import numpy as np
-import torch
+import pandas as pd
 from pandas import DataFrame
 
 from generative_models.generative_model import GenerativeModel
 from method.AIM.cdp2adp import cdp_rho
-from method.GEM.gem import GEM as GEMMechanism
-from method.GEM.mbi.dataset import Dataset
-from method.GEM.mbi.domain import Domain
-from method.GEM.Util.qm import QueryManager
-from method.GEM.Util.util_gem import randomKwayData
-from method.GEM.Util.util_general import get_eps0_simple
 from utils.constants import CATEGORICAL, ORDINAL
 from utils.logging import LOGGER
 
@@ -70,6 +64,12 @@ class GEM(GenerativeModel):
         encoded_data = self._encode_data(data)
         domain = self._build_domain(encoded_data)
 
+        from method.GEM.gem import GEM as GEMMechanism
+        from method.GEM.mbi.dataset import Dataset
+        from method.GEM.Util.qm import QueryManager
+        from method.GEM.Util.util_gem import randomKwayData
+        from method.GEM.Util.util_general import get_eps0_simple
+
         self.dataset = Dataset(encoded_data, domain)
 
         workloads = randomKwayData(self.dataset, self.workload, self.degree, seed=self.workload_seed)
@@ -122,12 +122,13 @@ class GEM(GenerativeModel):
         assert self.trained, 'Model must first be fitted to some data.'
         LOGGER.debug(f'Generate synthetic dataset of size {nsamples}')
 
+        import torch
+
         n_batch = int(np.ceil(nsamples / self.batch_size))
 
-        fake_data = self.mechanism.generate_fake_data(self.mechanism.mean, self.mechanism.std, resample=self.resample)
-
         samples = []
-        for i in range(n_batch):
+        for _ in range(n_batch):
+            fake_data = self.mechanism.generate_fake_data(self.mechanism.mean, self.mechanism.std, resample=True)
             x = self.mechanism.get_onehot(fake_data).cpu()
             samples.append(x)
         x = torch.cat(samples, dim=0)
@@ -160,10 +161,12 @@ class GEM(GenerativeModel):
         decoded = DataFrame(index=data.index)
         for column in data.columns:
             if column in self._reverse_maps:
-                decoded[column] = data[column].round().astype(int).map(self._reverse_maps[column])
+                decoded[column] = pd.to_numeric(data[column], errors='coerce').round().astype(int).map(self._reverse_maps[column])
             else:
                 decoded[column] = data[column]
         return decoded
 
     def _build_domain(self, data):
+        from method.GEM.mbi.domain import Domain
+
         return Domain(data.columns, [int(data[column].nunique()) for column in data.columns])

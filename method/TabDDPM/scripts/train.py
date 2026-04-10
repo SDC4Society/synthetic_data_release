@@ -9,9 +9,9 @@ sys.path.append(target_path)
 
 from opacus.optimizers.optimizer import DPOptimizer
 from opacus import PrivacyEngine
-from model.modules import MLPDiffusion
-from model.diffusion import GaussianMultinomialDiffusion
-from data.dataset import *
+from method.TabDDPM.model.modules import MLPDiffusion
+from method.TabDDPM.model.diffusion import GaussianMultinomialDiffusion
+from method.TabDDPM.data.dataset import *
 torch.set_default_dtype(torch.float32)
 
 def get_model(
