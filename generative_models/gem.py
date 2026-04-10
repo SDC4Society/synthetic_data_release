@@ -25,7 +25,7 @@ class GEM(GenerativeModel):
                  batch_size=500,
                  lr=1e-3, T=None, alpha=0.5,
                  workload=100000, workload_seed=0,
-                 device='cuda:0',
+                 device=None,
                  resample=False,
                  verbose=False):
         self.metadata = metadata
@@ -41,6 +41,11 @@ class GEM(GenerativeModel):
         self.alpha = alpha
         self.workload = workload
         self.workload_seed = workload_seed
+        if device is None:
+            if torch.cuda.is_available():
+                device = 'cuda:0'
+            else:
+                device = 'cpu'
         self.device = device
         self.resample = resample
         self.verbose = verbose

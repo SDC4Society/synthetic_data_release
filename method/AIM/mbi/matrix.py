@@ -164,7 +164,7 @@ class Identity(EkteloMatrix):
     def __init__(self, n, dtype=np.float64):
         self.n = n
         self.shape = (n,n)
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
    
     def _matmat(self, V):
         return V
