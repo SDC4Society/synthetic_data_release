@@ -108,6 +108,14 @@
       [
         1.0
       ]
+    ],
+    "PrivMRF": [
+      [
+        0.1
+      ],
+      [
+        1.0
+      ]
     ]
   },
   "sanitisationTechniques": {
