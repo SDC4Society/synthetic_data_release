@@ -9,7 +9,7 @@ from method.TabDDPM.scripts.pretrain_and_finetune import finetune
 from method.TabDDPM.scripts.sample import ddpm_sampler
 from method.TabDDPM.data.dataset import * 
 from method.TabDDPM.data.data_utils import * 
-from util.rho_cdp import cdp_rho
+from method.AIM.cdp2adp import cdp_rho
 
 
 def ddpm_main(args, df, domain, rho, parent_dir, **kwargs):
