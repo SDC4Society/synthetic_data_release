@@ -19,3 +19,10 @@ notebooks_local/
 tests/*/runconfig.json
 Results*.json
 *.pdf
+
+# Runtime-generated outputs
+.claude/
+exp/
+privsyn/
+method/PrivMRF/PrivMRF/temp/
+tests/linkage/progress_monitor.log
