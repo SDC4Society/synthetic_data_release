@@ -5,6 +5,8 @@ by J. Yoon, J. Jordon, M. van der Schaar, published in International Conference 
 Adapted from: https://bitbucket.org/mvdschaar/mlforhealthlabpub/src/82d7f91d46db54d256ff4fc920d513499ddd2ab8/alg/pategan/
 """
 
+import contextlib
+
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -56,29 +58,41 @@ class PATEGAN(GenerativeModel):
         device_name = tf.test.gpu_device_name()
         if device_name == '':
             self.device_spec = tf.DeviceSpec(device_type='CPU', device_index=0)
+            # On CPU, use a per-instance graph so that ops don't accumulate in
+            # the TF default graph across fit() calls and Pool worker reuse,
+            # which causes TF threads to stall (CPU usage drops to 0).
+            self.graph = tf.Graph()
         else:
             self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=0)
+            self.graph = None  # use the default graph on GPU (original behaviour)
 
-        with tf.device(self.device_spec.to_string()):
-            # Variable init
-            # Feature matrix
-            self.X = tf.placeholder(tf.float32, shape=[None, self.nfeatures])
-            # Latent space
-            self.Z = tf.placeholder(tf.float32, shape=[None, self.z_dim])
-            # Noise variable
-            self.M = tf.placeholder(tf.float32, shape=[None, 1])
-            # Generator
-            self.GDist = None
-            self._generator()
-            # Discriminator
-            self._discriminator()
-            self.sess = tf.Session()
+        with self._graph_ctx():
+            with tf.device(self.device_spec.to_string()):
+                # Variable init
+                # Feature matrix
+                self.X = tf.placeholder(tf.float32, shape=[None, self.nfeatures])
+                # Latent space
+                self.Z = tf.placeholder(tf.float32, shape=[None, self.z_dim])
+                # Noise variable
+                self.M = tf.placeholder(tf.float32, shape=[None, 1])
+                # Generator
+                self.GDist = None
+                self._generator()
+                # Discriminator
+                self._discriminator()
+                self.sess = tf.Session(graph=self.graph)
 
         self.multiprocess = multiprocess
 
         self.trained = False
 
         self.__name__ = f'PateGanEps{self.epsilon}'
+
+    def _graph_ctx(self):
+        """Return a context manager that activates self.graph when on CPU."""
+        if self.graph is not None:
+            return self.graph.as_default()
+        return contextlib.nullcontext()
 
     @property
     def laplace_noise_scale(self):
@@ -158,16 +172,18 @@ class PATEGAN(GenerativeModel):
 
         # Clean up
         if self.trained:
-            self._generator()
-            self._discriminator()
-            self.sess = tf.Session()
+            with self._graph_ctx():
+                self._generator()
+                self._discriminator()
+            self.sess = tf.Session(graph=self.graph)
             self.trained = False
 
         LOGGER.debug(f'Start fitting {self.__class__.__name__} to data of shape {data.shape}...')
         nsamples = len(data)
         features_train = self._encode_data(data)
 
-        with tf.device(self.device_spec.to_string()):
+        with self._graph_ctx():
+          with tf.device(self.device_spec.to_string()):
             # Generator
             self.GDist = self.gen_out(self.Z)
 

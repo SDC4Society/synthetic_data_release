@@ -1,33 +1,43 @@
 """Parallel execution utilities for model evaluation"""
+import importlib
 import os
 from multiprocessing import Pool, cpu_count
+
 from numpy.random import seed
 from tqdm import tqdm
 
 from generative_models.generative_model import GenerativeModel
-from generative_models.data_synthesiser import IndependentHistogram, BayesianNet, PrivBayes
-from generative_models.ctgan import CTGAN
-from generative_models.pate_gan import PATEGAN
-from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
-from sanitisation_techniques.sanitiser_mondrian import SanitiserMondrian
-from predictive_models.predictive_model import RandForestClassTask, LogRegClassTask, LinRegTask
 
 
 MODEL_REGISTRY = {
-    "IndependentHistogram": IndependentHistogram,
-    "BayesianNet": BayesianNet,
-    "PrivBayes": PrivBayes,
-    "CTGAN": CTGAN,
-    "PATEGAN": PATEGAN,
-    "SanitiserNHS": SanitiserNHS,
-    "SanitiserMondrian": SanitiserMondrian,
+    "IndependentHistogram": "generative_models.data_synthesiser.IndependentHistogram",
+    "BayesianNet": "generative_models.data_synthesiser.BayesianNet",
+    "PrivBayes": "generative_models.data_synthesiser.PrivBayes",
+    "CTGAN": "generative_models.ctgan.CTGAN",
+    "PATEGAN": "generative_models.pate_gan.PATEGAN",
+    "SanitiserNHS": "sanitisation_techniques.sanitiser_nhs.SanitiserNHS",
+    "SanitiserMondrian": "sanitisation_techniques.sanitiser_mondrian.SanitiserMondrian",
+    "AIM": "generative_models.aim.AIM",
+    "DP_MERF": "generative_models.dp_merf.DP_MERF",
+    "GEM": "generative_models.gem.GEM",
+    "PrivateGSD": "generative_models.private_gsd.PrivateGSD",
+    "RAPpp": "generative_models.rappp.RAPpp",
+    "PrivMRF": "generative_models.privmrf.PrivMRF",
+    "TabDDPM": "generative_models.tabddpm.TabDDPM",
+    "PrivSyn": "generative_models.privsyn.PrivSyn",
 }
 
 UTILITY_TASK_REGISTRY = {
-    "RandForestClass": RandForestClassTask,
-    "LogRegClass": LogRegClassTask,
-    "LinReg": LinRegTask,
+    "RandForestClass": "predictive_models.predictive_model.RandForestClassTask",
+    "LogRegClass": "predictive_models.predictive_model.LogRegClassTask",
+    "LinReg": "predictive_models.predictive_model.LinRegTask",
 }
+
+
+def _resolve_class(import_path):
+    module_name, class_name = import_path.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, class_name)
 
 
 def create_model(config, metadata):
@@ -35,7 +45,7 @@ def create_model(config, metadata):
     name, *params = config
     if name not in MODEL_REGISTRY:
         raise ValueError(f'Unknown model: {name}')
-    return MODEL_REGISTRY[name](metadata, *params)
+    return _resolve_class(MODEL_REGISTRY[name])(metadata, *params)
 
 
 def create_utility_task(config, metadata):
@@ -43,7 +53,7 @@ def create_utility_task(config, metadata):
     name, *params = config
     if name not in UTILITY_TASK_REGISTRY:
         raise ValueError(f'Unknown utility task: {name}')
-    return UTILITY_TASK_REGISTRY[name](metadata, *params)
+    return _resolve_class(UTILITY_TASK_REGISTRY[name])(metadata, *params)
 
 
 def is_generative_model(model):
@@ -58,6 +68,7 @@ def _worker_init():
 
 class _StarmapHelper:
     """Picklable wrapper that unpacks a tuple arg for imap_unordered."""
+
     def __init__(self, fn):
         self.fn = fn
 

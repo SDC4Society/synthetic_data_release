@@ -16,7 +16,13 @@ paper/*.blg
 paper/*.out
 syn_data_files/
 notebooks_local/
-CTGAN/
 tests/*/runconfig.json
 Results*.json
 *.pdf
+
+# Runtime-generated outputs
+.claude/
+exp/
+/privsyn/
+method/PrivMRF/PrivMRF/temp/
+tests/linkage/progress_monitor.log
