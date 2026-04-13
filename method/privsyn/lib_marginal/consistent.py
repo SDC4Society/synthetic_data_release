@@ -29,7 +29,7 @@ class Consistenter:
         for marg_key in self.margs:
             # create a dependency subset for each marg
             new_subset = self.SubsetWithDependency(set(marg_key))
-            subsets_temp = copy.deepcopy(subsets_with_dependency)
+            subsets_temp = dict(subsets_with_dependency)  # read-only iteration: shallow copy suffices
 
             for subset_key, subset_value in subsets_temp.items():
                 # sort here to avoid producing multiple keys with the same set
@@ -58,6 +58,20 @@ class Consistenter:
             subsets_with_dependency[marg_key] = new_subset
 
         return subsets_with_dependency
+
+    def _shallow_copy_dependency(self, subsets_with_dependency):
+        """Shallow-copy the dependency dict without deepcopy.
+
+        subsets_with_dependency is never mutated in the outer consist loop —
+        only the _temp copy is. Copying attr_set and dependency as plain sets
+        is sufficient and avoids expensive recursive deepcopy on every round.
+        """
+        result = {}
+        for key, subset in subsets_with_dependency.items():
+            new_subset = self.SubsetWithDependency(set(subset.attr_set))
+            new_subset.dependency = set(subset.dependency)
+            result[key] = new_subset
+        return result
     
     def consist_marginals(self):
         def find_subset_without_dependency():
@@ -115,7 +129,7 @@ class Consistenter:
 
             # first make sure summation are the same
             consist_on_subset(set(), [marg for _, marg in self.margs.items()])
-            subsets_with_dependency_temp = copy.deepcopy(subsets_with_dependency)
+            subsets_with_dependency_temp = self._shallow_copy_dependency(subsets_with_dependency)
             
             # consist margs in the dependency tree
             while len(subsets_with_dependency_temp) > 0:

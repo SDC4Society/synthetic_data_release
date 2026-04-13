@@ -254,14 +254,17 @@ class GraphicalModel:
             used.add(col)
             marg = self.project(proj + (col,)).datavector(flatten=False)
 
-            def foo(group):
-                idx = group.name
-                vals = synthetic_col(marg[idx], group.shape[0])
-                group[col] = vals
-                return group
-
             if len(proj) >= 1:
-                df = df.groupby(list(proj), group_keys=False).apply(foo)
+                # Avoid groupby().apply() whose include_groups behaviour changed
+                # in pandas 3.0 (groupby key columns are now excluded from the
+                # groups, so applying foo and re-assigning df drops those columns).
+                # Instead, iterate over groups explicitly and write the new column
+                # values back by integer position.
+                new_col = np.empty(len(df), dtype=int)
+                for group_key, group_df in df.groupby(list(proj), group_keys=False):
+                    vals = synthetic_col(marg[group_key], group_df.shape[0])
+                    new_col[group_df.index] = vals
+                df[col] = new_col
             else:
                 df[col] = synthetic_col(marg, df.shape[0])
 

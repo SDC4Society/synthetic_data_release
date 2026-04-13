@@ -99,4 +99,11 @@ class PrivSyn(GenerativeModel):
         return decoded
 
     def _build_domain(self, data):
-        return {column: int(data[column].nunique()) for column in data.columns}
+        domain = {}
+        for column in data.columns:
+            column_meta = next((c for c in self.metadata['columns'] if c['name'] == column), None) if self.metadata else None
+            if column_meta and column_meta['type'] in [CATEGORICAL, ORDINAL]:
+                domain[column] = len(column_meta['i2s'])
+            else:
+                domain[column] = int(data[column].nunique())
+        return domain

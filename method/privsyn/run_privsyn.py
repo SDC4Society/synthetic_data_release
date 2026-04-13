@@ -28,17 +28,20 @@ def config_logger():
 
 def add_default_params(args):
     args.dataset_name = args.dataset
-    args.is_cal_marginals = True 
+    args.method = getattr(args, 'method', 'privsyn')
+    args.num_preprocess = getattr(args, 'num_preprocess', getattr(args, 'num_prep', 'privtree'))
+    args.rare_threshold = getattr(args, 'rare_threshold', 0.005)
+    args.is_cal_marginals = True
     args.is_cal_depend = True
-    args.is_combine = True 
+    args.is_combine = True
     args.marg_add_sensitivity = 1.0
     args.marg_sel_threshold = 20000
     args.non_negativity = "N3"
     args.consist_iterations = 501
     args.initialize_method = "singleton"
     args.update_method = "S5"
-    args.append = True 
-    args.sep_syn = False 
+    args.append = True
+    args.sep_syn = False
     args.update_rate_method = "U4"
     args.update_rate_initial = 1.0
     args.update_iterations = 50
