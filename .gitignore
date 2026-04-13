@@ -23,6 +23,6 @@ Results*.json
 # Runtime-generated outputs
 .claude/
 exp/
-privsyn/
+/privsyn/
 method/PrivMRF/PrivMRF/temp/
 tests/linkage/progress_monitor.log

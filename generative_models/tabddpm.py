@@ -119,6 +119,9 @@ class TabDDPM(GenerativeModel):
         config['train']['main']['batch_size'] = self.batch_size
         config['diffusion_params']['num_timesteps'] = self.num_timesteps
 
+        # '__none__' is the TOML-safe sentinel for Python None used in the config files
+        t_params = {k: (None if v == '__none__' else v) for k, v in config['train']['T'].items()}
+
         dataset_dict = {
             'X_num': numeric_data,
             'X_cat': categorical_data,
@@ -126,11 +129,13 @@ class TabDDPM(GenerativeModel):
         }
         self.dataset = _make_dataset_from_df(
             dataset_dict,
-            T=_Transformations(**config['train']['T']),
+            T=_Transformations(**t_params),
             y_num_classes=2,
             is_y_cond=True,
             task_type='binclass',
         )
+
+        num_numerical_features = len(self._numeric_columns)
 
         self._tmp_dir = tempfile.TemporaryDirectory()
         self.diffusion = _finetune(
@@ -141,8 +146,8 @@ class TabDDPM(GenerativeModel):
             model_type=config['model_type'],
             model_params=config['model_params'],
             model_path=None,
-            T_dict=config['train']['T'],
-            num_numerical_features=config['num_numerical_features'],
+            T_dict=t_params,
+            num_numerical_features=num_numerical_features,
             device=self.device,
             dp_epsilon=None,
             dp_delta=None,
@@ -151,8 +156,8 @@ class TabDDPM(GenerativeModel):
         )
         self.sampler = _ddpm_sampler(
             diffusion=self.diffusion,
-            num_numerical_features=config['num_numerical_features'],
-            T_dict=config['train']['T'],
+            num_numerical_features=num_numerical_features,
+            T_dict=t_params,
             dataset=self.dataset,
             model_params=config['model_params'],
         )

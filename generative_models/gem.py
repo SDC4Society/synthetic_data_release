@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
+import torch
 from pandas import DataFrame
 
 from generative_models.generative_model import GenerativeModel

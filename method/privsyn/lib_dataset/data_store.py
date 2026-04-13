@@ -22,6 +22,8 @@ class DataStore:
         for path in config.ALL_PATH:
             if not os.path.exists(path):
                 os.makedirs(path)
+        if not os.path.exists(self.parent_dir):
+            os.makedirs(self.parent_dir)
     
     def load_processed_data(self):
         return pickle.load(open(config.PROCESSED_DATA_PATH + self.args['dataset_name'], 'rb'))

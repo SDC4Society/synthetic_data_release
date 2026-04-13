@@ -14,7 +14,7 @@ class Marginal:
         self.attr_set = set(marg_domain.attrs)
 
         # self.num_key represents the number of different possible combinations in the marg
-        self.num_key = np.product(self.num_categories[self.attributes_index])
+        self.num_key = np.prod(self.num_categories[self.attributes_index])
         self.num_attributes = self.indicator.shape[0]
         self.ways = np.count_nonzero(self.indicator)
 
@@ -196,7 +196,7 @@ class Marginal:
 
         encode_tuple_key = np.matmul(bigger_marg.tuple_key, encode_num)
 
-        self.weights[index] = 1.0 / np.product(
+        self.weights[index] = 1.0 / np.prod(
             self.num_categories[np.setdiff1d(bigger_marg.attributes_index, self.attributes_index)])
         self.rhos[index] = bigger_marg.rho
 
