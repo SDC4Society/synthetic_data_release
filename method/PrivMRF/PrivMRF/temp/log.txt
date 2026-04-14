@@ -1,1 +1,185 @@
-{(9, 11, 12, 14), (6, 15), (4, 8, 11), (8, 9, 11, 12, 15), (4, 15), (3, 13), (5, 16), (4, 13, 16), (8, 14, 16), (0, 8), (7, 11, 12, 13), (2, 11), (0, 11), (6, 12, 16), (1,), (11, 13, 14), (4, 10, 13), (7, 8, 9), (9, 12, 14, 16), (3, 10, 16), (7, 8, 13, 16), (0, 13), (2, 16), (8, 11, 13, 15, 16), (0,), (5, 11), (7, 9, 13), (13, 14, 15), (4, 11, 13), (7, 14)}
+PrivMRF
+theta: 6
+privacy budget:            0.006111319039527913
+estimated noise scale:     25.743051964189405
+max 2way measure dom:      6.467764592621516
+max high way measure dom:  6.467764592621516
+max edge number:           153.0
+TVD_noise:                 0.3167690517854457
+data num:                  999
+construct attribute graph
+data entropy: 6.907755278982134
+  init score: -35.3515 query_num: 18 size: 3.0090e+03, edge_num: 0 entropy: 35.35
+average TVD and noise: 0.18862084640522872 0.3167690517854457
+  iter: 0/306 score: 1.65 size: 8.04e+03, edge_num: 1 mutual_info: 1.65
+  iter: 1/306 score: 2.82 size: 8.13e+03, edge_num: 2 mutual_info: 2.82
+  iter: 2/306 score: 3.96 size: 1.41e+04, edge_num: 3 mutual_info: 3.96
+  iter: 3/306 score: 5.09 size: 8.34e+05, edge_num: 4 mutual_info: 5.10
+  iter: 4/306 score: 6.56 size: 1.26e+07, edge_num: 5 mutual_info: 6.68
+  iter: 5/306 score: 7.64 size: 1.26e+07, edge_num: 6 mutual_info: 7.77
+  iter: 6/306 score: 8.64 size: 1.26e+07, edge_num: 7 mutual_info: 8.77
+  iter: 7/306 score: 9.48 size: 1.26e+07, edge_num: 8 mutual_info: 9.60
+  iter: 8/306 score: 10.38 size: 1.28e+07, edge_num: 9 mutual_info: 10.51
+  iter: 9/306 score: 11.19 size: 1.28e+07, edge_num: 10 mutual_info: 11.32
+  iter: 10/306 score: 11.98 size: 1.28e+07, edge_num: 11 mutual_info: 12.10
+  iter: 11/306 score: 12.74 size: 1.28e+07, edge_num: 12 mutual_info: 12.87
+  iter: 12/306 score: 14.10 size: 1.77e+07, edge_num: 13 mutual_info: 14.27
+  iter: 13/306 score: 14.81 size: 1.77e+07, edge_num: 14 mutual_info: 14.99
+  iter: 14/306 score: 15.52 size: 1.77e+07, edge_num: 15 mutual_info: 15.70
+  iter: 15/306 score: 16.14 size: 2.26e+07, edge_num: 16 mutual_info: 16.37
+  iter: 16/306 score: 17.10 size: 2.55e+07, edge_num: 17 mutual_info: 17.36
+  iter: 17/306 score: 17.71 size: 2.56e+07, edge_num: 18 mutual_info: 17.96
+  iter: 18/306 score: 18.29 size: 2.57e+07, edge_num: 19 mutual_info: 18.54
+  iter: 19/306 score: 18.86 size: 2.57e+07, edge_num: 20 mutual_info: 19.12
+  iter: 20/306 score: 19.40 size: 2.57e+07, edge_num: 21 mutual_info: 19.65
+  iter: 21/306 score: 19.88 size: 2.86e+07, edge_num: 22 mutual_info: 20.16
+  iter: 22/306 score: 20.33 size: 2.86e+07, edge_num: 23 mutual_info: 20.62
+  iter: 23/306 score: 20.77 size: 2.86e+07, edge_num: 24 mutual_info: 21.05
+  iter: 24/306 score: 21.13 size: 2.86e+07, edge_num: 25 mutual_info: 21.41
+  iter: 25/306 score: 21.55 size: 2.86e+07, edge_num: 26 mutual_info: 21.84
+  iter: 26/306 score: 21.79 size: 2.87e+07, edge_num: 27 mutual_info: 22.07
+  iter: 27/306 score: 21.85 size: 2.90e+07, edge_num: 28 mutual_info: 22.14
+  iter: 28/306 score: 21.85 size: 2.90e+07, edge_num: 29 mutual_info: 22.14
+  iter: 29/306 score: 21.85 size: 2.90e+07, edge_num: 30 mutual_info: 22.14
+  iter: 30/306 score: 21.85 size: 2.90e+07, edge_num: 31 mutual_info: 22.14
+  iter: 31/306 score: 21.85 size: 2.90e+07, edge_num: 32 mutual_info: 22.14
+  iter: 32/306 score: 21.85 size: 2.90e+07, edge_num: 33 mutual_info: 22.14
+  iter: 33/306 score: 21.81 size: 3.18e+07, edge_num: 34 mutual_info: 22.13
+  iter: 34/306 score: 21.75 size: 3.49e+07, edge_num: 35 mutual_info: 22.10
+  iter: 35/306 score: 21.52 size: 3.77e+07, edge_num: 36 mutual_info: 21.89
+  iter: 36/306 score: 21.21 size: 3.78e+07, edge_num: 37 mutual_info: 21.59
+  found local minimum
+  found local minimum
+  found local minimum
+construct Bayesian Network for maximal cliques
+  [16, 0, 3], 0/13
+unable to construct Bayes network under dom limitation [16, 0, 3]
+  [16, 0, 12], 1/13
+unable to construct Bayes network under dom limitation [16, 0, 12]
+  [16, 4, 11, 13], 2/13
+unable to construct Bayes network under dom limitation [16, 4, 11, 13]
+  [16, 4, 12], 3/13
+unable to construct Bayes network under dom limitation [16, 4, 12]
+  [16, 5, 17, 15], 4/13
+unable to construct Bayes network under dom limitation [16, 5, 17, 15]
+  [16, 7, 8, 6], 5/13
+unable to construct Bayes network under dom limitation [16, 7, 8, 6]
+  [16, 7, 12], 6/13
+unable to construct Bayes network under dom limitation [16, 7, 12]
+  [16, 7, 14], 7/13
+unable to construct Bayes network under dom limitation [16, 7, 14]
+  [16, 9, 17, 15], 8/13
+unable to construct Bayes network under dom limitation [16, 9, 17, 15]
+  [16, 9, 12], 9/13
+unable to construct Bayes network under dom limitation [16, 9, 12]
+  [1, 9, 12], 10/13
+unable to construct Bayes network under dom limitation [1, 9, 12]
+  [2, 12, 7], 11/13
+unable to construct Bayes network under dom limitation [2, 12, 7]
+  [10, 0, 12], 12/13
+unable to construct Bayes network under dom limitation [10, 0, 12]
+attr measure []
+single attr measure: 0
+single attr measure: 1
+single attr measure: 2
+single attr measure: 3
+single attr measure: 4
+single attr measure: 5
+single attr measure: 6
+single attr measure: 7
+single attr measure: 8
+single attr measure: 9
+single attr measure: 10
+single attr measure: 11
+single attr measure: 12
+single attr measure: 13
+single attr measure: 14
+single attr measure: 15
+single attr measure: 16
+single attr measure: 17
+model size: 3.7841e+07
+noisy data num: 999 data num: 1000
+clique length: [3, 3, 4, 3, 4, 4, 3, 3, 4, 3, 3, 3, 3]
+convergence_ratio 1.2
+final_convergence_ratio 0.7
+k: 400
+initial measure number: 18
+initial measure set:
+     [(6,), (12,), (2,), (15,), (5,), (11,), (8,), (14,), (4,), (17,), (1,), (7,), (10,), (16,), (0,), (13,), (3,), (9,)]
+    measure count:  [18]
+  marginal noise:            25.58365072899422
+  max 2way measure dom:      8.156646839558952
+  max high way measure dom:  8.156646839558952
+  max de measure num         14
+ed_step_num: 8
+  generate measure for clique (0, 3, 16), size: 1.33e+05
+  generate measure for clique (0, 12, 16), size: 7.81e+06
+  generate measure for clique (4, 11, 13, 16), size: 3.18e+06
+  generate measure for clique (4, 12, 16), size: 2.93e+06
+  generate measure for clique (5, 15, 16, 17), size: 2.97e+06
+  generate measure for clique (6, 7, 8, 16), size: 2.87e+05
+  generate measure for clique (7, 12, 16), size: 6.83e+06
+  generate measure for clique (7, 14, 16), size: 5.74e+06
+  generate measure for clique (9, 15, 16, 17), size: 2.97e+06
+  generate measure for clique (9, 12, 16), size: 4.88e+06
+  generate measure for clique (1, 9, 12), size: 3.00e+04
+  generate measure for clique (2, 7, 12), size: 2.80e+04
+  generate measure for clique (0, 10, 12), size: 4.00e+04
+consider measure set:
+    measure count:  [18]
+theoretic loss: 9.8473e+05
+mirror descent
+    it: 0/3000 loss: 3.6654e+06 time: 1.41
+    it: 50/3000 loss: 8.1630e+05 time: 3.68
+entropy: 30.30329495001324
+measure num list [2, 2, 2, 2, 2, 2, 1, 1]
+entropy descent step: 0/8
+  consider measure set:
+    measure count:  [18]
+   18 2
+  marginal norm noise: 153.50190437396532
+  new selected measure list
+    [(12,), np.float64(0.8125420729737225), np.float64(0.8303851312127772)]
+    [(16,), np.float64(0.7081307857074051), np.float64(0.7834049520386601)]
+  consider measure list 18
+  measure num: 18
+    measure count:  [18]
+  theoretic loss: 9.8473e+05
+mirror descent
+    it: 0/3000 loss: 9.4270e+05 time: 1.90
+    it: 50/3000 loss: 8.4686e+05 time: 3.45
+entropy: 28.94593055440005
+entropy descent step: 1/8
+  consider measure set:
+    measure count:  [16]
+   16 2
+  marginal norm noise: 144.7229833438398
+  new selected measure list
+    [(14,), np.float64(0.7981386358278239), np.float64(0.8723928921307683)]
+    [(8,), np.float64(0.27190311097906855), np.float64(0.20199999999999602)]
+  consider measure list 16
+  measure num: 18
+    measure count:  [18]
+  theoretic loss: 9.8473e+05
+mirror descent
+    it: 0/3000 loss: 8.9412e+05 time: 1.99
+    it: 50/3000 loss: 8.4304e+05 time: 3.88
+entropy: 28.477260798919133
+entropy descent step: 2/8
+  consider measure set:
+    measure count:  [14]
+   14 2
+  marginal norm noise: 135.37595491611006
+  new selected measure list
+    [(15,), np.float64(0.19810789613119947), np.float64(0.06430997675909643)]
+    [(11,), np.float64(0.16010838601736987), np.float64(0.19573846336921608)]
+  consider measure list 14
+  measure num: 18
+    measure count:  [18]
+  theoretic loss: 9.8473e+05
+mirror descent
+    it: 0/3000 loss: 8.6536e+05 time: 2.03
+    it: 50/3000 loss: 8.4187e+05 time: 2.04
+entropy: 28.43165146352044
+entropy descent step: 3/8
+  consider measure set:ize: 7.69e+05.79e+06
