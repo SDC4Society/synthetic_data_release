@@ -35,6 +35,9 @@ UTILITY_TASK_REGISTRY = {
 }
 
 
+SANITISER_MODELS = {'SanitiserNHS', 'SanitiserMondrian'}
+
+
 def _resolve_class(import_path):
     module_name, class_name = import_path.rsplit(".", 1)
     module = importlib.import_module(module_name)
@@ -47,6 +50,33 @@ def create_model(config, metadata):
     if name not in MODEL_REGISTRY:
         raise ValueError(f'Unknown model: {name}')
     return _resolve_class(MODEL_REGISTRY[name])(metadata, *params)
+
+
+def model_name_from_config(config, metadata=None):
+    """Return a model name for a config, falling back when the model cannot be imported."""
+    original_device = os.environ.get('SYNTHETIC_DATA_DEVICE')
+    try:
+        os.environ['SYNTHETIC_DATA_DEVICE'] = 'cpu'
+        os.environ.setdefault('CUDA_VISIBLE_DEVICES', '')
+        model = create_model(config, metadata)
+        return model.__name__
+    except (ModuleNotFoundError, ImportError, RuntimeError, ValueError):
+        name, *params = config
+        if params:
+            param_str = ','.join(str(p) for p in params)
+            return f'{name}({param_str})'
+        return name
+    finally:
+        if original_device is None:
+            os.environ.pop('SYNTHETIC_DATA_DEVICE', None)
+        else:
+            os.environ['SYNTHETIC_DATA_DEVICE'] = original_device
+
+
+def is_generative_model_config(config):
+    """Determine model/sanitiser type from config without full instantiation."""
+    name, *_ = config
+    return name not in SANITISER_MODELS
 
 
 def create_utility_task(config, metadata):

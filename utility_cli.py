@@ -13,7 +13,14 @@ import pandas as pd
 from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
-from utils.parallel import create_model, create_utility_task, is_generative_model, run_parallel_models
+from utils.parallel import (
+    create_model,
+    create_utility_task,
+    is_generative_model,
+    is_generative_model_config,
+    model_name_from_config,
+    run_parallel_models,
+)
 
 def _deep_tuple(obj):
     """Recursively convert lists to tuples so nested configs are hashable."""
@@ -232,10 +239,17 @@ def main():
     _model_names = {}
     _model_types = {}
     for cfg in all_model_configs:
-        m = create_model(cfg, metadata)
         key = _deep_tuple(cfg)
-        _model_names[key] = m.__name__
-        _model_types[key] = is_generative_model(m)
+        if key in _model_names:
+            continue
+        try:
+            m = create_model(cfg, metadata)
+            _model_names[key] = m.__name__
+            _model_types[key] = is_generative_model(m)
+        except (ModuleNotFoundError, ImportError, RuntimeError, ValueError) as err:
+            LOGGER.warning(f'Could not instantiate {cfg[0]} for config {cfg}: {err}; using fallback name/type.')
+            _model_names[key] = model_name_from_config(cfg, metadata)
+            _model_types[key] = is_generative_model_config(cfg)
 
     # Separate gm and san configs
     gm_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
