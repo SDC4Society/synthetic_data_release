@@ -233,15 +233,18 @@ def main():
     ##################################
     # Build model_name lookup from configs
     _model_names = {}
+    _model_types = {}
     for cfg in all_model_configs:
         m = create_model(cfg, metadata)
-        _model_names[_deep_tuple(cfg)] = m.__name__
+        key = _deep_tuple(cfg)
+        _model_names[key] = m.__name__
+        _model_types[key] = is_generative_model(m)
 
     # Separate gm and san configs
     gm_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                  if is_generative_model(create_model(cfg, metadata))]
+                  if _model_types[_deep_tuple(cfg)]]
     san_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                   if not is_generative_model(create_model(cfg, metadata))]
+                   if not _model_types[_deep_tuple(cfg)]]
 
     resultsTargetPrivacy = {
         tid: {sa: {name: {} for name in list(_model_names.values()) + ['Raw']}

@@ -242,9 +242,12 @@ def main():
     ##################################
     # Build model_name lookup from configs
     _model_names = {}
+    _model_types = {}
     for cfg in all_model_configs:
         m = create_model(cfg, metadata)
-        _model_names[_deep_tuple(cfg)] = m.__name__
+        key = _deep_tuple(cfg)
+        _model_names[key] = m.__name__
+        _model_types[key] = is_generative_model(m)
 
     resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
 

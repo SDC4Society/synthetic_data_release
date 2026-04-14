@@ -6,6 +6,7 @@ from method.AIM.cdp2adp import cdp_rho
 from method.PrivMRF.PrivMRF.domain import Domain
 from method.PrivMRF.PrivMRF.main import run as run_privmrf
 from utils.constants import CATEGORICAL, ORDINAL
+from utils.device_utils import validate_and_get_device
 from utils.logging import LOGGER
 
 
@@ -30,6 +31,7 @@ class PrivMRF(GenerativeModel):
         max_measure_attr_num=6,
         estimation_iter_num=3000,
         multiprocess=False,
+        device=None,
     ):
         self.metadata = metadata
         self.epsilon = epsilon
@@ -38,6 +40,7 @@ class PrivMRF(GenerativeModel):
         self.max_measure_attr_num = max_measure_attr_num
         self.estimation_iter_num = estimation_iter_num
         self.multiprocess = bool(multiprocess)
+        self.device, self.is_gpu = validate_and_get_device(device)
 
         self.datatype = DataFrame
         self.mechanism = None
@@ -65,6 +68,7 @@ class PrivMRF(GenerativeModel):
             'theta': self.theta,
             'max_measure_attr_num': self.max_measure_attr_num,
             'estimation_iter_num': self.estimation_iter_num,
+            'gpu': bool(self.is_gpu),
         }
         self.mechanism = run_privmrf(
             encoded_data.to_numpy(dtype=int),

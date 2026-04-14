@@ -5,11 +5,11 @@ import os
 
 # thread number for numpy (when it runs on CPU)
 thread_num = '16'
-os.environ["OMP_NUM_THREADS"] = thread_num
-os.environ["OPENBLAS_NUM_THREADS"] = thread_num
-os.environ["MKL_NUM_THREADS"] = thread_num
-os.environ["VECLIB_MAXIMUM_THREADS"] = thread_num
-os.environ["NUMEXPR_NUM_THREADS"] = thread_num
+os.environ.setdefault("OMP_NUM_THREADS", thread_num)
+os.environ.setdefault("OPENBLAS_NUM_THREADS", thread_num)
+os.environ.setdefault("MKL_NUM_THREADS", thread_num)
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", thread_num)
+os.environ.setdefault("NUMEXPR_NUM_THREADS", thread_num)
 
 from .preprocess import read_preprocessed_data, postprocess
 from .attribute_graph import AttributeGraph
@@ -105,18 +105,21 @@ def run(data, domain, attr_hierarchy, exp_name, rho, task='TVD', p_config=None):
 
     if not config['print']:
         temp_stream = sys.stdout
-        sys.stdout = open('./temp/log.txt', 'w')
+        os.makedirs('./temp', exist_ok=True)
+        sys.stdout = open(f'./temp/log_{os.getpid()}.txt', 'w')
 
     # There might be no enough resource to run PrivMRF on GPU
     # acs should be runned on cpu, nltcs is too small and doesn't have to be runned on GPU
-    gpu = True
-    if config['data'] == 'adult' or config['data'] == 'br2000':
+    gpu = config.get('gpu')
+    if gpu is None:
         gpu = True
-    if config['data'] == 'acs' or config['data'] == 'nltcs':
-        default_config['max_measure_attr_num'] = 10
-        default_config['max_measure_attr_num_privBayes'] = 9
-    if config['data'] == 'adult':
-        default_config['enable_attribute_hierarchy'] = True
+        if config['data'] == 'adult' or config['data'] == 'br2000':
+            gpu = True
+        if config['data'] == 'acs' or config['data'] == 'nltcs':
+            default_config['max_measure_attr_num'] = 10
+            default_config['max_measure_attr_num_privBayes'] = 9
+        if config['data'] == 'adult':
+            default_config['enable_attribute_hierarchy'] = True
 
     config['theta1'] = config['theta']
     config['theta2'] = config['theta']
