@@ -28,13 +28,21 @@ The framework and its building blocks have been developed and tested under Pytho
 
 This project uses [uv](https://docs.astral.sh/uv/) for dependency management. All dependencies (including the CTGAN fork) are declared in `pyproject.toml`.
 
-```
+**For standard (CPU-only) environments:**
+```bash
 uv sync
 ```
 
-To test your installation try to run
+**For GPU-accelerated environments (CUDA 12):**
+If you have a compatible NVIDIA GPU, you can drastically speed up operations by installing the optional GPU dependencies (which pull `cuml-cu12`, `cudf-cu12`, and `cupy-cuda12x` directly from the NVIDIA package registry):
+```bash
+uv sync --extra gpu
 ```
+
+To test your installation try to run:
+```bash
 uv run python -c "import ctgan"
+uv run python -c "import cuml; print('GPU support ready!')"  # Only if you used --extra gpu
 ```
 
 ## Docker Distribution (not recommended)
