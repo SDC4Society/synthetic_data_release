@@ -28,17 +28,23 @@
 
 ### 必要条件
 このフレームワークとその構成要素は Python 3.9+ で開発およびテストされています。
-
 このプロジェクトは依存関係の管理に [uv](https://docs.astral.sh/uv/) を使用しています。すべての依存関係（CTGAN フォークを含む）は `pyproject.toml` に宣言されています。
 
+**標準的な（CPUのみの）環境向け:**
 ```bash
 uv sync
 ```
 
-インストールが正しく行われたか確認するには、次のコマンドを実行してください。
+**GPUで加速する環境向け（CUDA 12）:**
+対応する NVIDIA GPU をお持ちの場合、オプションの GPU 依存関係（NVIDIAのパッケージレジストリから直に `cuml-cu12`, `cudf-cu12`, `cupy-cuda12x` を取得します）をインストールすることで、処理速度を飛躍的に向上させることができます：
+```bash
+uv sync --extra gpu
+```
 
+インストールが正しく行われたか確認するには、次のコマンドを実行してください。
 ```bash
 uv run python -c "import ctgan"
+uv run python -c "import cuml; print('GPU support ready!')"  # --extra gpu を利用した場合のみ
 ```
 
 ## Docker 配布（推奨ではありません）
