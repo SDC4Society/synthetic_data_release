@@ -162,8 +162,13 @@ def main():
     if args.device:
         os.environ['SYNTHETIC_DATA_DEVICE'] = args.device
         LOGGER.info(f"Device set to: {args.device}")
-        # Force CPU-only mode if device is 'cpu' to avoid TensorFlow GPU initialization errors
-        if args.device == 'cpu':
+        if 'cuda:' in args.device:
+            try:
+                idx = args.device.split(':')[1]
+                os.environ['CUDA_VISIBLE_DEVICES'] = idx
+            except IndexError:
+                pass
+        elif args.device == 'cpu':
             os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
     seed(SEED)
@@ -237,27 +242,9 @@ def main():
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Build model_name lookup from configs
-    _model_names = {}
-    _model_types = {}
-    for cfg in all_model_configs:
-        key = _deep_tuple(cfg)
-        if key in _model_names:
-            continue
-        try:
-            m = create_model(cfg, metadata)
-            _model_names[key] = m.__name__
-            _model_types[key] = is_generative_model(m)
-        except (ModuleNotFoundError, ImportError, RuntimeError, ValueError) as err:
-            LOGGER.warning(f'Could not instantiate {cfg[0]} for config {cfg}: {err}; using fallback name/type.')
-            _model_names[key] = model_name_from_config(cfg, metadata)
-            _model_types[key] = is_generative_model_config(cfg)
-
-    # Separate gm and san configs
-    gm_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                  if _model_types[_deep_tuple(cfg)]]
-    san_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                   if not _model_types[_deep_tuple(cfg)]]
+    # Separate gm and san configs without instantiating them
+    gm_configs = [cfg for cfg in all_model_configs if is_generative_model_config(cfg)]
+    san_configs = [cfg for cfg in all_model_configs if not is_generative_model_config(cfg)]
 
     # Build utility task names
     ut_names = []
@@ -265,11 +252,8 @@ def main():
         ut = create_utility_task(cfg, metadata)
         ut_names.append(ut.__name__)
 
-    resultsTargetUtility = {ut_name: {name: {} for name in list(_model_names.values()) + ['Raw']}
-                           for ut_name in ut_names}
-    resultsAggUtility = {ut_name: {name: {'TargetID': [], 'Accuracy': []}
-                                   for name in list(_model_names.values()) + ['Raw']}
-                         for ut_name in ut_names}
+    resultsTargetUtility = {ut_name: {'Raw': {}} for ut_name in ut_names}
+    resultsAggUtility = {ut_name: {'Raw': {'TargetID': [], 'Accuracy': []}} for ut_name in ut_names}
 
     for nr in range(runconfig['nIter']):
         rIdx = choice(list(rawTrainWoTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
@@ -328,12 +312,12 @@ def main():
         gm_tasks = [
             (cfg, rawTout, targets, targetIDs,
              utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
-            for cfg, _ in gm_configs
+            for cfg in gm_configs
         ]
         san_tasks = [
             (cfg, rawTout, targets, targetIDs,
              utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
-            for cfg, _ in san_configs
+            for cfg in san_configs
         ]
 
         # Separate GPU-requiring models from CPU-only models for optimal parallelization
@@ -364,12 +348,18 @@ def main():
         for model_name, results_target, results_agg in all_results:
             for (ut_name, tid_or_out), result_dict in results_target.items():
                 if ut_name not in resultsTargetUtility:
-                    continue
+                    resultsTargetUtility[ut_name] = {}
+                if model_name not in resultsTargetUtility[ut_name]:
+                    resultsTargetUtility[ut_name][model_name] = {}
                 if nr not in resultsTargetUtility[ut_name][model_name]:
                     resultsTargetUtility[ut_name][model_name][nr] = {}
                 resultsTargetUtility[ut_name][model_name][nr][tid_or_out] = result_dict
 
             for ut_name, entries in results_agg.items():
+                if ut_name not in resultsAggUtility:
+                    resultsAggUtility[ut_name] = {}
+                if model_name not in resultsAggUtility[ut_name]:
+                    resultsAggUtility[ut_name][model_name] = {'TargetID': [], 'Accuracy': []}
                 for tid_or_out, accuracy in entries:
                     resultsAggUtility[ut_name][model_name]['TargetID'].append(tid_or_out)
                     resultsAggUtility[ut_name][model_name]['Accuracy'].append(accuracy)

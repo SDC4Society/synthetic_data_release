@@ -4,7 +4,8 @@ import os
 # caikt@comp.nus.edu.sg
 
 # thread number for numpy (when it runs on CPU)
-thread_num = '16'
+# Set to '1' to avoid CPU thrashing when multiprocessing.Pool is active
+thread_num = '1'
 os.environ.setdefault("OMP_NUM_THREADS", thread_num)
 os.environ.setdefault("OPENBLAS_NUM_THREADS", thread_num)
 os.environ.setdefault("MKL_NUM_THREADS", thread_num)

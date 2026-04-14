@@ -36,7 +36,7 @@ UTILITY_TASK_REGISTRY = {
 
 
 SANITISER_MODELS = {'SanitiserNHS', 'SanitiserMondrian'}
-GPU_MODELS = {'CTGAN', 'PATEGAN', 'AIM', 'GEM', 'TabDDPM', 'DP_MERF', 'PrivateGSD'}
+GPU_MODELS = {'CTGAN', 'PATEGAN', 'AIM', 'GEM', 'TabDDPM', 'DP_MERF', 'PrivateGSD', 'PrivMRF', 'PrivSyn'}
 
 
 def _resolve_class(import_path):
@@ -158,7 +158,11 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
     if max_workers == 1:
         return [worker_fn(*task) for task in tqdm(tasks, desc=desc)]
     if max_workers is None:
-        max_workers = min(cpu_count(), len(tasks))
+        has_gpu_tasks = any(model_requires_gpu(task[0]) for task in tasks if task and isinstance(task[0], (tuple, list, str)))
+        if _gpu_device_requested() and has_gpu_tasks:
+            max_workers = 1
+        else:
+            max_workers = min(cpu_count(), len(tasks))
 
     ctx = get_context('spawn') if _gpu_device_requested() else get_context()
     with ctx.Pool(max_workers, initializer=_worker_init) as pool:
