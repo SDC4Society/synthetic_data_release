@@ -7,7 +7,7 @@
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
-  "featuresSetBins": 45,
+  "featureSetBins": 45,
   "Targets": ["ID28264", "ID8694", "ID19576", "ID16497", "ID8310"],
   "generativeModels": {
     "IndependentHistogram": [[45]],

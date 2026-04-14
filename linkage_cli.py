@@ -60,11 +60,11 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
     trained_attacks = {}
 
-    if "featuresSetBins" not in runconfig:
-        print("WARNING: featuresSetBins not found in configuration file, default to 10.")
+    if "featureSetBins" not in runconfig:
+        print("WARNING: featureSetBins not found in configuration file, default to 10.")
         nbins_features = 10
     else:      
-        nbins_features = runconfig["featuresSetBins"]
+        nbins_features = runconfig["featureSetBins"]
 
 
     if is_generative_model(model):
