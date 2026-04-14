@@ -4,7 +4,7 @@
   "sizeSynT": 1000,
   "nSynT": 10,
   "nTargets": 0,
-  "Targets": ["ID28264", "ID8694", "ID19576", "ID16497", "ID8310"],
+  "Targets": ["ID37", "ID224", "ID5361", "ID1246", "ID19609"],
   "TestRecords": ["ID30000", "ID30001", "ID30002", "ID30003", "ID30004"],
   "generativeModels": {
     "IndependentHistogram": [[10], [25], [45]],
