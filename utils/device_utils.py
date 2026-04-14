@@ -4,7 +4,12 @@ import os
 import logging
 from typing import Optional
 
-import torch
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +53,7 @@ def get_device(device: Optional[str] = None, prefer_gpu: bool = True) -> str:
             return env_device
     
     # Auto-detect
-    if prefer_gpu and torch.cuda.is_available():
+    if prefer_gpu and TORCH_AVAILABLE and torch.cuda.is_available():
         return 'cuda:0'
     return 'cpu'
 
@@ -72,6 +77,8 @@ def set_device_env(device: str) -> None:
 
 def _is_valid_device(device: str) -> bool:
     """Check if a device string is valid by attempting to create a test tensor."""
+    if not TORCH_AVAILABLE:
+        return device == 'cpu'
     try:
         torch.tensor([1.0], device=device)
         return True

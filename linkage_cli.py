@@ -4,8 +4,6 @@ Command-line interface for running privacy evaluation with respect to the risk o
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import tensorflow as tf
-tf.get_logger().setLevel('ERROR')
 
 import json
 
@@ -25,19 +23,17 @@ from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
-from utils.parallel import create_model, is_generative_model, run_parallel_models
+from utils.parallel import (
+    create_model,
+    is_generative_model,
+    is_generative_model_config,
+    model_name_from_config,
+    run_parallel_models,
+)
 
 from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
 from feature_sets.bayes import CorrelationsFeatureSet
-
-from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
-
-from generative_models.ctgan import CTGAN
-from generative_models.pate_gan import PATEGAN
-from generative_models.data_synthesiser import (IndependentHistogram,
-                                                BayesianNet,
-                                                PrivBayes)
 
 from attack_models.mia_classifier import (MIAttackClassifierRandomForest,
                                           generate_mia_shadow_data,
@@ -244,10 +240,17 @@ def main():
     _model_names = {}
     _model_types = {}
     for cfg in all_model_configs:
-        m = create_model(cfg, metadata)
         key = _deep_tuple(cfg)
-        _model_names[key] = m.__name__
-        _model_types[key] = is_generative_model(m)
+        if key in _model_names:
+            continue
+        try:
+            m = create_model(cfg, metadata)
+            _model_names[key] = m.__name__
+            _model_types[key] = is_generative_model(m)
+        except (ModuleNotFoundError, ImportError, RuntimeError, ValueError) as err:
+            LOGGER.warning(f'Could not instantiate {cfg[0]} for config {cfg}: {err}; using fallback name/type.')
+            _model_names[key] = model_name_from_config(cfg, metadata)
+            _model_types[key] = is_generative_model_config(cfg)
 
     resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
 
