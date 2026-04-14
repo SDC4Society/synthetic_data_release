@@ -1,7 +1,7 @@
 """Parallel execution utilities for model evaluation"""
 import importlib
 import os
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 from numpy.random import seed
 from tqdm import tqdm
@@ -81,7 +81,7 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
 
     :param worker_fn: callable: Worker function to execute
     :param tasks: list[tuple]: List of argument tuples for worker_fn
-    :param max_workers: int or None: Number of worker processes (default: min(cpu_count, len(tasks)))
+    :param max_workers: int or None: Number of worker processes (default: 1)
     :param desc: str: Description for the progress bar
     :return: list: Results from each worker
     """
@@ -90,7 +90,7 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
     if max_workers == 1:
         return [worker_fn(*task) for task in tqdm(tasks, desc=desc)]
     if max_workers is None:
-        max_workers = min(cpu_count(), len(tasks))
+        max_workers = 1
     with Pool(max_workers, initializer=_worker_init) as pool:
         results = list(tqdm(
             pool.imap_unordered(_StarmapHelper(worker_fn), tasks),
