@@ -87,7 +87,7 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
             Attack.train(sanA, labelsA)
             trained_attacks[Feature.__name__] = Attack
 
-    return (tid, model.__name__, trained_attacks)
+    return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
 
 
 def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
@@ -159,8 +159,13 @@ def main():
     if args.device:
         os.environ['SYNTHETIC_DATA_DEVICE'] = args.device
         LOGGER.info(f"Device set to: {args.device}")
-        # Force CPU-only mode if device is 'cpu' to avoid TensorFlow GPU initialization errors
-        if args.device == 'cpu':
+        if 'cuda:' in args.device:
+            try:
+                idx = args.device.split(':')[1]
+                os.environ['CUDA_VISIBLE_DEVICES'] = idx
+            except IndexError:
+                pass
+        elif args.device == 'cpu':
             os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
     # Load runconfig
@@ -247,29 +252,15 @@ def main():
             desc="CPU attack training"))
 
     attacks = {}
-    for tid, model_name, trained in attack_results:
+    cfg_to_model_name = {}
+    for tid, model_name, trained, cfg_key in attack_results:
         attacks.setdefault(tid, {})[model_name] = trained
+        cfg_to_model_name[cfg_key] = model_name
 
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Build model_name lookup from configs
-    _model_names = {}
-    _model_types = {}
-    for cfg in all_model_configs:
-        key = _deep_tuple(cfg)
-        if key in _model_names:
-            continue
-        try:
-            m = create_model(cfg, metadata)
-            _model_names[key] = m.__name__
-            _model_types[key] = is_generative_model(m)
-        except (ModuleNotFoundError, ImportError, RuntimeError, ValueError) as err:
-            LOGGER.warning(f'Could not instantiate {cfg[0]} for config {cfg}: {err}; using fallback name/type.')
-            _model_names[key] = model_name_from_config(cfg, metadata)
-            _model_types[key] = is_generative_model_config(cfg)
-
-    resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
+    resultsTargetPrivacy = {tid: {} for tid in targetIDs}
 
     for nr in range(runconfig['nIter']):
         rIdx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
@@ -277,7 +268,7 @@ def main():
 
         eval_tasks = [
             (cfg, rawTout, targets, targetIDs,
-             {tid: attacks[tid][_model_names[_deep_tuple(cfg)]] for tid in targetIDs},
+             {tid: attacks[tid][cfg_to_model_name[_deep_tuple(cfg)]] for tid in targetIDs},
              metadata, runconfig)
             for cfg in all_model_configs
         ]
@@ -302,6 +293,8 @@ def main():
 
         for model_name, per_target in eval_results:
             for tid, feature_results in per_target.items():
+                if model_name not in resultsTargetPrivacy[tid]:
+                    resultsTargetPrivacy[tid][model_name] = {}
                 resultsTargetPrivacy[tid][model_name][nr] = feature_results
 
     outfile = f"ResultsMIA_{dname}"

@@ -179,8 +179,13 @@ def main():
     if args.device:
         os.environ['SYNTHETIC_DATA_DEVICE'] = args.device
         LOGGER.info(f"Device set to: {args.device}")
-        # Force CPU-only mode if device is 'cpu' to avoid TensorFlow GPU initialization errors
-        if args.device == 'cpu':
+        if 'cuda:' in args.device:
+            try:
+                idx = args.device.split(':')[1]
+                os.environ['CUDA_VISIBLE_DEVICES'] = idx
+            except IndexError:
+                pass
+        elif args.device == 'cpu':
             os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
     # Load runconfig
@@ -236,31 +241,12 @@ def main():
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Build model_name lookup from configs
-    _model_names = {}
-    _model_types = {}
-    for cfg in all_model_configs:
-        key = _deep_tuple(cfg)
-        if key in _model_names:
-            continue
-        try:
-            m = create_model(cfg, metadata)
-            _model_names[key] = m.__name__
-            _model_types[key] = is_generative_model(m)
-        except (ModuleNotFoundError, ImportError, RuntimeError, ValueError) as err:
-            LOGGER.warning(f'Could not instantiate {cfg[0]} for config {cfg}: {err}; using fallback name/type.')
-            _model_names[key] = model_name_from_config(cfg, metadata)
-            _model_types[key] = is_generative_model_config(cfg)
-
-    # Separate gm and san configs
-    gm_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                  if _model_types[_deep_tuple(cfg)]]
-    san_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                   if not _model_types[_deep_tuple(cfg)]]
+    # Separate gm and san configs without instantiating them
+    gm_configs = [cfg for cfg in all_model_configs if is_generative_model_config(cfg)]
+    san_configs = [cfg for cfg in all_model_configs if not is_generative_model_config(cfg)]
 
     resultsTargetPrivacy = {
-        tid: {sa: {name: {} for name in list(_model_names.values()) + ['Raw']}
-              for sa in runconfig['sensitiveAttributes']}
+        tid: {sa: {'Raw': {}} for sa in runconfig['sensitiveAttributes']}
         for tid in targetIDs
     }
 
@@ -315,12 +301,12 @@ def main():
         gm_tasks = [
             (cfg, rawTout, targets, targetIDs,
              runconfig['sensitiveAttributes'], metadata, runconfig)
-            for cfg, _ in gm_configs
+            for cfg in gm_configs
         ]
         san_tasks = [
             (cfg, rawTout, targets, targetIDs,
              runconfig['sensitiveAttributes'], metadata, runconfig)
-            for cfg, _ in san_configs
+            for cfg in san_configs
         ]
 
         # Separate GPU-requiring models from CPU-only models for optimal parallelization
@@ -350,6 +336,8 @@ def main():
 
         for model_name, results in all_results:
             for (tid, sa), result_dict in results.items():
+                if model_name not in resultsTargetPrivacy[tid][sa]:
+                    resultsTargetPrivacy[tid][sa][model_name] = {}
                 resultsTargetPrivacy[tid][sa][model_name][nr] = result_dict
 
     outfile = f"ResultsMLEAI_{dname}"

@@ -83,13 +83,8 @@ class PATEGAN(GenerativeModel):
             # which causes TF threads to stall (CPU usage drops to 0).
             self.graph = tf.Graph()
         else:
-            gpu_index = 0
-            if self.device_str.startswith('cuda:'):
-                try:
-                    gpu_index = int(self.device_str.split(':', 1)[1])
-                except ValueError:
-                    gpu_index = 0
-            self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=gpu_index)
+            # Due to CUDA_VISIBLE_DEVICES masking, the visible GPU is always index 0
+            self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=0)
             self.graph = None  # use the default graph on GPU (original behaviour)
 
         with self._graph_ctx():
