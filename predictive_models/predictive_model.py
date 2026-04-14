@@ -1,8 +1,6 @@
 """ Some predictive models to represent a simple analysis task. """
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from utils.classifier_fallback import get_linear_regression, get_logistic_regression, get_random_forest_classifier
 from pandas import DataFrame
 from numpy import empty, true_divide, zeros, arange
 
@@ -60,6 +58,7 @@ class PredictiveModel(object):
                     features_encoded[:, cidx : cidx + len(col_cats)] = col_data_onehot
                     cidx += len(col_cats)
 
+        features_encoded = features_encoded.astype('float32')
         return features_encoded
 
     def _get_num_features(self):
@@ -191,12 +190,12 @@ class ClassificationTask(PredictiveModel):
 
 class RandForestClassTask(ClassificationTask):
     def __init__(self, metadata, labelCol):
-        super().__init__(RandomForestClassifier(), metadata, labelCol)
+        super().__init__(get_random_forest_classifier(), metadata, labelCol)
 
 
 class LogRegClassTask(ClassificationTask):
     def __init__(self, metadata, labelCol):
-        super().__init__(LogisticRegression(), metadata, labelCol)
+        super().__init__(get_logistic_regression(), metadata, labelCol)
 
 
 class RegressionTask(PredictiveModel):
@@ -250,4 +249,4 @@ class RegressionTask(PredictiveModel):
 
 class LinRegTask(RegressionTask):
     def __init__(self, metadata, labelCol):
-        super().__init__(LinearRegression(), metadata, labelCol)
+        super().__init__(get_linear_regression(), metadata, labelCol)
