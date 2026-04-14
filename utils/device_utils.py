@@ -82,7 +82,7 @@ def _is_valid_device(device: str) -> bool:
     try:
         torch.tensor([1.0], device=device)
         return True
-    except (RuntimeError, ValueError):
+    except (RuntimeError, ValueError, AssertionError):
         return False
 
 
