@@ -2,8 +2,8 @@
 import importlib
 import os
 import warnings
-from multiprocessing import cpu_count, get_context
-
+from multiprocessing import cpu_count
+import joblib
 from numpy.random import seed
 from tqdm import tqdm
 
@@ -130,14 +130,11 @@ def _worker_init():
 
 
 class _StarmapHelper:
-    """Picklable wrapper that unpacks a tuple arg for imap_unordered."""
-
+    """Picklable wrapper that unpacks a tuple arg for execution."""
     def __init__(self, fn):
         self.fn = fn
-
     def __call__(self, args):
         return self.fn(*args)
-
 
 def _gpu_device_requested():
     device = os.environ.get('SYNTHETIC_DATA_DEVICE', '')
@@ -167,11 +164,15 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
         else:
             max_workers = min(cpu_count(), len(tasks))
 
-    ctx = get_context('spawn') if _gpu_device_requested() else get_context()
-    with ctx.Pool(max_workers, initializer=_worker_init) as pool:
-        results = list(tqdm(
-            pool.imap_unordered(_StarmapHelper(worker_fn), tasks),
-            total=len(tasks),
-            desc=desc
-        ))
+    # Use joblib.Parallel instead of multiprocessing.Pool
+    # Loky backend automatically uses memmapping for arrays > 1MB, solving the IPC bottleneck
+    with tqdm(total=len(tasks), desc=desc) as pbar:
+        generator = joblib.Parallel(n_jobs=max_workers, backend='loky', return_as='generator')(
+            joblib.delayed(worker_fn)(*task) for task in tasks
+        )
+        results = []
+        for res in generator:
+            results.append(res)
+            pbar.update(1)
+            
     return results
