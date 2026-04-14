@@ -19,19 +19,11 @@ def _deep_tuple(obj):
         return tuple(_deep_tuple(x) for x in obj)
     return obj
 import pandas as pd
-from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
-from utils.parallel import (
-    create_model,
-    is_generative_model,
-    is_generative_model_config,
-    model_name_from_config,
-    model_requires_gpu,
-    get_optimal_workers_for_config,
-    run_parallel_models,
-)
+from utils.parallel import create_model, is_generative_model, is_generative_model_config
+from utils.evaluation_framework import EvaluationEngine
 
 from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
@@ -143,53 +135,13 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
 
 
 def main():
-    argparser = ArgumentParser()
-    datasource = argparser.add_mutually_exclusive_group()
-    datasource.add_argument('--s3name', '-S3', type=str, choices=['adult', 'census', 'credit', 'alarm', 'insurance'], help='Name of the dataset to run on')
-    datasource.add_argument('--datapath', '-D', type=str, help='Relative path to cwd of a local data file')
-    argparser.add_argument('--runconfig', '-RC', default='runconfig_mia.json', type=str, help='Path relative to cwd of runconfig file')
-    argparser.add_argument('--outdir', '-O', default='tests', type=str, help='Path relative to cwd for storing output files')
-    argparser.add_argument('--workers', '-W', type=int, default=None,
-                           help='Number of parallel workers (default: CPU count)')
-    argparser.add_argument('--device', type=str, default=None,
-                           help='Device to use for models (e.g., "cpu", "cuda:0"). Defaults to GPU if available, otherwise CPU.')
-    args = argparser.parse_args()
-    
-    # Set device environment variable for models
-    if args.device:
-        os.environ['SYNTHETIC_DATA_DEVICE'] = args.device
-        LOGGER.info(f"Device set to: {args.device}")
-        if 'cuda:' in args.device:
-            try:
-                idx = args.device.split(':')[1]
-                os.environ['CUDA_VISIBLE_DEVICES'] = idx
-            except IndexError:
-                pass
-        elif args.device == 'cpu':
-            os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    engine = EvaluationEngine(description="Command-line interface for running privacy evaluation w.r.t linkage risk")
+    engine.setup(cwd)
 
-    # Load runconfig
-    with open(path.join(cwd, args.runconfig)) as f:
-        runconfig = json.load(f)
-    print('Runconfig:')
-    print(runconfig)
-
-    # Load data
-    if args.s3name is not None:
-        rawPop, metadata = load_s3_data_as_df(args.s3name)
-        dname = args.s3name
-    else:
-        rawPop, metadata = load_local_data_as_df(path.join(cwd, args.datapath))
-        dname = args.datapath.split('/')[-1]
-
-    print(f'Loaded data {dname}:')
-    print(rawPop.info())
-
-    # Make sure outdir exists
-    if not path.isdir(args.outdir):
-        mkdir(args.outdir)
-
-    seed(SEED)
+    runconfig = engine.runconfig
+    rawPop = engine.rawPop
+    metadata = engine.metadata
+    args = engine.args
 
     ########################
     #### GAME INPUTS #######
@@ -210,46 +162,28 @@ def main():
     rawAidx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawA'], replace=False).tolist()
     rawA = rawPop.loc[rawAidx, :]
 
-    # Build serializable model configs for parallel execution
-    all_model_configs = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            for params in paramsList:
-                all_model_configs.append((gm, *params))
-
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            for params in paramsList:
-                all_model_configs.append((name, *params))
+    # Base targets and pools established
 
     ###################################
     #### ATTACK TRAINING #############
     ##################################
     print('\n---- Attack training ----')
 
-    attack_tasks = [
+    attack_gm_tasks = [
         (cfg, tid, targets.loc[[tid]], rawA, metadata, runconfig)
-        for tid in targetIDs
-        for cfg in all_model_configs
+        for tid in targetIDs for cfg in engine.gm_configs
+    ]
+    attack_san_tasks = [
+        (cfg, tid, targets.loc[[tid]], rawA, metadata, runconfig)
+        for tid in targetIDs for cfg in engine.san_configs
     ]
     
-    # Separate GPU and CPU model tasks for optimal parallelization
-    gpu_attack_tasks = [t for t in attack_tasks if model_requires_gpu(t[0])]
-    cpu_attack_tasks = [t for t in attack_tasks if not model_requires_gpu(t[0])]
-    
-    attack_results = []
-    # GPU models: serialize
-    if gpu_attack_tasks:
-        attack_results.extend(run_parallel_models(
-            linkage_attack_worker, gpu_attack_tasks, max_workers=1,
-            desc="GPU attack training"))
-    
-    # CPU models/sanitisers: parallelize
-    if cpu_attack_tasks:
-        cpu_workers = get_optimal_workers_for_config(cpu_attack_tasks[0][0], args.workers)
-        attack_results.extend(run_parallel_models(
-            linkage_attack_worker, cpu_attack_tasks, max_workers=cpu_workers,
-            desc="CPU attack training"))
+    attack_results = engine.run_parallel_evaluation(
+        eval_gm_worker=linkage_attack_worker,
+        san_tasks=attack_san_tasks,
+        gm_tasks=attack_gm_tasks,
+        desc_prefix="attack training"
+    )
 
     attacks = {}
     cfg_to_model_name = {}
@@ -266,30 +200,26 @@ def main():
         rIdx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawPopDropTargets.loc[rIdx]
 
-        eval_tasks = [
+        eval_gm_tasks = [
             (cfg, rawTout, targets, targetIDs,
              {tid: attacks[tid][cfg_to_model_name[_deep_tuple(cfg)]] for tid in targetIDs},
              metadata, runconfig)
-            for cfg in all_model_configs
+            for cfg in engine.gm_configs
+        ]
+        eval_san_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             {tid: attacks[tid][cfg_to_model_name[_deep_tuple(cfg)]] for tid in targetIDs},
+             metadata, runconfig)
+            for cfg in engine.san_configs
         ]
         
-        # Separate GPU and CPU model tasks for optimal parallelization
-        gpu_eval_tasks = [t for t in eval_tasks if model_requires_gpu(t[0])]
-        cpu_eval_tasks = [t for t in eval_tasks if not model_requires_gpu(t[0])]
-        
-        eval_results = []
-        # GPU models: serialize
-        if gpu_eval_tasks:
-            eval_results.extend(run_parallel_models(
-                linkage_eval_worker, gpu_eval_tasks, max_workers=1,
-                desc=f"GPU eval iter {nr+1}/{runconfig['nIter']}"))
-        
-        # CPU models/sanitisers: parallelize
-        if cpu_eval_tasks:
-            cpu_workers = get_optimal_workers_for_config(cpu_eval_tasks[0][0], args.workers)
-            eval_results.extend(run_parallel_models(
-                linkage_eval_worker, cpu_eval_tasks, max_workers=cpu_workers,
-                desc=f"CPU eval iter {nr+1}/{runconfig['nIter']}"))
+        eval_results = engine.run_parallel_evaluation(
+            eval_gm_worker=linkage_eval_worker,
+            san_tasks=eval_san_tasks,
+            gm_tasks=eval_gm_tasks,
+            iter_idx=nr,
+            desc_prefix="eval iter"
+        )
 
         for model_name, per_target in eval_results:
             for tid, feature_results in per_target.items():
@@ -297,11 +227,7 @@ def main():
                     resultsTargetPrivacy[tid][model_name] = {}
                 resultsTargetPrivacy[tid][model_name][nr] = feature_results
 
-    outfile = f"ResultsMIA_{dname}"
-    LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
-
-    with open(path.join(f'{args.outdir}', f'{outfile}.json'), 'w') as f:
-        json.dump(resultsTargetPrivacy, f, indent=2, default=json_numpy_serialzer)
+    engine.dump_results(resultsTargetPrivacy, prefix="ResultsMIA")
 
 
 if __name__ == "__main__":
