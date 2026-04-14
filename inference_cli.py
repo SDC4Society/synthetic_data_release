@@ -5,7 +5,7 @@ Command-line interface for running privacy evaluation under an attribute inferen
 import json
 import os
 
-from os import mkdir, path
+from os import path
 from numpy.random import choice, seed
 from argparse import ArgumentParser
 import pandas as pd
