@@ -81,10 +81,7 @@ def is_generative_model_config(config):
 
 
 def model_requires_gpu(config):
-    """Check if a model config requires GPU."""
-    if not _gpu_device_requested():
-        return False
-        
+    """Check if a model config normally runs on a GPU backend (PyTorch/TF)."""
     name, *_ = config if isinstance(config, (tuple, list)) else (config,)
     return name in GPU_MODELS
 
@@ -92,7 +89,9 @@ def model_requires_gpu(config):
 def get_optimal_workers_for_config(config, user_workers=None):
     """Get optimal number of workers for a specific config.
     
-    If GPU device is requested and model requires GPU, use 1 worker.
+    If the model uses PyTorch/TF (GPU_MODELS), force 1 worker to avoid 
+    multiprocessing deadlocks and OpenMP/Accelerate thrashing on CPU, 
+    or CUDA context fragmentation on GPU.
     Otherwise, use optimal parallel count.
     
     :param config: Model/sanitiser config tuple
@@ -102,10 +101,11 @@ def get_optimal_workers_for_config(config, user_workers=None):
     if user_workers == 1:
         return 1
     
-    if _gpu_device_requested() and model_requires_gpu(config):
-        return 1  # GPU model with GPU device: serialize to avoid contention
+    if model_requires_gpu(config):
+        return 1  # Deep learning model: serialize to avoid parallel threading contention
     
-    # CPU-only model or no GPU requested: can parallelize
+    # Standard CPU models (e.g. Scikit-learn, pgx, etc)
+
     if user_workers is None:
         return min(cpu_count(), 4)  # Reasonable default for CPU tasks
     return user_workers
