@@ -73,8 +73,7 @@ class EvaluationEngine:
         print(self.rawPop.info())
 
         # Make sure outdir exists
-        if not path.isdir(self.args.outdir):
-            mkdir(self.args.outdir)
+        os.makedirs(self.args.outdir, exist_ok=True)
 
         seed(SEED)
 

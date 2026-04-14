@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import json
 
-from os import mkdir, path
+from os import path
 from numpy.random import choice, seed
 from argparse import ArgumentParser
 from pandas import DataFrame

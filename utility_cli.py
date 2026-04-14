@@ -5,7 +5,7 @@ Command-line interface for running utility evaluation
 import json
 import os
 
-from os import mkdir, path
+from os import path
 from numpy import mean
 from numpy.random import choice, seed
 import pandas as pd
