@@ -8,7 +8,7 @@ Privacy evaluation framework for synthetic data publishing, based on the paper "
 
 ## Environment Setup
 
-The project uses **uv** for dependency management (Python 3.9+). A `.venv` already exists in the repo root. Dependencies are declared in `pyproject.toml`。CTGANはフォーク版（`git+https://github.com/SDC4Society/CTGAN.git`）を使用しており、pyproject.tomlに含まれている。
+The project uses **uv** for dependency management (Python 3.9+). A `.venv` already exists in the repo root. Dependencies are declared in `pyproject.toml`. Note that this project uses a forked version of CTGAN (`git+https://github.com/SDC4Society/CTGAN.git`), which is included in `pyproject.toml`.
 
 ## Running Evaluations
 
@@ -29,13 +29,13 @@ uv run python utility_cli.py -D data/texas -RC tests/utility/runconfig.json -O t
 
 ```bash
 # All tests
-python3 -m unittest discover tests/
+uv run python -m unittest discover tests/
 
 # Single test file
-python3 -m unittest tests/test_gms.py
+uv run python -m unittest tests/test_gms.py
 
 # Single test method
-python3 -m unittest tests.test_gms.TestGenerativeModel.test_bayesian_net
+uv run python -m unittest tests/test_gms.TestGenerativeModel.test_bayesian_net
 ```
 
 Test data lives in `tests/` (germancredit_test.csv + .json). Main evaluation data is in `data/` (texas dataset). Some datasets are fetched from S3 on first use via `--s3name`.
@@ -69,3 +69,21 @@ JSON files in `tests/{linkage,inference,utility}/runconfig.json` control experim
 
 ### Results Analysis
 Results JSON files can be parsed with functions in `utils/analyse_results.py`. Jupyter notebooks in `notebooks/` provide visualization.
+
+## Development Guidelines (Instructions for Gemini)
+
+### Python Standards
+- Enforce strict type hinting and Google-style docstrings.
+- Use `uv` for all dependency management tasks.
+
+### Extension Points
+- **New Attacks:** Must inherit from `PrivacyAttack` in `attack_models/`.
+- **New Features:** Must inherit from `FeatureSet` in `feature_sets/`.
+
+### Testing Requirements
+- Every new feature must include a corresponding test case in `tests/`.
+- Use `germancredit_test.csv` for small-scale CI tests.
+
+### Forbidden Practices
+- Do not use standard `pip` commands; suggest `uv run` or `uv add`.
+- Do not hardcode device IDs; always use the `--device` logic defined in CLI files.
