@@ -3,8 +3,7 @@ from pandas.api.types import CategoricalDtype
 from numpy import mean, concatenate, ones, sqrt, zeros, arange
 from scipy.stats import norm
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestClassifier
+from utils.classifier_fallback import get_linear_regression, get_random_forest_classifier
 
 from attack_models.attack_model import PrivacyAttack
 from utils.constants import *
@@ -134,7 +133,7 @@ class AttributeInferenceAttack(PrivacyAttack):
                     col_data = col_data.astype(cat)
                     dfcopy[col] = col_data.cat.codes
 
-        return dfcopy.values
+        return dfcopy.values.astype('float32')
 
     def _impute_missing_values(self, df):
         dfImpute = df.copy()
@@ -168,7 +167,7 @@ class AttributeInferenceAttack(PrivacyAttack):
 class LinRegAttack(AttributeInferenceAttack):
     """An AttributeInferenceAttack based on a simple Linear Regression model"""
     def __init__(self, sensitiveAttribute, metadata, quids=None):
-        super().__init__(LinearRegression(fit_intercept=False), sensitiveAttribute, metadata, quids)
+        super().__init__(get_linear_regression(fit_intercept=False), sensitiveAttribute, metadata, quids)
 
         self.scaleFactor = None
         self.coefficients = None
@@ -188,7 +187,7 @@ class LinRegAttack(AttributeInferenceAttack):
         # Center independent variables for better regression performance
         self.scaleFactor = mean(features, axis=0)
         featuresScaled = features - self.scaleFactor
-        featuresScaled = concatenate([ones((n, 1)), featuresScaled], axis=1) # append all  ones for inclu intercept in beta vector
+        featuresScaled = concatenate([ones((n, 1), dtype='float32'), featuresScaled], axis=1) # append all ones for inclu intercept in beta vector
 
         # Get MLE for linear coefficients
         self.PredictionModel.fit(featuresScaled, labels)
@@ -201,7 +200,7 @@ class LinRegAttack(AttributeInferenceAttack):
     def _make_guess(self, targetAux):
         targetFeatures = self._encode_data(targetAux)
         targetFeaturesScaled = targetFeatures - self.scaleFactor
-        targetFeaturesScaled = concatenate([ones((len(targetFeaturesScaled), 1)), targetFeatures], axis=1)
+        targetFeaturesScaled = concatenate([ones((len(targetFeaturesScaled), 1), dtype='float32'), targetFeaturesScaled], axis=1)
 
         guess = targetFeaturesScaled.dot(self.coefficients)[0]
 
@@ -212,7 +211,7 @@ class LinRegAttack(AttributeInferenceAttack):
 
         targetFeatures = self._encode_data(targetAux)
         targetFeaturesScaled = targetFeatures - self.scaleFactor
-        targetFeaturesScaled = concatenate([ones((len(targetFeaturesScaled), 1)), targetFeatures], axis=1)
+        targetFeaturesScaled = concatenate([ones((len(targetFeaturesScaled), 1), dtype='float32'), targetFeaturesScaled], axis=1)
 
         if attemptLinkage:
             assert data is not None, "Need a dataset for linkage attack."
@@ -240,7 +239,7 @@ class LinRegAttack(AttributeInferenceAttack):
 class RandForestAttack(AttributeInferenceAttack):
     """An AttributeInferenceAttack based on a simple Linear Regression model"""
     def __init__(self, sensitiveAttribute, metadata, quids=None):
-        super().__init__(RandomForestClassifier(), sensitiveAttribute, metadata, quids)
+        super().__init__(get_random_forest_classifier(), sensitiveAttribute, metadata, quids)
 
         self.labels = {l:i for i, l in enumerate(self.metadata[self.sensitiveAttribute]['categories'])}
         self.labelsInv = {i:l for l, i in self.labels.items()}

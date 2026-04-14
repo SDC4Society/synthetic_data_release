@@ -1,8 +1,9 @@
 """Parallel execution utilities for model evaluation"""
 import importlib
 import os
-from multiprocessing import Pool
-
+import warnings
+from multiprocessing import cpu_count
+import joblib
 from numpy.random import seed
 from tqdm import tqdm
 
@@ -34,6 +35,10 @@ UTILITY_TASK_REGISTRY = {
 }
 
 
+SANITISER_MODELS = {'SanitiserNHS', 'SanitiserMondrian'}
+GPU_MODELS = {'CTGAN', 'PATEGAN', 'AIM', 'GEM', 'TabDDPM', 'DP_MERF', 'PrivateGSD', 'PrivMRF', 'PrivSyn'}
+
+
 def _resolve_class(import_path):
     module_name, class_name = import_path.rsplit(".", 1)
     module = importlib.import_module(module_name)
@@ -46,6 +51,64 @@ def create_model(config, metadata):
     if name not in MODEL_REGISTRY:
         raise ValueError(f'Unknown model: {name}')
     return _resolve_class(MODEL_REGISTRY[name])(metadata, *params)
+
+
+def model_name_from_config(config, metadata=None):
+    """Return a model name for a config, falling back when the model cannot be imported."""
+    original_device = os.environ.get('SYNTHETIC_DATA_DEVICE')
+    try:
+        os.environ['SYNTHETIC_DATA_DEVICE'] = 'cpu'
+        os.environ.setdefault('CUDA_VISIBLE_DEVICES', '')
+        model = create_model(config, metadata)
+        return model.__name__
+    except (ModuleNotFoundError, ImportError, RuntimeError, ValueError):
+        name, *params = config
+        if params:
+            param_str = ','.join(str(p) for p in params)
+            return f'{name}({param_str})'
+        return name
+    finally:
+        if original_device is None:
+            os.environ.pop('SYNTHETIC_DATA_DEVICE', None)
+        else:
+            os.environ['SYNTHETIC_DATA_DEVICE'] = original_device
+
+
+def is_generative_model_config(config):
+    """Determine model/sanitiser type from config without full instantiation."""
+    name, *_ = config
+    return name not in SANITISER_MODELS
+
+
+def model_requires_gpu(config):
+    """Check if a model config normally runs on a GPU backend (PyTorch/TF)."""
+    name, *_ = config if isinstance(config, (tuple, list)) else (config,)
+    return name in GPU_MODELS
+
+
+def get_optimal_workers_for_config(config, user_workers=None):
+    """Get optimal number of workers for a specific config.
+    
+    If the model uses PyTorch/TF (GPU_MODELS), force 1 worker to avoid 
+    multiprocessing deadlocks and OpenMP/Accelerate thrashing on CPU, 
+    or CUDA context fragmentation on GPU.
+    Otherwise, use optimal parallel count.
+    
+    :param config: Model/sanitiser config tuple
+    :param user_workers: User-specified max workers (None = auto)
+    :return: Optimal worker count for this config
+    """
+    if user_workers == 1:
+        return 1
+    
+    if model_requires_gpu(config):
+        return 1  # Deep learning model: serialize to avoid parallel threading contention
+    
+    # Standard CPU models (e.g. Scikit-learn, pgx, etc)
+
+    if user_workers is None:
+        return min(cpu_count(), 4)  # Reasonable default for CPU tasks
+    return user_workers
 
 
 def create_utility_task(config, metadata):
@@ -67,13 +130,15 @@ def _worker_init():
 
 
 class _StarmapHelper:
-    """Picklable wrapper that unpacks a tuple arg for imap_unordered."""
-
+    """Picklable wrapper that unpacks a tuple arg for execution."""
     def __init__(self, fn):
         self.fn = fn
-
     def __call__(self, args):
         return self.fn(*args)
+
+def _gpu_device_requested():
+    device = os.environ.get('SYNTHETIC_DATA_DEVICE', '')
+    return bool(device) and ('cuda' in device.lower() or device.lower().startswith('gpu'))
 
 
 def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
@@ -81,20 +146,33 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
 
     :param worker_fn: callable: Worker function to execute
     :param tasks: list[tuple]: List of argument tuples for worker_fn
-    :param max_workers: int or None: Number of worker processes (default: 1)
+    :param max_workers: int or None: Number of worker processes (None = auto based on task count and device)
     :param desc: str: Description for the progress bar
     :return: list: Results from each worker
+    
+    Note: For fine-grained GPU/CPU control per model, see get_optimal_workers_for_config().
+    For GPU-model-only pools, pass max_workers=1 explicitly.
     """
     if not tasks:
         return []
     if max_workers == 1:
         return [worker_fn(*task) for task in tqdm(tasks, desc=desc)]
     if max_workers is None:
-        max_workers = 1
-    with Pool(max_workers, initializer=_worker_init) as pool:
-        results = list(tqdm(
-            pool.imap_unordered(_StarmapHelper(worker_fn), tasks),
-            total=len(tasks),
-            desc=desc
-        ))
+        has_gpu_tasks = any(model_requires_gpu(task[0]) for task in tasks if task and isinstance(task[0], (tuple, list, str)))
+        if _gpu_device_requested() and has_gpu_tasks:
+            max_workers = 1
+        else:
+            max_workers = min(cpu_count(), len(tasks))
+
+    # Use joblib.Parallel instead of multiprocessing.Pool
+    # Loky backend automatically uses memmapping for arrays > 1MB, solving the IPC bottleneck
+    with tqdm(total=len(tasks), desc=desc) as pbar:
+        generator = joblib.Parallel(n_jobs=max_workers, backend='loky', return_as='generator')(
+            joblib.delayed(worker_fn)(*task) for task in tasks
+        )
+        results = []
+        for res in generator:
+            results.append(res)
+            pbar.update(1)
+            
     return results

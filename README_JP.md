@@ -1,0 +1,94 @@
+# 合成データ公開のためのプライバシー評価フレームワーク
+合成データ公開におけるプライバシーと有用性のトレードオフを評価するための実用的なフレームワークです。
+
+このフレームワークは、Stadler, T., Oprisanu, B., Troncoso, C. による論文「In 31st USENIX Security Symposium (USENIX Security22), pages 1451–1468, Boston, MA. USENIX Association.」（2022年）に基づいています。
+- 公式論文: https://www.usenix.org/conference/usenixsecurity22/presentation/stadler
+- arXiv: https://arxiv.org/abs/2011.07018
+- GitHub: https://github.com/spring-epfl/synthetic_data_release
+
+# 攻撃モデル
+`attack_models` モジュールには、現在次の攻撃モデルが含まれています。
+
+- リンケージ攻撃をメンバーシップ推論攻撃としてモデル化したプライバシー敵対者 `MIAAttackClassifier` によるプライバシーゲイン評価
+- ターゲットレコードの一部の情報を知っている場合に、ターゲットの機微な値を推測することを目的とした単純な属性推論攻撃 `AttributeInferenceAttack`
+
+# 生成モデル
+`generative_models` モジュールには、現在次のモデルが含まれています。
+
+- `IndependentHistogram`: [Data Responsibly の DataSynthesiser](https://github.com/DataResponsibly/DataSynthesizer) から適応した独立ヒストグラムモデル
+- `BayesianNet`: [Data Responsibly の DataSynthesiser](https://github.com/DataResponsibly/DataSynthesizer) から適応したベイジアンネットワークに基づく生成モデル
+- `PrivBayes`: [Data Responsibly の DataSynthesiser](https://github.com/DataResponsibly/DataSynthesizer) から適応したベイジアンネットワークモデルの差分プライバシー版
+- `CTGAN`: [CTGAN](https://github.com/sdv-dev/CTGAN) の CTGAN モデルを統合した条件付き表形式生成敵対ネットワーク
+- `PATE-GAN`: [MLforHealth Lab](https://bitbucket.org/mvdschaar/mlforhealthlabpub/src/82d7f91d46db54d256ff4fc920d513499ddd2ab8/alg/pategan/) の元実装を基に適応された差分プライバシー生成敵対ネットワーク
+- その他のモデルとして `AIM`, `GEM`, `PrivMRF`, `PrivSyn`, `DP_MERF`, `TabDDPM`, `PrivateGSD`, `RAPpp` などを含みます。
+
+# セットアップ
+
+## 直接インストール
+
+### 必要条件
+このフレームワークとその構成要素は Python 3.9+ で開発およびテストされています。
+
+このプロジェクトは依存関係の管理に [uv](https://docs.astral.sh/uv/) を使用しています。すべての依存関係（CTGAN フォークを含む）は `pyproject.toml` に宣言されています。
+
+```bash
+uv sync
+```
+
+インストールが正しく行われたか確認するには、次のコマンドを実行してください。
+
+```bash
+uv run python -c "import ctgan"
+```
+
+## Docker 配布（推奨ではありません）
+
+便宜上、Synthetic Data は Python 3.9 と CUDA 11.4.2 を含む Docker イメージとしても配布されています。
+
+**注意:** この配布は CUDA バイナリを含むため、イメージをダウンロードする前に [その EULA](https://docs.nvidia.com/cuda/eula/index.html) を読み、利用規約に同意してください。
+
+```bash
+docker pull springepfl/synthetic-data:latest
+docker run -it --rm -v "$(pwd)/output:/output" -p 8888:8888 springepfl/synthetic-data
+```
+
+# 実行例
+
+このリポジトリでは、Utility、Linkage（MIA）、Inference の評価を共通実行エンジン `all_cli.py` でまとめて実行できます。これにより、共通データセットを何度も読み込む必要がなくなります。個別の CLI でそれぞれの評価を実行することもできます。
+
+### 統合実行（推奨）
+
+3つの評価をシームレスに実行できます。CLI は適切なワーカーを自動スケジューリングし、PyTorch/CUDA リソースを動的に管理します。
+
+```bash
+uv run python all_cli.py -D data/texas -O outputs/texas -W 4 --device cpu
+```
+
+このコマンドは `-RCU`（Utility）、`-RCL`（Linkage）、`-RCI`（Inference）の設定を順次実行します。これらはデフォルトで `tests/*/runconfig.json` テンプレートを使用します。
+
+### 個別評価の実行
+
+```bash
+# リンケージプライバシー評価（MIA ベース）
+uv run python linkage_cli.py -D data/texas -RC tests/linkage/runconfig.json -O tests/linkage --device cpu
+
+# 推論プライバシー評価（属性推論）
+uv run python inference_cli.py -D data/texas -RC tests/inference/runconfig.json -O tests/inference --device cuda:0
+
+# ユーティリティ評価
+uv run python utility_cli.py -D data/texas -RC tests/utility/runconfig.json -O tests/utility
+```
+
+### デバイス最適化とハードウェアについて（GPU/CPU）
+
+ほとんどのモデル（`AIM`, `GEM`, `TabDDPM`, `DP_MERF`, `CTGAN`, `PATEGAN`, `PrivMRF` など）は、CPU/GPU 両方の並列実行に対応するよう検証および修正されています。
+
+1. **`--device` フラグ**: `cpu`, `cuda:0`, `cuda:1` などをサポートします。指定がない場合、CUDA が利用可能なら動的に選択します。
+2. **環境変数**: `export SYNTHETIC_DATA_DEVICE="cuda:0"` で実行コンテキストを全体設定できます。
+3. **スマート GPU 割り当て**: `SYNTHETIC_DATA_DEVICE` が `gpu` または `cuda` を示し、かつ現在のアルゴリズムが `GPU_MODELS` リストに含まれる場合、フレームワークは CUDA コンテキストの競合と VRAM OOM を避けるため、`multiprocessing` を `max_workers=1` に制限します。
+4. **共有 IPC**: このフレームワークは `joblib.Parallel (loky)` を使用し、重い入力データセットを OS 共有メモリ経由でワーカーに送信することで、ギガバイト単位の重複ピクル化を回避します。
+5. **Sklearn パイプライン**: 内部データ表現は `sklearn.compose.ColumnTransformer` をネイティブに利用しており、属性の One-Hot エンコーディングや `StandardScaler` の適用を Python ループのオーバーヘッドなしに処理します。
+
+## 結果の解析
+
+出力される JSON ファイルは、`utils/analyse_results.py` 内のヘルパー関数 `load_results_linkage`、`load_results_inference`、`load_results_utility` を使ってノートブック上で解析できます。ROC 曲線、ユーティリティ、およびアドバンテージ差分をプロットするのに便利です。

@@ -16,6 +16,7 @@ from pandas import DataFrame
 from generative_models.generative_model import GenerativeModel
 from utils.logging import LOGGER
 from utils.constants import *
+from utils.device_utils import validate_and_get_device
 
 
 ZERO_TOL = 1e-8
@@ -27,7 +28,7 @@ class PATEGAN(GenerativeModel):
     def __init__(self, metadata,
                  eps=1, delta=1e-5, infer_ranges=False,
                  num_teachers=10, n_iters=100, batch_size=128,
-                 learning_rate=1e-4, multiprocess=False):
+                 learning_rate=1e-4, device=None, multiprocess=False):
         """
         :param metadata: dict: Attribute metadata describing the data domain of the synthetic target data
         :param eps: float: Privacy parameter
@@ -35,6 +36,7 @@ class PATEGAN(GenerativeModel):
         :param target: str: Name of the target variable for downstream classification tasks
         :param num_teachers: int: Number of teacher discriminators
         :param n_iters: int: Number of training iterations
+        :param device: str: Device to use for training ('gpu' or 'cpu')
         """
         # Data description
         self.metadata, self.attribute_list = self.read_meta(metadata)
@@ -45,6 +47,15 @@ class PATEGAN(GenerativeModel):
         self.epsilon = eps
         self.delta = delta
         self.infer_ranges = infer_ranges
+        
+        # Set device - TensorFlow handles CPU/GPU automatically
+        # For TensorFlow, device should be 'gpu' or '' (empty for CPU)
+        self.device_str, self.is_gpu = validate_and_get_device(device)
+        # Convert PyTorch device string to TensorFlow format
+        if 'cuda' in self.device_str or self.device_str.lower().startswith('gpu'):
+            self.device = 'gpu'
+        else:
+            self.device = ''  # TensorFlow uses empty string for CPU
 
         # Training params
         self.num_teachers = num_teachers
@@ -55,7 +66,16 @@ class PATEGAN(GenerativeModel):
         self.h_dim = int(self.nfeatures)
 
         # Configure device
-        device_name = tf.test.gpu_device_name()
+        # Only check GPU availability if we explicitly requested GPU
+        if self.device == 'gpu':
+            try:
+                device_name = tf.test.gpu_device_name()
+            except (RuntimeError, ValueError):
+                LOGGER.warning("GPU device test failed, falling back to CPU")
+                device_name = ''
+        else:
+            device_name = ''
+
         if device_name == '':
             self.device_spec = tf.DeviceSpec(device_type='CPU', device_index=0)
             # On CPU, use a per-instance graph so that ops don't accumulate in
@@ -63,6 +83,7 @@ class PATEGAN(GenerativeModel):
             # which causes TF threads to stall (CPU usage drops to 0).
             self.graph = tf.Graph()
         else:
+            # Due to CUDA_VISIBLE_DEVICES masking, the visible GPU is always index 0
             self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=0)
             self.graph = None  # use the default graph on GPU (original behaviour)
 
