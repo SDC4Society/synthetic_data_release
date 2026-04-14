@@ -8,21 +8,11 @@ import os
 from os import mkdir, path
 from numpy import mean
 from numpy.random import choice, seed
-from argparse import ArgumentParser
 import pandas as pd
-from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
-from utils.parallel import (
-    create_model,
-    create_utility_task,
-    is_generative_model,
-    is_generative_model_config,
-    model_name_from_config,
-    model_requires_gpu,
-    get_optimal_workers_for_config,
-    run_parallel_models,
-)
+from utils.parallel import create_model, create_utility_task
+from utils.evaluation_framework import EvaluationEngine
 
 def _deep_tuple(obj):
     """Recursively convert lists to tuples so nested configs are hashable."""
@@ -146,52 +136,14 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
 
 
 def main():
-    argparser = ArgumentParser()
-    datasource = argparser.add_mutually_exclusive_group()
-    datasource.add_argument('--s3name', '-S3', type=str, choices=['adult', 'census', 'credit', 'alarm', 'insurance'], help='Name of the dataset to run on')
-    datasource.add_argument('--datapath', '-D', type=str, help='Relative path to cwd of a local data file')
-    argparser.add_argument('--runconfig', '-RC', default='runconfig_mia.json', type=str, help='Path relative to cwd of runconfig file')
-    argparser.add_argument('--outdir', '-O', default='outputs/test', type=str, help='Path relative to cwd for storing output files')
-    argparser.add_argument('--workers', '-W', type=int, default=None,
-                           help='Number of parallel workers (default: CPU count)')
-    argparser.add_argument('--device', type=str, default=None,
-                           help='Device to use for models (e.g., "cpu", "cuda:0"). Defaults to GPU if available, otherwise CPU.')
-    args = argparser.parse_args()
-    
-    # Set device environment variable for models
-    if args.device:
-        os.environ['SYNTHETIC_DATA_DEVICE'] = args.device
-        LOGGER.info(f"Device set to: {args.device}")
-        if 'cuda:' in args.device:
-            try:
-                idx = args.device.split(':')[1]
-                os.environ['CUDA_VISIBLE_DEVICES'] = idx
-            except IndexError:
-                pass
-        elif args.device == 'cpu':
-            os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    engine = EvaluationEngine(description="Command-line interface for running utility evaluation")
+    engine.setup(cwd)
 
-    seed(SEED)
-    # Load runconfig
-    with open(path.join(cwd, args.runconfig)) as f:
-        runconfig = json.load(f)
-    print('Runconfig:')
-    print(runconfig)
-
-    # Load data
-    if args.s3name is not None:
-        rawPop, metadata = load_s3_data_as_df(args.s3name)
-        dname = args.s3name
-    else:
-        rawPop, metadata = load_local_data_as_df(path.join(cwd, args.datapath))
-        dname = args.datapath.split('/')[-1]
-
-    print(f'Loaded data {dname}:')
-    print(rawPop.info())
-
-    # Make sure outdir exists
-    if not path.isdir(args.outdir):
-        mkdir(args.outdir)
+    runconfig = engine.runconfig
+    rawPop = engine.rawPop
+    metadata = engine.metadata
+    dname = engine.dname
+    args = engine.args
 
     ########################
     #### GAME INPUTS #######
@@ -221,18 +173,6 @@ def main():
 
     testRecords = rawTest.loc[testRecordIDs, :]
 
-    # Build serializable model configs for parallel execution
-    all_model_configs = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            for params in paramsList:
-                all_model_configs.append((gm, *params))
-
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            for params in paramsList:
-                all_model_configs.append((name, *params))
-
     # Build serializable utility task configs
     utility_task_configs = []
     for taskName, paramsList in runconfig['utilityTasks'].items():
@@ -242,10 +182,6 @@ def main():
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Separate gm and san configs without instantiating them
-    gm_configs = [cfg for cfg in all_model_configs if is_generative_model_config(cfg)]
-    san_configs = [cfg for cfg in all_model_configs if not is_generative_model_config(cfg)]
-
     # Build utility task names
     ut_names = []
     for cfg in utility_task_configs:
@@ -312,38 +248,22 @@ def main():
         gm_tasks = [
             (cfg, rawTout, targets, targetIDs,
              utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
-            for cfg in gm_configs
+            for cfg in engine.gm_configs
         ]
         san_tasks = [
             (cfg, rawTout, targets, targetIDs,
              utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
-            for cfg in san_configs
+            for cfg in engine.san_configs
         ]
 
-        # Separate GPU-requiring models from CPU-only models for optimal parallelization
-        gpu_gm_tasks = [t for t in gm_tasks if model_requires_gpu(t[0])]
-        cpu_gm_tasks = [t for t in gm_tasks if not model_requires_gpu(t[0])]
-
-        all_results = []
-        # Sanitisers are always CPU-only, so use optimal parallelization
-        if san_tasks:
-            san_workers = get_optimal_workers_for_config(san_tasks[0][0], args.workers)
-            all_results.extend(run_parallel_models(
-                utility_eval_san_worker, san_tasks, max_workers=san_workers,
-                desc=f"San eval {nr+1}/{runconfig['nIter']}"))
-        
-        # GPU models must serialize
-        if gpu_gm_tasks:
-            all_results.extend(run_parallel_models(
-                utility_eval_gm_worker, gpu_gm_tasks, max_workers=1,
-                desc=f"GPU GM eval {nr+1}/{runconfig['nIter']}"))
-        
-        # CPU-only models can parallelize beyond user-specified workers
-        if cpu_gm_tasks:
-            cpu_workers = get_optimal_workers_for_config(cpu_gm_tasks[0][0], args.workers)
-            all_results.extend(run_parallel_models(
-                utility_eval_gm_worker, cpu_gm_tasks, max_workers=cpu_workers,
-                desc=f"CPU GM eval {nr+1}/{runconfig['nIter']}"))
+        all_results = engine.run_parallel_evaluation(
+            eval_gm_worker=utility_eval_gm_worker,
+            eval_san_worker=utility_eval_san_worker,
+            san_tasks=san_tasks,
+            gm_tasks=gm_tasks,
+            iter_idx=nr,
+            desc_prefix="eval"
+        )
 
         for model_name, results_target, results_agg in all_results:
             for (ut_name, tid_or_out), result_dict in results_target.items():
@@ -364,17 +284,8 @@ def main():
                     resultsAggUtility[ut_name][model_name]['TargetID'].append(tid_or_out)
                     resultsAggUtility[ut_name][model_name]['Accuracy'].append(accuracy)
 
-    outfile = f"ResultsUtilTargets_{dname}"
-    LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
-
-    with open(path.join(f'{args.outdir}', f'{outfile}.json'), 'w') as f:
-        json.dump(resultsTargetUtility, f, indent=2, default=json_numpy_serialzer)
-
-    outfile = f"ResultsUtilAgg_{dname}"
-    LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
-
-    with open(path.join(f'{args.outdir}', f'{outfile}.json'), 'w') as f:
-        json.dump(resultsAggUtility, f, indent=2, default=json_numpy_serialzer)
+    engine.dump_results(resultsTargetUtility, prefix="ResultsUtilTargets")
+    engine.dump_results(resultsAggUtility, prefix="ResultsUtilAgg")
 
 
 if __name__ == "__main__":
