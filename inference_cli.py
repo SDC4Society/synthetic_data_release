@@ -108,12 +108,16 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
     model = create_model(model_config, metadata)
     attack_metadata = model.get_output_metadata(metadata)
 
+    # For Mondrian, must ignore QID settings so that FeaturesSet will not 
+    # cause error when accessing "bins" key for numerical QID attribute.
+    _quids = None if model_config[0] == "SanitiserMondrian" else model.quids
+
     attacks = {}
     for sa, atype in sensitive_attrs.items():
         if atype == 'LinReg':
-            attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=model.quids)
+            attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=_quids)
         elif atype == 'Classification':
-            attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=model.quids)
+            attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=_quids)
 
     results = {}
 

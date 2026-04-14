@@ -29,7 +29,7 @@ from utils.parallel import create_model, is_generative_model, run_parallel_model
 
 from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
-from feature_sets.bayes import CorrelationsFeatureSet
+from feature_sets.bayes import CorrelationsFeatureSet, BinnedCorrelationsFeatureSet
 
 from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
 
@@ -60,6 +60,13 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
     trained_attacks = {}
 
+    if "featuresSetBins" not in runconfig:
+        print("WARNING: featuresSetBins not found in configuration file, default to 10.")
+        nbins_features = 10
+    else:      
+        nbins_features = runconfig["featuresSetBins"]
+
+
     if is_generative_model(model):
         synA, labelsA = generate_mia_shadow_data(
             model, target, rawA,
@@ -67,8 +74,11 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
             runconfig['nShadows'], runconfig['nSynA'])
 
         for Feature in [NaiveFeatureSet(model.datatype),
-                        HistogramFeatureSet(model.datatype, metadata),
-                        CorrelationsFeatureSet(model.datatype, metadata)]:
+                        HistogramFeatureSet(model.datatype, metadata, 
+                                            nbins=nbins_features),
+                        BinnedCorrelationsFeatureSet(model.datatype, metadata, 
+                                                     nbins=nbins_features),
+                        ]:
             Attack = MIAttackClassifierRandomForest(metadata, Feature)
             Attack.train(synA, labelsA)
             trained_attacks[Feature.__name__] = Attack
@@ -77,15 +87,22 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
             model, target, rawA,
             runconfig['sizeRawT'],
             runconfig['nShadows'] * runconfig['nSynA'])
+        
+        # For Mondrian, must ignore QID settings so that FeaturesSet will not 
+        # cause error when accessing "bins" key for numerical QID attribute.
+        _quids = None if model_config[0] == "SanitiserMondrian" else model.quids
 
         for Feature in [NaiveFeatureSet(DataFrame),
                         HistogramFeatureSet(DataFrame, attack_metadata,
-                                           nbins=model.histogram_size, quids=model.quids),
-                        CorrelationsFeatureSet(DataFrame, attack_metadata, quids=model.quids),
-                        EnsembleFeatureSet(DataFrame, attack_metadata,
-                                          nbins=model.histogram_size,
-                                          quasi_id_cols=model.quids)]:
-            Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=model.quids)
+                                           nbins=nbins_features, quids=_quids),
+                        BinnedCorrelationsFeatureSet(DataFrame, attack_metadata, 
+                                                    nbins=nbins_features, quids=_quids),
+                        # EnsembleFeatureSet is not discussed in Groundhog Day paper
+                        # EnsembleFeatureSet(DataFrame, attack_metadata,
+                        #                   nbins=model.histogram_size,
+                        #                   quasi_id_cols=model.quids),
+                        ]:
+            Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=_quids)
             Attack.train(sanA, labelsA)
             trained_attacks[Feature.__name__] = Attack
 
