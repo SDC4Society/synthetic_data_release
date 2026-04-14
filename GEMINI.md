@@ -1,6 +1,6 @@
-# GEMINI.md
+# GEMINI.md / CLAUDE.md guidelines
 
-This file provides guidance to Gemini Code Assist when working with code in this repository.
+This file provides guidance to AI assistants when working with code in this repository.
 
 ## Project Overview
 
@@ -12,78 +12,49 @@ The project uses **uv** for dependency management (Python 3.9+). A `.venv` alrea
 
 ## Running Evaluations
 
-Three CLI entry points, all following the same pattern: `-D` for local data path, `-RC` for run config JSON, `-O` for output directory. A `--device` option can be used to specify `cpu` or `cuda:N`. If omitted, it defaults to `cuda:0` if a GPU is available, otherwise `cpu`.
+There is a newly architected unified evaluation runner (`all_cli.py`) spanning the three components. Alternatively, `utility_cli.py`, `linkage_cli.py`, and `inference_cli.py` can be used individually.
+Each entry point follows this pattern: `-D` for local data path, `-RC` for run config JSON, `-O` for output directory, `-W` for worker count, `--device` for computing unit designation.
 
 ```bash
-# Linkage privacy (MIA-based) on CPU
+# ALL-IN-ONE (Recommended)
+uv run python all_cli.py -D data/texas -O outputs/all --device cpu
+
+# Linkage privacy (MIA-based)
 uv run python linkage_cli.py -D data/texas -RC tests/linkage/runconfig.json -O tests/linkage --device cpu
 
-# Inference privacy (attribute inference) on GPU
+# Inference privacy (attribute inference)
 uv run python inference_cli.py -D data/texas -RC tests/inference/runconfig.json -O tests/inference --device cuda:0
 
-# Utility evaluation (auto-detect device)
+# Utility evaluation
 uv run python utility_cli.py -D data/texas -RC tests/utility/runconfig.json -O tests/utility
 ```
 
 ## Running Tests
 
 ```bash
-# All tests
 uv run python -m unittest discover tests/
-
-# Single test file
 uv run python -m unittest tests/test_gms.py
-
-# Single test method
 uv run python -m unittest tests/test_gms.TestGenerativeModel.test_bayesian_net
 ```
+Test data lives in `tests/` (germancredit_test.csv). Main evaluation data is in `data/` (texas dataset). Some datasets are fetched from S3 on first use via `--s3name`.
 
-Test data lives in `tests/` (germancredit_test.csv + .json). Main evaluation data is in `data/` (texas dataset). Some datasets are fetched from S3 on first use via `--s3name`.
+## Architecture & Optimizations
 
-## Architecture
+### 1. Data Pipeline & Parallelization (`joblib`)
+- **Shared IPC**: Evaluations dispatch `multiprocessing` processes using `joblib.Parallel` via the `loky` backend. This ensures incredibly fast memory-mapped views instead of duplicating pandas DataFrames for every task.
+- **Resource Constraints**: CPU-based models automatically detect system boundaries, whereas GPU PyTorch/TensorFlow models (`PrivMRF`, `CTGAN`, `GEM`) force sequential queues (`max_workers=1`) whenever the flag `--device cuda:X` forces GPU usage, averting CUDA Context fragmentation.
 
-### Data Format
-Datasets consist of a `.csv` file paired with a `.json` metadata file describing column types (`Categorical`, `Ordinal`, `Integer`, `Float`) and value mappings. The `load_local_data_as_df()` function in `utils/datagen.py` loads both and returns a DataFrame + metadata dict.
+### 2. Preprocessing & Sklearn Pipeline
+- **Unified Pipeline Module**: Instead of messy custom for-loop encoding routines scattered around attack packages, datasets are ingested through `preprocess_common/pipeline.py` leveraging `sklearn.compose.ColumnTransformer`. 
 
-### Module Hierarchy
+### 3. Module Hierarchy
 
-**Generative Models** (`generative_models/`): All inherit from `GenerativeModel` base class with `fit(data)` and `generate_samples(nsamples)` interface. Implementations: `IndependentHistogram`, `BayesianNet`, `PrivBayes` (in `data_synthesiser.py`), `CTGAN` (`ctgan.py`), `PATEGAN` (`pate_gan.py`).
+- **Generative Models** (`generative_models/`): Inherit from `GenerativeModel`. E.g., `CTGAN`, `PATEGAN`, `PrivSyn`, `TabDDPM`.
+- **Attack Models** (`attack_models/`): Inherit from `PrivacyAttack`. Includes MIA classifiers (`mia_classifier.py`) and attribute reconstructors (`reconstruction.py`).
+- **Feature Sets** (`feature_sets/`): MIA extraction layers (`NaiveFeatureSet`, `HistogramFeatureSet`).
+- **Predictive Models** (`predictive_models/`): Classifiers or regressors measuring practical utility bounds against fake datasets.
 
-**Attack Models** (`attack_models/`): All inherit from `PrivacyAttack` base class with `train()` and `attack()` interface. MIA classifier (`mia_classifier.py`) for linkage attacks, attribute reconstruction attacks (`reconstruction.py`) for inference attacks.
-
-**Feature Sets** (`feature_sets/`): Feature extraction layers for MIA attacks. `NaiveFeatureSet`, `HistogramFeatureSet`, `CorrelationsFeatureSet`, `EnsembleFeatureSet` — all inherit from `FeatureSet` with an `extract(data)` method.
-
-**Predictive Models** (`predictive_models/`): Utility task classifiers/regressors (RandomForest, LogReg, LinReg) used to measure data utility.
-
-**Sanitisation Techniques** (`sanitisation_techniques/`): Traditional anonymisation methods (k-anonymity style `SanitiserNHS`).
-
-### Evaluation Flow
-Each CLI follows the same pattern:
-1. Load data + metadata, parse run config JSON
-2. Instantiate generative models and/or sanitisers from config params
-3. Run a privacy/utility "game" over `nIter` iterations: sample raw data, train models, generate synthetic data, run attacks/utility tasks
-4. Write results as JSON to the output directory
-
-### Run Config
-JSON files in `tests/{linkage,inference,utility}/runconfig.json` control experiment parameters: number of iterations, dataset sizes, target selection, which generative models/sanitisers to use and their hyperparameters (passed as positional args).
-
-### Results Analysis
-Results JSON files can be parsed with functions in `utils/analyse_results.py`. Jupyter notebooks in `notebooks/` provide visualization.
-
-## Development Guidelines (Instructions for Gemini)
-
-### Python Standards
-- Enforce strict type hinting and Google-style docstrings.
-- Use `uv` for all dependency management tasks.
-
-### Extension Points
-- **New Attacks:** Must inherit from `PrivacyAttack` in `attack_models/`.
-- **New Features:** Must inherit from `FeatureSet` in `feature_sets/`.
-
-### Testing Requirements
-- Every new feature must include a corresponding test case in `tests/`.
-- Use `germancredit_test.csv` for small-scale CI tests.
-
-### Forbidden Practices
-- Do not use standard `pip` commands; suggest `uv run` or `uv add`.
-- Do not hardcode device IDs; always use the `--device` logic defined in CLI files.
+## Development Guidelines (Instructions for AI)
+1. **Dependency management**: Always suggest `uv run` or `uv add`. Never use standard `pip` directly.
+2. **Device Awareness**: Always incorporate `--device` functionality or consider `SYNTHETIC_DATA_DEVICE` in environment variables when initializing PyTorch and ML instances.
+3. **Extend with Standards**: Inject new classifiers and sanitizers seamlessly by passing properties down to standard `sklearn` factories unless intrinsically unsupported.

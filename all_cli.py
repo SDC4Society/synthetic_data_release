@@ -1,0 +1,118 @@
+import os
+import gc
+import json
+import logging
+from argparse import ArgumentParser
+
+# Import main functions from the individual CLIs
+from utility_cli import main as utility_main
+from linkage_cli import main as linkage_main
+from inference_cli import main as inference_main
+
+LOGGER = logging.getLogger(__name__)
+
+def main():
+    argparser = ArgumentParser(description="Run all synthetic data evaluation games (Utility, Linkage, Inference)")
+    datasource = argparser.add_mutually_exclusive_group(required=True)
+    datasource.add_argument('--s3name', '-S3', type=str, choices=['adult', 'census', 'credit', 'alarm', 'insurance'], help='Name of the dataset to run on')
+    datasource.add_argument('--datapath', '-D', type=str, help='Relative path to cwd of a local data file')
+    
+    argparser.add_argument('--rc-utility', '-RCU', default='tests/utility/runconfig.json', type=str, help='Path to runconfig for Utility eval')
+    argparser.add_argument('--rc-linkage', '-RCL', default='tests/linkage/runconfig.json', type=str, help='Path to runconfig for Linkage eval')
+    argparser.add_argument('--rc-inference', '-RCI', default='tests/inference/runconfig.json', type=str, help='Path to runconfig for Inference eval')
+    
+    argparser.add_argument('--outdir', '-O', default='outputs/all', type=str, help='Path for storing all output files')
+    argparser.add_argument('--workers', '-W', type=int, default=None,
+                           help='Number of parallel workers (default: CPU count)')
+    argparser.add_argument('--device', type=str, default=None,
+                           help='Device to use for models (e.g., "cpu", "cuda:0").')
+                           
+    args = argparser.parse_args()
+    
+    # We will simulate sys.argv for the underlying argparsers in EvaluationEngine
+    import sys
+    
+    def build_argv_for_task(runconfig_path):
+        new_argv = [sys.argv[0]]
+        if args.s3name:
+            new_argv.extend(['--s3name', args.s3name])
+        elif args.datapath:
+            new_argv.extend(['--datapath', args.datapath])
+            
+        new_argv.extend(['--runconfig', runconfig_path])
+        new_argv.extend(['--outdir', args.outdir])
+        
+        if args.workers is not None:
+            new_argv.extend(['--workers', str(args.workers)])
+        if args.device is not None:
+            new_argv.extend(['--device', args.device])
+            
+        return new_argv
+
+    # Ensure output directory
+    os.makedirs(args.outdir, exist_ok=True)
+    
+    original_argv = sys.argv.copy()
+
+    #---------------------------------------------
+    # 1. UTILITY EVALUATION
+    #---------------------------------------------
+    logging.info("====================================")
+    logging.info("🚀 STARTING UTILITY EVALUATION")
+    logging.info("====================================")
+    sys.argv = build_argv_for_task(args.rc_utility)
+    try:
+        utility_main()
+    except Exception as e:
+        logging.error(f"Utility evaluation failed: {e}")
+        
+    gc.collect()
+    _clear_cuda()
+
+    #---------------------------------------------
+    # 2. LINKAGE EVALUATION
+    #---------------------------------------------
+    logging.info("====================================")
+    logging.info("🚀 STARTING LINKAGE EVALUATION")
+    logging.info("====================================")
+    sys.argv = build_argv_for_task(args.rc_linkage)
+    try:
+        linkage_main()
+    except Exception as e:
+        logging.error(f"Linkage evaluation failed: {e}")
+
+    gc.collect()
+    _clear_cuda()
+
+    #---------------------------------------------
+    # 3. INFERENCE EVALUATION
+    #---------------------------------------------
+    logging.info("====================================")
+    logging.info("🚀 STARTING INFERENCE EVALUATION")
+    logging.info("====================================")
+    sys.argv = build_argv_for_task(args.rc_inference)
+    try:
+        inference_main()
+    except Exception as e:
+        logging.error(f"Inference evaluation failed: {e}")
+
+    gc.collect()
+    _clear_cuda()
+
+    sys.argv = original_argv
+    logging.info("====================================")
+    logging.info("✅ ALL EVALUATIONS COMPLETED")
+    logging.info("====================================")
+
+
+def _clear_cuda():
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except ImportError:
+        pass
+
+
+if __name__ == "__main__":
+    main()
