@@ -149,8 +149,12 @@ def main():
     #### GAME INPUTS #######
     ########################
     # Train test split
-    rawTrain = rawPop.query(runconfig['dataFilter']['train'])
-    rawTest = rawPop.query(runconfig['dataFilter']['test'])
+    if 'dataFilter' in runconfig and runconfig['dataFilter']:
+        rawTrain = rawPop.query(runconfig['dataFilter']['train'])
+        rawTest = rawPop.query(runconfig['dataFilter']['test'])
+    else:
+        rawTrain = rawPop
+        rawTest = rawPop
 
     # Pick targets
     targetIDs = choice(list(rawTrain.index), size=runconfig['nTargets'], replace=False).tolist()

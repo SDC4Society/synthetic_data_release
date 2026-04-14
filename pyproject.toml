@@ -33,9 +33,9 @@ dependencies = [
 
 [project.optional-dependencies]
 gpu = [
-    "cuml-cu12>=24.0.0",
-    "cudf-cu12>=24.0.0",
-    "cupy-cuda12x>=13.0.0"
+    "cuml-cu12>=24.0.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "cudf-cu12>=24.0.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "cupy-cuda12x>=13.0.0; sys_platform == 'linux' and platform_machine == 'x86_64'"
 ]
 
 [[tool.uv.index]]
@@ -47,4 +47,3 @@ explicit = true
 k-anonymization = { git = "https://github.com/SDC4Society/k_anonymization.git" }
 cuml-cu12 = { index = "nvidia" }
 cudf-cu12 = { index = "nvidia" }
-cupy-cuda12x = { index = "nvidia" }
