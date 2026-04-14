@@ -28,6 +28,8 @@ from utils.parallel import (
     is_generative_model,
     is_generative_model_config,
     model_name_from_config,
+    model_requires_gpu,
+    get_optimal_workers_for_config,
     run_parallel_models,
 )
 
@@ -225,9 +227,24 @@ def main():
         for tid in targetIDs
         for cfg in all_model_configs
     ]
-    attack_results = run_parallel_models(
-        linkage_attack_worker, attack_tasks, max_workers=args.workers,
-        desc="Attack training")
+    
+    # Separate GPU and CPU model tasks for optimal parallelization
+    gpu_attack_tasks = [t for t in attack_tasks if model_requires_gpu(t[0])]
+    cpu_attack_tasks = [t for t in attack_tasks if not model_requires_gpu(t[0])]
+    
+    attack_results = []
+    # GPU models: serialize
+    if gpu_attack_tasks:
+        attack_results.extend(run_parallel_models(
+            linkage_attack_worker, gpu_attack_tasks, max_workers=1,
+            desc="GPU attack training"))
+    
+    # CPU models/sanitisers: parallelize
+    if cpu_attack_tasks:
+        cpu_workers = get_optimal_workers_for_config(cpu_attack_tasks[0][0], args.workers)
+        attack_results.extend(run_parallel_models(
+            linkage_attack_worker, cpu_attack_tasks, max_workers=cpu_workers,
+            desc="CPU attack training"))
 
     attacks = {}
     for tid, model_name, trained in attack_results:
@@ -264,9 +281,24 @@ def main():
              metadata, runconfig)
             for cfg in all_model_configs
         ]
-        eval_results = run_parallel_models(
-            linkage_eval_worker, eval_tasks, max_workers=args.workers,
-            desc=f"Eval iter {nr+1}/{runconfig['nIter']}")
+        
+        # Separate GPU and CPU model tasks for optimal parallelization
+        gpu_eval_tasks = [t for t in eval_tasks if model_requires_gpu(t[0])]
+        cpu_eval_tasks = [t for t in eval_tasks if not model_requires_gpu(t[0])]
+        
+        eval_results = []
+        # GPU models: serialize
+        if gpu_eval_tasks:
+            eval_results.extend(run_parallel_models(
+                linkage_eval_worker, gpu_eval_tasks, max_workers=1,
+                desc=f"GPU eval iter {nr+1}/{runconfig['nIter']}"))
+        
+        # CPU models/sanitisers: parallelize
+        if cpu_eval_tasks:
+            cpu_workers = get_optimal_workers_for_config(cpu_eval_tasks[0][0], args.workers)
+            eval_results.extend(run_parallel_models(
+                linkage_eval_worker, cpu_eval_tasks, max_workers=cpu_workers,
+                desc=f"CPU eval iter {nr+1}/{runconfig['nIter']}"))
 
         for model_name, per_target in eval_results:
             for tid, feature_results in per_target.items():

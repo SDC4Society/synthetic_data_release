@@ -36,6 +36,7 @@ UTILITY_TASK_REGISTRY = {
 
 
 SANITISER_MODELS = {'SanitiserNHS', 'SanitiserMondrian'}
+GPU_MODELS = {'CTGAN', 'PATEGAN', 'AIM', 'GEM', 'TabDDPM', 'DP_MERF', 'PrivateGSD'}
 
 
 def _resolve_class(import_path):
@@ -79,6 +80,34 @@ def is_generative_model_config(config):
     return name not in SANITISER_MODELS
 
 
+def model_requires_gpu(config):
+    """Check if a model config requires GPU."""
+    name, *_ = config if isinstance(config, (tuple, list)) else (config,)
+    return name in GPU_MODELS
+
+
+def get_optimal_workers_for_config(config, user_workers=None):
+    """Get optimal number of workers for a specific config.
+    
+    If GPU device is requested and model requires GPU, use 1 worker.
+    Otherwise, use optimal parallel count.
+    
+    :param config: Model/sanitiser config tuple
+    :param user_workers: User-specified max workers (None = auto)
+    :return: Optimal worker count for this config
+    """
+    if user_workers == 1:
+        return 1
+    
+    if _gpu_device_requested() and model_requires_gpu(config):
+        return 1  # GPU model with GPU device: serialize to avoid contention
+    
+    # CPU-only model or no GPU requested: can parallelize
+    if user_workers is None:
+        return min(cpu_count(), 4)  # Reasonable default for CPU tasks
+    return user_workers
+
+
 def create_utility_task(config, metadata):
     """Create a utility task instance from a (task_name, *params) config tuple."""
     name, *params = config
@@ -117,24 +146,19 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
 
     :param worker_fn: callable: Worker function to execute
     :param tasks: list[tuple]: List of argument tuples for worker_fn
-    :param max_workers: int or None: Number of worker processes (default: 1)
+    :param max_workers: int or None: Number of worker processes (None = auto based on task count and device)
     :param desc: str: Description for the progress bar
     :return: list: Results from each worker
+    
+    Note: For fine-grained GPU/CPU control per model, see get_optimal_workers_for_config().
+    For GPU-model-only pools, pass max_workers=1 explicitly.
     """
     if not tasks:
         return []
     if max_workers == 1:
         return [worker_fn(*task) for task in tqdm(tasks, desc=desc)]
     if max_workers is None:
-        if _gpu_device_requested():
-            max_workers = min(1, len(tasks))
-        else:
-            max_workers = min(cpu_count(), len(tasks))
-    elif _gpu_device_requested() and max_workers > 1:
-        warnings.warn(
-            'CUDA device requested via SYNTHETIC_DATA_DEVICE; using more than one worker may oversubscribe the GPU.',
-            UserWarning
-        )
+        max_workers = min(cpu_count(), len(tasks))
 
     ctx = get_context('spawn') if _gpu_device_requested() else get_context()
     with ctx.Pool(max_workers, initializer=_worker_init) as pool:

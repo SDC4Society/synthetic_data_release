@@ -19,6 +19,8 @@ from utils.parallel import (
     is_generative_model,
     is_generative_model_config,
     model_name_from_config,
+    model_requires_gpu,
+    get_optimal_workers_for_config,
     run_parallel_models,
 )
 
@@ -334,15 +336,30 @@ def main():
             for cfg, _ in san_configs
         ]
 
+        # Separate GPU-requiring models from CPU-only models for optimal parallelization
+        gpu_gm_tasks = [t for t in gm_tasks if model_requires_gpu(t[0])]
+        cpu_gm_tasks = [t for t in gm_tasks if not model_requires_gpu(t[0])]
+
         all_results = []
-        if gm_tasks:
-            all_results.extend(run_parallel_models(
-                utility_eval_gm_worker, gm_tasks, max_workers=args.workers,
-                desc=f"GM eval {nr+1}/{runconfig['nIter']}"))
+        # Sanitisers are always CPU-only, so use optimal parallelization
         if san_tasks:
+            san_workers = get_optimal_workers_for_config(san_tasks[0][0], args.workers)
             all_results.extend(run_parallel_models(
-                utility_eval_san_worker, san_tasks, max_workers=args.workers,
+                utility_eval_san_worker, san_tasks, max_workers=san_workers,
                 desc=f"San eval {nr+1}/{runconfig['nIter']}"))
+        
+        # GPU models must serialize
+        if gpu_gm_tasks:
+            all_results.extend(run_parallel_models(
+                utility_eval_gm_worker, gpu_gm_tasks, max_workers=1,
+                desc=f"GPU GM eval {nr+1}/{runconfig['nIter']}"))
+        
+        # CPU-only models can parallelize beyond user-specified workers
+        if cpu_gm_tasks:
+            cpu_workers = get_optimal_workers_for_config(cpu_gm_tasks[0][0], args.workers)
+            all_results.extend(run_parallel_models(
+                utility_eval_gm_worker, cpu_gm_tasks, max_workers=cpu_workers,
+                desc=f"CPU GM eval {nr+1}/{runconfig['nIter']}"))
 
         for model_name, results_target, results_agg in all_results:
             for (ut_name, tid_or_out), result_dict in results_target.items():
