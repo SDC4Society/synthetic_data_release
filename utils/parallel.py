@@ -82,6 +82,9 @@ def is_generative_model_config(config):
 
 def model_requires_gpu(config):
     """Check if a model config requires GPU."""
+    if not _gpu_device_requested():
+        return False
+        
     name, *_ = config if isinstance(config, (tuple, list)) else (config,)
     return name in GPU_MODELS
 
