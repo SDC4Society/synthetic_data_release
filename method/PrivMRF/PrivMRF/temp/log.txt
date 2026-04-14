@@ -1,83 +1,114 @@
 PrivMRF
 theta: 6
-privacy budget:            0.006111319039527913
-estimated noise scale:     25.743051964189405
-max 2way measure dom:      6.467764592621516
-max high way measure dom:  6.467764592621516
+privacy budget:            8.65987458803619e-05
+estimated noise scale:     216.25776500071916
+max 2way measure dom:      0.7776214031718465
+max high way measure dom:  0.7776214031718465
 max edge number:           153.0
-TVD_noise:                 0.3167690517854457
-data num:                  999
+TVD_noise:                 2.6346852707749298
+data num:                  1009
 construct attribute graph
 data entropy: 6.907755278982134
-  init score: -35.3515 query_num: 18 size: 3.0090e+03, edge_num: 0 entropy: 35.35
-average TVD and noise: 0.18862084640522872 0.3167690517854457
-  iter: 0/306 score: 1.65 size: 8.04e+03, edge_num: 1 mutual_info: 1.65
-  iter: 1/306 score: 2.82 size: 8.13e+03, edge_num: 2 mutual_info: 2.82
-  iter: 2/306 score: 3.96 size: 1.41e+04, edge_num: 3 mutual_info: 3.96
-  iter: 3/306 score: 5.09 size: 8.34e+05, edge_num: 4 mutual_info: 5.10
-  iter: 4/306 score: 6.56 size: 1.26e+07, edge_num: 5 mutual_info: 6.68
-  iter: 5/306 score: 7.64 size: 1.26e+07, edge_num: 6 mutual_info: 7.77
-  iter: 6/306 score: 8.64 size: 1.26e+07, edge_num: 7 mutual_info: 8.77
-  iter: 7/306 score: 9.48 size: 1.26e+07, edge_num: 8 mutual_info: 9.60
-  iter: 8/306 score: 10.38 size: 1.28e+07, edge_num: 9 mutual_info: 10.51
-  iter: 9/306 score: 11.19 size: 1.28e+07, edge_num: 10 mutual_info: 11.32
-  iter: 10/306 score: 11.98 size: 1.28e+07, edge_num: 11 mutual_info: 12.10
-  iter: 11/306 score: 12.74 size: 1.28e+07, edge_num: 12 mutual_info: 12.87
-  iter: 12/306 score: 14.10 size: 1.77e+07, edge_num: 13 mutual_info: 14.27
-  iter: 13/306 score: 14.81 size: 1.77e+07, edge_num: 14 mutual_info: 14.99
-  iter: 14/306 score: 15.52 size: 1.77e+07, edge_num: 15 mutual_info: 15.70
-  iter: 15/306 score: 16.14 size: 2.26e+07, edge_num: 16 mutual_info: 16.37
-  iter: 16/306 score: 17.10 size: 2.55e+07, edge_num: 17 mutual_info: 17.36
-  iter: 17/306 score: 17.71 size: 2.56e+07, edge_num: 18 mutual_info: 17.96
-  iter: 18/306 score: 18.29 size: 2.57e+07, edge_num: 19 mutual_info: 18.54
-  iter: 19/306 score: 18.86 size: 2.57e+07, edge_num: 20 mutual_info: 19.12
-  iter: 20/306 score: 19.40 size: 2.57e+07, edge_num: 21 mutual_info: 19.65
-  iter: 21/306 score: 19.88 size: 2.86e+07, edge_num: 22 mutual_info: 20.16
-  iter: 22/306 score: 20.33 size: 2.86e+07, edge_num: 23 mutual_info: 20.62
-  iter: 23/306 score: 20.77 size: 2.86e+07, edge_num: 24 mutual_info: 21.05
-  iter: 24/306 score: 21.13 size: 2.86e+07, edge_num: 25 mutual_info: 21.41
-  iter: 25/306 score: 21.55 size: 2.86e+07, edge_num: 26 mutual_info: 21.84
-  iter: 26/306 score: 21.79 size: 2.87e+07, edge_num: 27 mutual_info: 22.07
-  iter: 27/306 score: 21.85 size: 2.90e+07, edge_num: 28 mutual_info: 22.14
-  iter: 28/306 score: 21.85 size: 2.90e+07, edge_num: 29 mutual_info: 22.14
-  iter: 29/306 score: 21.85 size: 2.90e+07, edge_num: 30 mutual_info: 22.14
-  iter: 30/306 score: 21.85 size: 2.90e+07, edge_num: 31 mutual_info: 22.14
-  iter: 31/306 score: 21.85 size: 2.90e+07, edge_num: 32 mutual_info: 22.14
-  iter: 32/306 score: 21.85 size: 2.90e+07, edge_num: 33 mutual_info: 22.14
-  iter: 33/306 score: 21.81 size: 3.18e+07, edge_num: 34 mutual_info: 22.13
-  iter: 34/306 score: 21.75 size: 3.49e+07, edge_num: 35 mutual_info: 22.10
-  iter: 35/306 score: 21.52 size: 3.77e+07, edge_num: 36 mutual_info: 21.89
-  iter: 36/306 score: 21.21 size: 3.78e+07, edge_num: 37 mutual_info: 21.59
+  init score: -35.3539 query_num: 18 size: 2.9780e+03, edge_num: 0 entropy: 35.35
+average TVD and noise: 0.18978247385620917 2.6346852707749298
+  iter: 0/306 score: 9.25 size: 3.04e+03, edge_num: 1 mutual_info: 9.25
+  iter: 1/306 score: 16.29 size: 3.22e+03, edge_num: 2 mutual_info: 16.29
+  iter: 2/306 score: 22.86 size: 7.18e+03, edge_num: 3 mutual_info: 22.86
+  iter: 3/306 score: 28.53 size: 7.19e+03, edge_num: 4 mutual_info: 28.53
+  iter: 4/306 score: 33.95 size: 7.22e+03, edge_num: 5 mutual_info: 33.95
+  iter: 5/306 score: 39.19 size: 7.23e+03, edge_num: 6 mutual_info: 39.19
+  iter: 6/306 score: 44.29 size: 7.23e+03, edge_num: 7 mutual_info: 44.29
+  iter: 7/306 score: 48.84 size: 1.15e+04, edge_num: 8 mutual_info: 48.84
+  iter: 8/306 score: 53.19 size: 1.57e+04, edge_num: 9 mutual_info: 53.19
+  iter: 9/306 score: 57.36 size: 6.03e+04, edge_num: 10 mutual_info: 57.36
+  iter: 10/306 score: 61.22 size: 6.04e+04, edge_num: 11 mutual_info: 61.22
+  iter: 11/306 score: 66.24 size: 6.43e+04, edge_num: 12 mutual_info: 66.24
+  iter: 12/306 score: 69.68 size: 6.44e+04, edge_num: 13 mutual_info: 69.68
+  iter: 13/306 score: 73.11 size: 6.45e+04, edge_num: 14 mutual_info: 73.11
+  iter: 14/306 score: 76.42 size: 6.45e+04, edge_num: 15 mutual_info: 76.42
+  iter: 15/306 score: 79.88 size: 1.89e+05, edge_num: 16 mutual_info: 79.88
+  iter: 16/306 score: 83.87 size: 1.89e+05, edge_num: 17 mutual_info: 83.87
+  iter: 17/306 score: 86.64 size: 1.89e+05, edge_num: 18 mutual_info: 86.64
+  iter: 18/306 score: 89.34 size: 1.95e+05, edge_num: 19 mutual_info: 89.34
+  iter: 19/306 score: 93.81 size: 2.06e+05, edge_num: 20 mutual_info: 93.81
+  iter: 20/306 score: 96.23 size: 1.08e+06, edge_num: 21 mutual_info: 96.25
+  iter: 21/306 score: 101.20 size: 1.13e+06, edge_num: 22 mutual_info: 101.21
+  iter: 22/306 score: 104.76 size: 4.99e+06, edge_num: 23 mutual_info: 104.81
+  iter: 23/306 score: 107.13 size: 4.99e+06, edge_num: 24 mutual_info: 107.18
+  iter: 24/306 score: 109.20 size: 4.99e+06, edge_num: 25 mutual_info: 109.25
+  iter: 25/306 score: 112.18 size: 5.42e+06, edge_num: 26 mutual_info: 112.24
+  iter: 26/306 score: 116.47 size: 7.04e+06, edge_num: 27 mutual_info: 116.54
+  iter: 27/306 score: 118.22 size: 7.60e+06, edge_num: 28 mutual_info: 118.30
+  iter: 28/306 score: 119.59 size: 7.61e+06, edge_num: 29 mutual_info: 119.67
+  iter: 29/306 score: 120.53 size: 7.24e+06, edge_num: 30 mutual_info: 120.60
+  iter: 30/306 score: 121.23 size: 9.36e+06, edge_num: 31 mutual_info: 121.33
+  iter: 31/306 score: 121.23 size: 9.36e+06, edge_num: 32 mutual_info: 121.33
+  iter: 32/306 score: 121.23 size: 9.36e+06, edge_num: 33 mutual_info: 121.33
+  iter: 33/306 score: 121.50 size: 1.09e+07, edge_num: 34 mutual_info: 121.60
+  iter: 34/306 score: 121.50 size: 1.09e+07, edge_num: 35 mutual_info: 121.60
+  iter: 35/306 score: 121.50 size: 1.09e+07, edge_num: 36 mutual_info: 121.60
+  iter: 36/306 score: 121.50 size: 1.09e+07, edge_num: 37 mutual_info: 121.60
+  iter: 37/306 score: 121.50 size: 1.09e+07, edge_num: 38 mutual_info: 121.60
+  iter: 38/306 score: 121.50 size: 1.09e+07, edge_num: 39 mutual_info: 121.60
+  iter: 39/306 score: 121.50 size: 1.09e+07, edge_num: 40 mutual_info: 121.60
+  iter: 40/306 score: 121.50 size: 1.09e+07, edge_num: 41 mutual_info: 121.60
+  iter: 41/306 score: 122.23 size: 1.31e+07, edge_num: 42 mutual_info: 122.36
+  iter: 42/306 score: 122.23 size: 1.31e+07, edge_num: 43 mutual_info: 122.36
+  iter: 43/306 score: 123.97 size: 1.43e+07, edge_num: 44 mutual_info: 124.11
+  iter: 44/306 score: 124.19 size: 1.52e+07, edge_num: 45 mutual_info: 124.34
+  iter: 45/306 score: 124.19 size: 1.52e+07, edge_num: 46 mutual_info: 124.34
+  iter: 46/306 score: 124.19 size: 1.52e+07, edge_num: 47 mutual_info: 124.34
+  iter: 47/306 score: 124.19 size: 1.52e+07, edge_num: 48 mutual_info: 124.34
+  iter: 48/306 score: 124.19 size: 1.52e+07, edge_num: 49 mutual_info: 124.34
+  iter: 49/306 score: 124.19 size: 1.52e+07, edge_num: 50 mutual_info: 124.34
+  iter: 50/306 score: 123.71 size: 1.52e+07, edge_num: 51 mutual_info: 123.86
+  iter: 51/306 score: 123.03 size: 1.86e+07, edge_num: 52 mutual_info: 123.22
+  iter: 52/306 score: 122.24 size: 3.76e+07, edge_num: 53 mutual_info: 122.61
+  iter: 53/306 score: 122.39 size: 3.76e+07, edge_num: 54 mutual_info: 122.76
+  iter: 54/306 score: 122.39 size: 3.76e+07, edge_num: 55 mutual_info: 122.76
+  iter: 55/306 score: 122.39 size: 3.76e+07, edge_num: 56 mutual_info: 122.76
+  iter: 56/306 score: 122.39 size: 3.76e+07, edge_num: 57 mutual_info: 122.76
+  iter: 57/306 score: 122.39 size: 3.76e+07, edge_num: 58 mutual_info: 122.76
+  iter: 58/306 score: 122.39 size: 3.76e+07, edge_num: 59 mutual_info: 122.76
+  iter: 59/306 score: 122.18 size: 3.99e+07, edge_num: 60 mutual_info: 122.58
+  iter: 60/306 score: 121.28 size: 4.00e+07, edge_num: 61 mutual_info: 121.67
+  iter: 61/306 score: 120.33 size: 4.89e+07, edge_num: 62 mutual_info: 120.82
+  iter: 62/306 score: 119.17 size: 4.89e+07, edge_num: 63 mutual_info: 119.66
+  iter: 63/306 score: 117.88 size: 4.90e+07, edge_num: 64 mutual_info: 118.37
+  iter: 64/306 score: 115.65 size: 4.91e+07, edge_num: 65 mutual_info: 116.14
+  iter: 65/306 score: 114.70 size: 4.91e+07, edge_num: 66 mutual_info: 115.19
+  iter: 66/306 score: 112.15 size: 4.92e+07, edge_num: 67 mutual_info: 112.64
+  iter: 67/306 score: 108.89 size: 4.92e+07, edge_num: 68 mutual_info: 109.38
   found local minimum
   found local minimum
   found local minimum
 construct Bayesian Network for maximal cliques
-  [16, 0, 3], 0/13
-unable to construct Bayes network under dom limitation [16, 0, 3]
-  [16, 0, 12], 1/13
-unable to construct Bayes network under dom limitation [16, 0, 12]
-  [16, 4, 11, 13], 2/13
-unable to construct Bayes network under dom limitation [16, 4, 11, 13]
-  [16, 4, 12], 3/13
-unable to construct Bayes network under dom limitation [16, 4, 12]
-  [16, 5, 17, 15], 4/13
-unable to construct Bayes network under dom limitation [16, 5, 17, 15]
-  [16, 7, 8, 6], 5/13
-unable to construct Bayes network under dom limitation [16, 7, 8, 6]
-  [16, 7, 12], 6/13
-unable to construct Bayes network under dom limitation [16, 7, 12]
-  [16, 7, 14], 7/13
-unable to construct Bayes network under dom limitation [16, 7, 14]
-  [16, 9, 17, 15], 8/13
-unable to construct Bayes network under dom limitation [16, 9, 17, 15]
-  [16, 9, 12], 9/13
-unable to construct Bayes network under dom limitation [16, 9, 12]
-  [1, 9, 12], 10/13
-unable to construct Bayes network under dom limitation [1, 9, 12]
-  [2, 12, 7], 11/13
-unable to construct Bayes network under dom limitation [2, 12, 7]
-  [10, 0, 12], 12/13
-unable to construct Bayes network under dom limitation [10, 0, 12]
+  [0, 4, 8, 9, 5, 14], 0/13
+unable to construct Bayes network under dom limitation [0, 4, 8, 9, 5, 14]
+  [1, 9, 4, 8, 17, 10], 1/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 8, 17, 10]
+  [1, 9, 4, 8, 10, 12], 2/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 8, 10, 12]
+  [1, 9, 4, 8, 5, 12], 3/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 8, 5, 12]
+  [1, 9, 4, 8, 5, 6], 4/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 8, 5, 6]
+  [1, 9, 4, 8, 5, 14], 5/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 8, 5, 14]
+  [1, 9, 4, 11, 10, 17], 6/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 11, 10, 17]
+  [1, 9, 4, 11, 10, 3], 7/13
+unable to construct Bayes network under dom limitation [1, 9, 4, 11, 10, 3]
+  [1, 9, 13, 8, 14], 8/13
+unable to construct Bayes network under dom limitation [1, 9, 13, 8, 14]
+  [1, 9, 13, 8, 15], 9/13
+unable to construct Bayes network under dom limitation [1, 9, 13, 8, 15]
+  [1, 7, 8, 13, 14], 10/13
+unable to construct Bayes network under dom limitation [1, 7, 8, 13, 14]
+  [2, 8, 13, 14, 7], 11/13
+unable to construct Bayes network under dom limitation [2, 8, 13, 14, 7]
+  [16, 10, 12], 12/13
+unable to construct Bayes network under dom limitation [16, 10, 12]
 attr measure []
 single attr measure: 0
 single attr measure: 1
@@ -97,9 +128,9 @@ single attr measure: 14
 single attr measure: 15
 single attr measure: 16
 single attr measure: 17
-model size: 3.7841e+07
-noisy data num: 999 data num: 1000
-clique length: [3, 3, 4, 3, 4, 4, 3, 3, 4, 3, 3, 3, 3]
+model size: 4.9244e+07
+noisy data num: 1009 data num: 1000
+clique length: [6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 3]
 convergence_ratio 1.2
 final_convergence_ratio 0.7
 k: 400
@@ -107,79 +138,9 @@ initial measure number: 18
 initial measure set:
      [(6,), (12,), (2,), (15,), (5,), (11,), (8,), (14,), (4,), (17,), (1,), (7,), (10,), (16,), (0,), (13,), (3,), (9,)]
     measure count:  [18]
-  marginal noise:            25.58365072899422
-  max 2way measure dom:      8.156646839558952
-  max high way measure dom:  8.156646839558952
+  marginal noise:            214.91869475723684
+  max 2way measure dom:      0.9806762552537771
+  max high way measure dom:  0.9806762552537771
   max de measure num         14
 ed_step_num: 8
-  generate measure for clique (0, 3, 16), size: 1.33e+05
-  generate measure for clique (0, 12, 16), size: 7.81e+06
-  generate measure for clique (4, 11, 13, 16), size: 3.18e+06
-  generate measure for clique (4, 12, 16), size: 2.93e+06
-  generate measure for clique (5, 15, 16, 17), size: 2.97e+06
-  generate measure for clique (6, 7, 8, 16), size: 2.87e+05
-  generate measure for clique (7, 12, 16), size: 6.83e+06
-  generate measure for clique (7, 14, 16), size: 5.74e+06
-  generate measure for clique (9, 15, 16, 17), size: 2.97e+06
-  generate measure for clique (9, 12, 16), size: 4.88e+06
-  generate measure for clique (1, 9, 12), size: 3.00e+04
-  generate measure for clique (2, 7, 12), size: 2.80e+04
-  generate measure for clique (0, 10, 12), size: 4.00e+04
-consider measure set:
-    measure count:  [18]
-theoretic loss: 9.8473e+05
-mirror descent
-    it: 0/3000 loss: 3.6654e+06 time: 1.41
-    it: 50/3000 loss: 8.1630e+05 time: 3.68
-entropy: 30.30329495001324
-measure num list [2, 2, 2, 2, 2, 2, 1, 1]
-entropy descent step: 0/8
-  consider measure set:
-    measure count:  [18]
-   18 2
-  marginal norm noise: 153.50190437396532
-  new selected measure list
-    [(12,), np.float64(0.8125420729737225), np.float64(0.8303851312127772)]
-    [(16,), np.float64(0.7081307857074051), np.float64(0.7834049520386601)]
-  consider measure list 18
-  measure num: 18
-    measure count:  [18]
-  theoretic loss: 9.8473e+05
-mirror descent
-    it: 0/3000 loss: 9.4270e+05 time: 1.90
-    it: 50/3000 loss: 8.4686e+05 time: 3.45
-entropy: 28.94593055440005
-entropy descent step: 1/8
-  consider measure set:
-    measure count:  [16]
-   16 2
-  marginal norm noise: 144.7229833438398
-  new selected measure list
-    [(14,), np.float64(0.7981386358278239), np.float64(0.8723928921307683)]
-    [(8,), np.float64(0.27190311097906855), np.float64(0.20199999999999602)]
-  consider measure list 16
-  measure num: 18
-    measure count:  [18]
-  theoretic loss: 9.8473e+05
-mirror descent
-    it: 0/3000 loss: 8.9412e+05 time: 1.99
-    it: 50/3000 loss: 8.4304e+05 time: 3.88
-entropy: 28.477260798919133
-entropy descent step: 2/8
-  consider measure set:
-    measure count:  [14]
-   14 2
-  marginal norm noise: 135.37595491611006
-  new selected measure list
-    [(15,), np.float64(0.19810789613119947), np.float64(0.06430997675909643)]
-    [(11,), np.float64(0.16010838601736987), np.float64(0.19573846336921608)]
-  consider measure list 14
-  measure num: 18
-    measure count:  [18]
-  theoretic loss: 9.8473e+05
-mirror descent
-    it: 0/3000 loss: 8.6536e+05 time: 2.03
-    it: 50/3000 loss: 8.4187e+05 time: 2.04
-entropy: 28.43165146352044
-entropy descent step: 3/8
-  consider measure set:ize: 7.69e+05.79e+06
+  generate measure for clique (0, 4, 5, 8, 9, 14), size: 5.07e+06

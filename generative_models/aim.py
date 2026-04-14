@@ -3,14 +3,17 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+import torch
 
 from utils.constants import CATEGORICAL, ORDINAL
 from utils.logging import LOGGER
+from utils.device_utils import get_device, validate_and_get_device
 
 from generative_models.generative_model import GenerativeModel
 from method.AIM.aim import AIM as AIMMechanism
 from method.AIM.mbi.Dataset import Dataset
 from method.AIM.mbi.Domain import Domain
+from method.AIM.mbi.torch_factor import Factor
 
 
 class AIM(GenerativeModel):
@@ -18,7 +21,7 @@ class AIM(GenerativeModel):
 
     def __init__(self, metadata=None, epsilon=1.0, delta=1e-5, degree=2, 
                  max_model_size=80, max_iters=1000, max_cells=10000, bounded=False, rounds=None, 
-                 multiprocess=False,
+                 multiprocess=False, device=None,
     ):
         self.metadata = metadata
         self.epsilon = epsilon
@@ -30,6 +33,9 @@ class AIM(GenerativeModel):
         self.bounded = bounded
         self.rounds = rounds
         self.multiprocess = bool(multiprocess)
+        
+        # Set device with fallback to default
+        self.device, self.is_gpu = validate_and_get_device(device)
 
         self.datatype = DataFrame
         self.mechanism = None
@@ -38,6 +44,11 @@ class AIM(GenerativeModel):
         self.__name__ = 'AIM'
 
         self._reverse_maps = {}
+        
+        # Set the device for torch_factor
+        Factor.set_device(self.device)
+        
+        LOGGER.debug(f"AIM initialized with device: {self.device} (GPU: {self.is_gpu})")
 
     def fit(self, data):
         assert isinstance(data, self.datatype), (
