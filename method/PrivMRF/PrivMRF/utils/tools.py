@@ -383,7 +383,6 @@ def print_graph(G, path):
     nx.draw(G, with_labels=True, edge_color='b', node_color='g', node_size=20, font_size=4, width=0.5)
     plt.rcParams['figure.figsize'] = (4, 3)
     plt.rcParams['savefig.dpi'] = 600
-    plt.show()
     plt.savefig(path)
 
 def read_json_domain(domain_path):
