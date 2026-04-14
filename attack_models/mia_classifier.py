@@ -3,10 +3,7 @@ from pandas import DataFrame
 from pandas.api.types import CategoricalDtype
 from numpy import ndarray, concatenate, stack, array, round, zeros, arange
 import pandas as pd
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
+from utils.classifier_fallback import get_svc, get_logistic_regression, get_random_forest_classifier, get_knn_classifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import ShuffleSplit
 
@@ -46,7 +43,7 @@ class MIAttackClassifier(PrivacyAttack):
         if not isinstance(labels, ndarray):
             labels = array(labels)
 
-        self.Distinguisher.fit(synA, labels)
+        self.Distinguisher.fit(synA.astype('float32'), labels)
 
         self.trained = True
 
@@ -87,7 +84,7 @@ class MIAttackClassifier(PrivacyAttack):
         else:
             f = self._df_to_array(df).reshape(1, -1)
 
-        return round(self.Distinguisher.predict(f), 0).astype(int)[0]
+        return round(self.Distinguisher.predict(f.astype('float32')), 0).astype(int)[0]
 
 
     def get_confidence(self, synT, secret):
@@ -101,7 +98,7 @@ class MIAttackClassifier(PrivacyAttack):
             else:
                 synT = stack([s.flatten() for s in synT])
 
-        probs = self.Distinguisher.predict_proba(synT)
+        probs = self.Distinguisher.predict_proba(synT.astype('float32'))
 
         return [p[s] for p,s in zip(probs, secret)]
 
@@ -196,31 +193,31 @@ class MIAttackClassifier(PrivacyAttack):
 class MIAttackClassifierLinearSVC(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None):
-        super().__init__(SVC(kernel='linear', probability=True), metadata, FeatureSet)
+        super().__init__(get_svc(kernel='linear', probability=True), metadata, FeatureSet)
 
 
 class MIAttackClassifierSVC(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None):
-        super().__init__(SVC(probability=True), metadata, FeatureSet)
+        super().__init__(get_svc(probability=True), metadata, FeatureSet)
 
 
 class MIAttackClassifierLogReg(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None):
-        super().__init__(LogisticRegression(), metadata, FeatureSet)
+        super().__init__(get_logistic_regression(), metadata, FeatureSet)
 
 
 class MIAttackClassifierRandomForest(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(RandomForestClassifier(), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+        super().__init__(get_random_forest_classifier(), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
 
 
 class MIAttackClassifierKNN(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(KNeighborsClassifier(n_neighbors=5), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+        super().__init__(get_knn_classifier(n_neighbors=5), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
 
 
 class MIAttackClassifierMLP(MIAttackClassifier):
