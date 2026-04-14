@@ -52,7 +52,7 @@ class PATEGAN(GenerativeModel):
         # For TensorFlow, device should be 'gpu' or '' (empty for CPU)
         self.device_str, self.is_gpu = validate_and_get_device(device)
         # Convert PyTorch device string to TensorFlow format
-        if 'cuda' in self.device_str:
+        if 'cuda' in self.device_str or self.device_str.lower().startswith('gpu'):
             self.device = 'gpu'
         else:
             self.device = ''  # TensorFlow uses empty string for CPU
@@ -75,7 +75,7 @@ class PATEGAN(GenerativeModel):
                 device_name = ''
         else:
             device_name = ''
-        
+
         if device_name == '':
             self.device_spec = tf.DeviceSpec(device_type='CPU', device_index=0)
             # On CPU, use a per-instance graph so that ops don't accumulate in
@@ -83,7 +83,13 @@ class PATEGAN(GenerativeModel):
             # which causes TF threads to stall (CPU usage drops to 0).
             self.graph = tf.Graph()
         else:
-            self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=0)
+            gpu_index = 0
+            if self.device_str.startswith('cuda:'):
+                try:
+                    gpu_index = int(self.device_str.split(':', 1)[1])
+                except ValueError:
+                    gpu_index = 0
+            self.device_spec = tf.DeviceSpec(device_type='GPU', device_index=gpu_index)
             self.graph = None  # use the default graph on GPU (original behaviour)
 
         with self._graph_ctx():

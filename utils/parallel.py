@@ -1,7 +1,8 @@
 """Parallel execution utilities for model evaluation"""
 import importlib
 import os
-from multiprocessing import Pool
+import warnings
+from multiprocessing import cpu_count, get_context
 
 from numpy.random import seed
 from tqdm import tqdm
@@ -76,6 +77,11 @@ class _StarmapHelper:
         return self.fn(*args)
 
 
+def _gpu_device_requested():
+    device = os.environ.get('SYNTHETIC_DATA_DEVICE', '')
+    return bool(device) and ('cuda' in device.lower() or device.lower().startswith('gpu'))
+
+
 def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
     """Run tasks in parallel using multiprocessing.Pool with tqdm progress bar.
 
@@ -90,8 +96,18 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
     if max_workers == 1:
         return [worker_fn(*task) for task in tqdm(tasks, desc=desc)]
     if max_workers is None:
-        max_workers = 1
-    with Pool(max_workers, initializer=_worker_init) as pool:
+        if _gpu_device_requested():
+            max_workers = min(1, len(tasks))
+        else:
+            max_workers = min(cpu_count(), len(tasks))
+    elif _gpu_device_requested() and max_workers > 1:
+        warnings.warn(
+            'CUDA device requested via SYNTHETIC_DATA_DEVICE; using more than one worker may oversubscribe the GPU.',
+            UserWarning
+        )
+
+    ctx = get_context('spawn') if _gpu_device_requested() else get_context()
+    with ctx.Pool(max_workers, initializer=_worker_init) as pool:
         results = list(tqdm(
             pool.imap_unordered(_StarmapHelper(worker_fn), tasks),
             total=len(tasks),
