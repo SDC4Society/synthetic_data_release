@@ -14,7 +14,7 @@
 
 各データセットは `.csv`（データ本体）と `.json`（カラムメタデータ）のペアで構成される。CLIの `-D` オプションには拡張子なしのパスを指定する。
 
-MovieLens データセットの詳細（列構成・rarity 計算・前処理リポジトリへのリンク等）は `data/movielens/README.md` を参照。古い flat レイアウト（`data/ml_col3_*.csv`, `data/ml_col19_*.csv`）は legacy として残置している。
+MovieLens データセットの詳細（列構成・rarity 計算・前処理リポジトリへのリンク等）は `data/movielens/README.md` を参照。
 
 ---
 
