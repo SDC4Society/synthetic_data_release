@@ -9,6 +9,7 @@ from pandas import DataFrame
 from generative_models.generative_model import GenerativeModel
 from utils.constants import CATEGORICAL, FLOAT, INTEGER, ORDINAL
 from utils.logging import LOGGER
+from utils.device_utils import validate_and_get_device
 
 
 make_dataset_from_df = None
@@ -69,14 +70,16 @@ class TabDDPM(GenerativeModel):
         lr=1e-4,
         batch_size=1024,
         num_timesteps=100,
-        device='cpu',
+        device=None,
     ):
+        # Set device with device_utils
+        self.device, self.is_gpu = validate_and_get_device(device)
+        
         self.metadata = metadata
         self.steps = steps
         self.lr = lr
         self.batch_size = batch_size
         self.num_timesteps = num_timesteps
-        self.device = device
 
         self.datatype = DataFrame
         self.diffusion = None

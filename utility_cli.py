@@ -3,6 +3,7 @@ Command-line interface for running utility evaluation
 """
 
 import json
+import os
 
 from os import mkdir, path
 from numpy import mean
@@ -144,7 +145,17 @@ def main():
     argparser.add_argument('--outdir', '-O', default='outputs/test', type=str, help='Path relative to cwd for storing output files')
     argparser.add_argument('--workers', '-W', type=int, default=None,
                            help='Number of parallel workers (default: CPU count)')
+    argparser.add_argument('--device', type=str, default=None,
+                           help='Device to use for models (e.g., "cpu", "cuda:0"). Defaults to GPU if available, otherwise CPU.')
     args = argparser.parse_args()
+    
+    # Set device environment variable for models
+    if args.device:
+        os.environ['SYNTHETIC_DATA_DEVICE'] = args.device
+        LOGGER.info(f"Device set to: {args.device}")
+        # Force CPU-only mode if device is 'cpu' to avoid TensorFlow GPU initialization errors
+        if args.device == 'cpu':
+            os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
     seed(SEED)
     # Load runconfig

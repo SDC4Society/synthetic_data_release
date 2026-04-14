@@ -6,6 +6,20 @@ class Factor:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    @classmethod
+    def set_device(cls, device: str):
+        """Set the device for all Factor instances.
+        
+        Args:
+            device: Device string (e.g., 'cpu', 'cuda', 'cuda:0')
+        """
+        cls.device = device
+        # Validate device
+        try:
+            torch.tensor([1.0], device=device)
+        except RuntimeError as e:
+            raise ValueError(f"Invalid device '{device}': {e}")
+
     def __init__(self, domain, values):
         """ Initialize a factor over the given domain
 
