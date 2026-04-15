@@ -11,6 +11,7 @@ from numpy.random import choice, seed
 import pandas as pd
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
+from sklearn.model_selection import train_test_split
 from utils.parallel import create_model, create_utility_task
 from utils.evaluation_framework import EvaluationEngine
 
@@ -153,8 +154,8 @@ def main():
         rawTrain = rawPop.query(runconfig['dataFilter']['train'])
         rawTest = rawPop.query(runconfig['dataFilter']['test'])
     else:
-        rawTrain = rawPop
-        rawTest = rawPop
+        # Default to 50/50 random split if no filter is provided
+        rawTrain, rawTest = train_test_split(rawPop, test_size=0.5, random_state=SEED)
 
     # Pick targets
     targetIDs = choice(list(rawTrain.index), size=runconfig['nTargets'], replace=False).tolist()
