@@ -37,7 +37,10 @@ def utility_eval_gm_worker(model_config, rawTout, targets, targetIDs,
     :return: tuple: (model_name, results_target dict, results_agg dict)
     """
     model = create_model(model_config, metadata)
+    model.set_seed(SEED)
     utility_tasks = [create_utility_task(cfg, metadata) for cfg in utility_task_configs]
+    for ut in utility_tasks:
+        ut.set_seed(SEED)
     nSynT = runconfig['nSynT']
     sizeSynT = runconfig['sizeSynT']
 
@@ -91,8 +94,11 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
     :return: tuple: (model_name, results_target dict, results_agg dict)
     """
     model = create_model(model_config, metadata)
+    model.set_seed(SEED)
     attack_metadata = model.get_output_metadata(metadata)
     utility_tasks = [create_utility_task(cfg, attack_metadata) for cfg in utility_task_configs]
+    for ut in utility_tasks:
+        ut.set_seed(SEED)
     nSynT = runconfig['nSynT']
 
     results_target = {}
@@ -220,6 +226,7 @@ def main():
 
         for ut_cfg in utility_task_configs:
             ut = create_utility_task(ut_cfg, metadata)
+            ut.set_seed(SEED)
 
             resultsTargetUtility[ut.__name__]['Raw'][nr] = {}
 
@@ -243,6 +250,7 @@ def main():
 
             for ut_cfg in utility_task_configs:
                 ut = create_utility_task(ut_cfg, metadata)
+                ut.set_seed(SEED)
 
                 predErrorTargets = []
                 predErrorAggr = []

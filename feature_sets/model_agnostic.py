@@ -42,7 +42,10 @@ class NaiveFeatureSet(FeatureSet):
                 else:
                     if c in self.category_codes.keys():
                         new_cats = set(col.astype('category').cat.categories).difference(set(self.category_codes[c]))
-                        self.category_codes[c] += list(new_cats)
+                        # Calling list(set) does not ensure consistent items order.
+                        # Thus, sort list(new_cats) to ensure it, which is crucial for 
+                        # reproducibility.
+                        self.category_codes[c] += sorted(list(new_cats))
                         col = col.astype(CategoricalDtype(categories=self.category_codes[c]))
                     else:
                         col = col.astype('category')
