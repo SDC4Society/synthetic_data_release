@@ -4,6 +4,7 @@ Command-line interface for running utility evaluation
 
 import json
 import os
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 from os import path
 from numpy import mean
