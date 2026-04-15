@@ -86,6 +86,11 @@ class ClassificationTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
+        if data.empty:
+            LOGGER.warning(f"Training data is empty for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
+
         features = self.pipeline.fit_transform(data).astype('float32')
         labels = data[self.labelCol].apply(lambda x: self.labels[x]).values
 
@@ -106,6 +111,10 @@ class ClassificationTask(PredictiveModel):
     def evaluate(self, data):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
+
+        if not self.trained:
+            # Return list of zeros (worst accuracy)
+            return [0] * len(data)
 
         features = self.pipeline.transform(data).astype('float32')
         labelsTrue = data[self.labelCol].apply(lambda x: self.labels[x]).values
@@ -155,6 +164,11 @@ class RegressionTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
+        if data.empty:
+            LOGGER.warning(f"Training data is empty for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
+
         features = self.pipeline.fit_transform(data).astype('float32')
         labels = data[self.labelCol].values
 
@@ -175,6 +189,10 @@ class RegressionTask(PredictiveModel):
     def evaluate(self, data):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
+
+        if not self.trained:
+            # Return high error values
+            return [1e6] * len(data)
 
         features = self.pipeline.transform(data).astype('float32')
         labelsTrue = data[self.labelCol].values
