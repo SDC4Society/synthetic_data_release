@@ -1,9 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from bisect import bisect_right
 from random import uniform
+from random import seed as pyrand_seed
 
 import numpy as np
 from numpy.random import choice
+from numpy.random import seed as np_seed
 from pandas import Series
 
 from generative_models.data_synthesiser_utils.utils import normalize_given_distribution
@@ -28,6 +30,11 @@ class AbstractAttribute(object):
         self.distribution_bins = None
         self.distribution_probabilities = None
         self.domain_size = None
+
+    def set_seed(self, seed: int | None):
+        """Set a seed for reproducibility"""
+        pyrand_seed(seed)
+        np_seed(seed)
 
     def set_domain(self, domain):
         return NotImplementedError('Method needs to be overwritten.')

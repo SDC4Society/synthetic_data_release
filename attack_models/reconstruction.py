@@ -35,6 +35,14 @@ class AttributeInferenceAttack(PrivacyAttack):
 
         self.__name__ = f'{self.PredictionModel.__class__.__name__}'
 
+    def set_seed(self, seed: int | None):
+        """Set a seed for reproducibility"""
+        self.seed = seed
+        try:
+            self.PredictionModel.random_state = seed
+        except AttributeError:
+            LOGGER.debug(f'{self.PredictionModel.__class__.__name__} does not support/need random_state, or it uses a different name.')
+
     def attack(self, targetAux, attemptLinkage=False, data=None):
         """Makes a guess about the target's secret attribute"""
         assert self.trained, 'Attack must first be trained on some data before can predict sensitive target value'
