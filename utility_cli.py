@@ -154,8 +154,21 @@ def main():
         rawTrain = rawPop.query(runconfig['dataFilter']['train'])
         rawTest = rawPop.query(runconfig['dataFilter']['test'])
     else:
-        # Default to 50/50 random split if no filter is provided
-        rawTrain, rawTest = train_test_split(rawPop, test_size=0.5, random_state=SEED)
+        specified_targets = runconfig.get('Targets') or []
+        specified_test_records = runconfig.get('TestRecords') or []
+        reserved_ids = set(specified_targets) | set(specified_test_records)
+        if reserved_ids:
+            mask_targets = rawPop.index.isin(specified_targets)
+            mask_test = rawPop.index.isin(specified_test_records)
+            reserved_train = rawPop[mask_targets & ~mask_test]
+            reserved_test = rawPop[mask_test & ~mask_targets]
+            rest = rawPop[~mask_targets & ~mask_test]
+            rest_train, rest_test = train_test_split(rest, test_size=0.5, random_state=SEED)
+            rawTrain = pd.concat([reserved_train, rest_train])
+            rawTest = pd.concat([reserved_test, rest_test])
+        else:
+            # Default to 50/50 random split if no filter is provided
+            rawTrain, rawTest = train_test_split(rawPop, test_size=0.5, random_state=SEED)
 
     # Pick targets
     targetIDs = choice(list(rawTrain.index), size=runconfig['nTargets'], replace=False).tolist()
