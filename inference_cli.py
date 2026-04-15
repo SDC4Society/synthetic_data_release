@@ -223,6 +223,7 @@ def main():
             rawTin = pd.concat([rawTout, target])
 
             for sa, Attack in attacks.items():
+                Attack.train(rawTin)
                 targetAux = target.loc[[tid], Attack.knownAttributes]
                 targetSecret = target.loc[tid, Attack.sensitiveAttribute]
 
