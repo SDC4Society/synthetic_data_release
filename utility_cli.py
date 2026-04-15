@@ -3,16 +3,17 @@ Command-line interface for running utility evaluation
 """
 
 import json
+import os
 
-from os import mkdir, path
+from os import path
 from numpy import mean
 from numpy.random import choice, seed
-from argparse import ArgumentParser
 import pandas as pd
-from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
-from utils.parallel import create_model, create_utility_task, is_generative_model, run_parallel_models
+from sklearn.model_selection import train_test_split
+from utils.parallel import create_model, create_utility_task
+from utils.evaluation_framework import EvaluationEngine
 
 def _deep_tuple(obj):
     """Recursively convert lists to tuples so nested configs are hashable."""
@@ -136,44 +137,38 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
 
 
 def main():
-    argparser = ArgumentParser()
-    datasource = argparser.add_mutually_exclusive_group()
-    datasource.add_argument('--s3name', '-S3', type=str, choices=['adult', 'census', 'credit', 'alarm', 'insurance'], help='Name of the dataset to run on')
-    datasource.add_argument('--datapath', '-D', type=str, help='Relative path to cwd of a local data file')
-    argparser.add_argument('--runconfig', '-RC', default='runconfig_mia.json', type=str, help='Path relative to cwd of runconfig file')
-    argparser.add_argument('--outdir', '-O', default='outputs/test', type=str, help='Path relative to cwd for storing output files')
-    argparser.add_argument('--workers', '-W', type=int, default=None,
-                           help='Number of parallel workers (default: CPU count)')
-    args = argparser.parse_args()
+    engine = EvaluationEngine(description="Command-line interface for running utility evaluation")
+    engine.setup(cwd)
 
-    seed(SEED)
-    # Load runconfig
-    with open(path.join(cwd, args.runconfig)) as f:
-        runconfig = json.load(f)
-    print('Runconfig:')
-    print(runconfig)
-
-    # Load data
-    if args.s3name is not None:
-        rawPop, metadata = load_s3_data_as_df(args.s3name)
-        dname = args.s3name
-    else:
-        rawPop, metadata = load_local_data_as_df(path.join(cwd, args.datapath))
-        dname = args.datapath.split('/')[-1]
-
-    print(f'Loaded data {dname}:')
-    print(rawPop.info())
-
-    # Make sure outdir exists
-    if not path.isdir(args.outdir):
-        mkdir(args.outdir)
+    runconfig = engine.runconfig
+    rawPop = engine.rawPop
+    metadata = engine.metadata
+    dname = engine.dname
+    args = engine.args
 
     ########################
     #### GAME INPUTS #######
     ########################
     # Train test split
-    rawTrain = rawPop.query(runconfig['dataFilter']['train'])
-    rawTest = rawPop.query(runconfig['dataFilter']['test'])
+    if 'dataFilter' in runconfig and runconfig['dataFilter']:
+        rawTrain = rawPop.query(runconfig['dataFilter']['train'])
+        rawTest = rawPop.query(runconfig['dataFilter']['test'])
+    else:
+        specified_targets = runconfig.get('Targets') or []
+        specified_test_records = runconfig.get('TestRecords') or []
+        reserved_ids = set(specified_targets) | set(specified_test_records)
+        if reserved_ids:
+            mask_targets = rawPop.index.isin(specified_targets)
+            mask_test = rawPop.index.isin(specified_test_records)
+            reserved_train = rawPop[mask_targets & ~mask_test]
+            reserved_test = rawPop[mask_test & ~mask_targets]
+            rest = rawPop[~mask_targets & ~mask_test]
+            rest_train, rest_test = train_test_split(rest, test_size=0.5, random_state=SEED)
+            rawTrain = pd.concat([reserved_train, rest_train])
+            rawTest = pd.concat([reserved_test, rest_test])
+        else:
+            # Default to 50/50 random split if no filter is provided
+            rawTrain, rawTest = train_test_split(rawPop, test_size=0.5, random_state=SEED)
 
     # Pick targets
     targetIDs = choice(list(rawTrain.index), size=runconfig['nTargets'], replace=False).tolist()
@@ -196,18 +191,6 @@ def main():
 
     testRecords = rawTest.loc[testRecordIDs, :]
 
-    # Build serializable model configs for parallel execution
-    all_model_configs = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            for params in paramsList:
-                all_model_configs.append((gm, *params))
-
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            for params in paramsList:
-                all_model_configs.append((name, *params))
-
     # Build serializable utility task configs
     utility_task_configs = []
     for taskName, paramsList in runconfig['utilityTasks'].items():
@@ -217,29 +200,14 @@ def main():
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Build model_name lookup from configs
-    _model_names = {}
-    for cfg in all_model_configs:
-        m = create_model(cfg, metadata)
-        _model_names[_deep_tuple(cfg)] = m.__name__
-
-    # Separate gm and san configs
-    gm_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                  if is_generative_model(create_model(cfg, metadata))]
-    san_configs = [(cfg, _model_names[_deep_tuple(cfg)]) for cfg in all_model_configs
-                   if not is_generative_model(create_model(cfg, metadata))]
-
     # Build utility task names
     ut_names = []
     for cfg in utility_task_configs:
         ut = create_utility_task(cfg, metadata)
         ut_names.append(ut.__name__)
 
-    resultsTargetUtility = {ut_name: {name: {} for name in list(_model_names.values()) + ['Raw']}
-                           for ut_name in ut_names}
-    resultsAggUtility = {ut_name: {name: {'TargetID': [], 'Accuracy': []}
-                                   for name in list(_model_names.values()) + ['Raw']}
-                         for ut_name in ut_names}
+    resultsTargetUtility = {ut_name: {'Raw': {}} for ut_name in ut_names}
+    resultsAggUtility = {ut_name: {'Raw': {'TargetID': [], 'Accuracy': []}} for ut_name in ut_names}
 
     for nr in range(runconfig['nIter']):
         rIdx = choice(list(rawTrainWoTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
@@ -298,48 +266,44 @@ def main():
         gm_tasks = [
             (cfg, rawTout, targets, targetIDs,
              utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
-            for cfg, _ in gm_configs
+            for cfg in engine.gm_configs
         ]
         san_tasks = [
             (cfg, rawTout, targets, targetIDs,
              utility_task_configs, testRecords, testRecordIDs, rawTest, metadata, runconfig)
-            for cfg, _ in san_configs
+            for cfg in engine.san_configs
         ]
 
-        all_results = []
-        if gm_tasks:
-            all_results.extend(run_parallel_models(
-                utility_eval_gm_worker, gm_tasks, max_workers=args.workers,
-                desc=f"GM eval {nr+1}/{runconfig['nIter']}"))
-        if san_tasks:
-            all_results.extend(run_parallel_models(
-                utility_eval_san_worker, san_tasks, max_workers=args.workers,
-                desc=f"San eval {nr+1}/{runconfig['nIter']}"))
+        all_results = engine.run_parallel_evaluation(
+            eval_gm_worker=utility_eval_gm_worker,
+            eval_san_worker=utility_eval_san_worker,
+            san_tasks=san_tasks,
+            gm_tasks=gm_tasks,
+            iter_idx=nr,
+            desc_prefix="eval"
+        )
 
         for model_name, results_target, results_agg in all_results:
             for (ut_name, tid_or_out), result_dict in results_target.items():
                 if ut_name not in resultsTargetUtility:
-                    continue
+                    resultsTargetUtility[ut_name] = {}
+                if model_name not in resultsTargetUtility[ut_name]:
+                    resultsTargetUtility[ut_name][model_name] = {}
                 if nr not in resultsTargetUtility[ut_name][model_name]:
                     resultsTargetUtility[ut_name][model_name][nr] = {}
                 resultsTargetUtility[ut_name][model_name][nr][tid_or_out] = result_dict
 
             for ut_name, entries in results_agg.items():
+                if ut_name not in resultsAggUtility:
+                    resultsAggUtility[ut_name] = {}
+                if model_name not in resultsAggUtility[ut_name]:
+                    resultsAggUtility[ut_name][model_name] = {'TargetID': [], 'Accuracy': []}
                 for tid_or_out, accuracy in entries:
                     resultsAggUtility[ut_name][model_name]['TargetID'].append(tid_or_out)
                     resultsAggUtility[ut_name][model_name]['Accuracy'].append(accuracy)
 
-    outfile = f"ResultsUtilTargets_{dname}"
-    LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
-
-    with open(path.join(f'{args.outdir}', f'{outfile}.json'), 'w') as f:
-        json.dump(resultsTargetUtility, f, indent=2, default=json_numpy_serialzer)
-
-    outfile = f"ResultsUtilAgg_{dname}"
-    LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
-
-    with open(path.join(f'{args.outdir}', f'{outfile}.json'), 'w') as f:
-        json.dump(resultsAggUtility, f, indent=2, default=json_numpy_serialzer)
+    engine.dump_results(resultsTargetUtility, prefix="ResultsUtilTargets")
+    engine.dump_results(resultsAggUtility, prefix="ResultsUtilAgg")
 
 
 if __name__ == "__main__":

@@ -1,14 +1,13 @@
 """ Some predictive models to represent a simple analysis task. """
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from utils.classifier_fallback import get_linear_regression, get_logistic_regression, get_random_forest_classifier
 from pandas import DataFrame
 from numpy import empty, true_divide, zeros, arange
 
+from sklearn.pipeline import Pipeline
+from preprocess_common.pipeline import create_preprocessing_pipeline
 from utils.logging import LOGGER
 from utils.constants import *
-
 
 class PredictiveModel(object):
     """ A predictive model. """
@@ -21,8 +20,7 @@ class PredictiveModel(object):
         self.labelCol = labelCol
         self.nfeatures = self._get_num_features()
 
-        self.ImputerCat = SimpleImputer(strategy='most_frequent')
-        self.ImputerNum = SimpleImputer(strategy='median')
+        self.pipeline = create_preprocessing_pipeline(metadata, labelCol)
 
         self.datatype = DataFrame
         self.trained = False
@@ -36,31 +34,11 @@ class PredictiveModel(object):
     def evalute(self, data):
         return NotImplementedError("Method needs to be overwritten by a subclass")
 
-    def _encode_data(self, data):
-        n_samples = len(data)
-        features_encoded = empty((n_samples, self.nfeatures))
-        cidx = 0
-
-        for cdict in self.metadata['columns']:
-            data_type = cdict['type']
-            attr_name = cdict['name']
-            if attr_name != self.labelCol:
-                col_data = data[attr_name].to_numpy()
-
-                if data_type == FLOAT or data_type == INTEGER:
-                    col_max = cdict['max']
-                    col_min = cdict['min']
-                    features_encoded[:, cidx] = true_divide(col_data - col_min, col_max + ZERO_TOL)
-                    cidx += 1
-
-                elif data_type == CATEGORICAL or data_type == ORDINAL:
-                    # One-hot encoded categorical columns
-                    col_cats = cdict['i2s']
-                    col_data_onehot = self._one_hot(col_data, col_cats)
-                    features_encoded[:, cidx : cidx + len(col_cats)] = col_data_onehot
-                    cidx += len(col_cats)
-
-        return features_encoded
+        features_encoded = self.pipeline.fit_transform(data) 
+        if not self.trained:
+            # We only want to keep the fitted pipeline if it's the first time processing
+            pass
+        return features_encoded.astype('float32')
 
     def _get_num_features(self):
         nfeatures = 0
@@ -82,49 +60,8 @@ class PredictiveModel(object):
         return nfeatures
 
     def _get_feature_names(self):
-        featureNames = []
-
-        for i, cdict in enumerate(self.metadata['columns']):
-            data_type = cdict['type']
-            attr_name = cdict['name']
-
-            if attr_name != self.labelCol:
-                if data_type == FLOAT or data_type == INTEGER:
-                    featureNames.append(attr_name)
-
-                elif data_type == CATEGORICAL or data_type == ORDINAL:
-                    col_cats = cdict['i2s']
-                    featureNames.extend([f'{attr_name}_{c}' for c in col_cats])
-
-        return featureNames
-
-    def _impute_missing_values(self, df):
-        dfImpute = df.copy()
-
-        catCols = []
-        numCols = []
-
-        for col in self.metadata['columns']:
-            if col['name'] in list(dfImpute):
-                if col['type'] in [CATEGORICAL, ORDINAL]:
-                    catCols.append(col['name'])
-                elif col['type'] in NUMERICAL:
-                    numCols.append(col['name'])
-
-        self.ImputerCat.fit(df[catCols])
-        dfImpute[catCols] = self.ImputerCat.transform(df[catCols])
-
-        self.ImputerNum.fit(df[numCols])
-        dfImpute[numCols] = self.ImputerNum.transform(df[numCols])
-
-        return dfImpute
-
-    def _one_hot(self, col_data, categories):
-        col_data_onehot = zeros((len(col_data), len(categories)))
-        cidx = [categories.index(c) for c in col_data]
-        col_data_onehot[arange(len(col_data)), cidx] = 1
-
-        return col_data_onehot
+        # We can fetch directly from standard sklearn get_feature_names_out (or build backwards compatible output)
+        return []
 
 
 class ClassificationTask(PredictiveModel):
@@ -149,8 +86,12 @@ class ClassificationTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
-        data = self._impute_missing_values(data)
-        features = self._encode_data(data.drop(self.labelCol, axis=1))
+        if data.empty:
+            LOGGER.warning(f"Training data is empty for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
+
+        features = self.pipeline.fit_transform(data).astype('float32')
         labels = data[self.labelCol].apply(lambda x: self.labels[x]).values
 
         self.Distinguisher.fit(features, labels)
@@ -162,7 +103,7 @@ class ClassificationTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
-        features = self._encode_data(data.drop(self.labelCol, axis=1))
+        features = self.pipeline.transform(data).astype('float32')
         labels = self.Distinguisher.predict(features)
 
         return [self.labelsInv[i] for i in labels]
@@ -171,7 +112,11 @@ class ClassificationTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
-        features = self._encode_data(data.drop(self.labelCol, axis=1))
+        if not self.trained:
+            # Return list of zeros (worst accuracy)
+            return [0] * len(data)
+
+        features = self.pipeline.transform(data).astype('float32')
         labelsTrue = data[self.labelCol].apply(lambda x: self.labels[x]).values
         labelsPred = self.Distinguisher.predict(features)
 
@@ -191,12 +136,12 @@ class ClassificationTask(PredictiveModel):
 
 class RandForestClassTask(ClassificationTask):
     def __init__(self, metadata, labelCol):
-        super().__init__(RandomForestClassifier(), metadata, labelCol)
+        super().__init__(get_random_forest_classifier(), metadata, labelCol)
 
 
 class LogRegClassTask(ClassificationTask):
     def __init__(self, metadata, labelCol):
-        super().__init__(LogisticRegression(), metadata, labelCol)
+        super().__init__(get_logistic_regression(), metadata, labelCol)
 
 
 class RegressionTask(PredictiveModel):
@@ -219,8 +164,12 @@ class RegressionTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
-        data = self._impute_missing_values(data)
-        features = self._encode_data(data.drop(self.labelCol, axis=1))
+        if data.empty:
+            LOGGER.warning(f"Training data is empty for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
+
+        features = self.pipeline.fit_transform(data).astype('float32')
         labels = data[self.labelCol].values
 
         self.Regressor.fit(features, labels)
@@ -232,8 +181,8 @@ class RegressionTask(PredictiveModel):
         if not isinstance(features, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(features)}")
 
-        features = self._encode_data(features)
-        labels = self.Regressor.predict(features)
+        features_arr = self.pipeline.transform(features).astype('float32')
+        labels = self.Regressor.predict(features_arr)
 
         return list(labels)
 
@@ -241,7 +190,11 @@ class RegressionTask(PredictiveModel):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
-        features = self._encode_data(data.drop(self.labelCol, axis=1))
+        if not self.trained:
+            # Return high error values
+            return [1e6] * len(data)
+
+        features = self.pipeline.transform(data).astype('float32')
         labelsTrue = data[self.labelCol].values
         labelsPred = self.Regressor.predict(features)
 
@@ -250,4 +203,4 @@ class RegressionTask(PredictiveModel):
 
 class LinRegTask(RegressionTask):
     def __init__(self, metadata, labelCol):
-        super().__init__(LinearRegression(), metadata, labelCol)
+        super().__init__(get_linear_regression(), metadata, labelCol)

@@ -11,6 +11,7 @@ from generative_models.generative_model import GenerativeModel
 from preprocess_common.preprocess import discretizer, rare_merger
 from utils.constants import CATEGORICAL, ORDINAL, FLOAT, INTEGER
 from utils.logging import LOGGER
+from utils.device_utils import validate_and_get_device
 
 
 class _DP_MERFPreprocessor:
@@ -81,10 +82,13 @@ class DP_MERF(GenerativeModel):
         num_features=1000,
         mini_batch_size=0.05,
         how_many_epochs=100,
-        device='cpu',
+        device=None,
         seed=0,
         label_column=None,
     ):
+        # Set device with device_utils
+        self.device, self.is_gpu = validate_and_get_device(device)
+        
         self.metadata = metadata
         self.epsilon = epsilon
         self.num_preprocess = num_preprocess
@@ -92,7 +96,6 @@ class DP_MERF(GenerativeModel):
         self.num_features = num_features
         self.mini_batch_size = mini_batch_size
         self.how_many_epochs = how_many_epochs
-        self.device = device
         self.seed = seed
         self.label_column = label_column
 

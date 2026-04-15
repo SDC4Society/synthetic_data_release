@@ -4,12 +4,10 @@ Command-line interface for running privacy evaluation with respect to the risk o
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-import tensorflow as tf
-tf.get_logger().setLevel('ERROR')
 
 import json
 
-from os import mkdir, path
+from os import path
 from numpy.random import choice, seed
 from argparse import ArgumentParser
 from pandas import DataFrame
@@ -21,23 +19,15 @@ def _deep_tuple(obj):
         return tuple(_deep_tuple(x) for x in obj)
     return obj
 import pandas as pd
-from utils.datagen import load_s3_data_as_df, load_local_data_as_df
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
-from utils.parallel import create_model, is_generative_model, run_parallel_models
+from utils.parallel import create_model, is_generative_model, is_generative_model_config
+from utils.evaluation_framework import EvaluationEngine
 
 from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
 from feature_sets.bayes import CorrelationsFeatureSet
-
-from sanitisation_techniques.sanitiser_nhs import SanitiserNHS
-
-from generative_models.ctgan import CTGAN
-from generative_models.pate_gan import PATEGAN
-from generative_models.data_synthesiser import (IndependentHistogram,
-                                                BayesianNet,
-                                                PrivBayes)
 
 from attack_models.mia_classifier import (MIAttackClassifierRandomForest,
                                           generate_mia_shadow_data,
@@ -89,7 +79,7 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
             Attack.train(sanA, labelsA)
             trained_attacks[Feature.__name__] = Attack
 
-    return (tid, model.__name__, trained_attacks)
+    return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
 
 
 def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
@@ -145,38 +135,13 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
 
 
 def main():
-    argparser = ArgumentParser()
-    datasource = argparser.add_mutually_exclusive_group()
-    datasource.add_argument('--s3name', '-S3', type=str, choices=['adult', 'census', 'credit', 'alarm', 'insurance'], help='Name of the dataset to run on')
-    datasource.add_argument('--datapath', '-D', type=str, help='Relative path to cwd of a local data file')
-    argparser.add_argument('--runconfig', '-RC', default='runconfig_mia.json', type=str, help='Path relative to cwd of runconfig file')
-    argparser.add_argument('--outdir', '-O', default='tests', type=str, help='Path relative to cwd for storing output files')
-    argparser.add_argument('--workers', '-W', type=int, default=None,
-                           help='Number of parallel workers (default: CPU count)')
-    args = argparser.parse_args()
+    engine = EvaluationEngine(description="Command-line interface for running privacy evaluation w.r.t linkage risk")
+    engine.setup(cwd)
 
-    # Load runconfig
-    with open(path.join(cwd, args.runconfig)) as f:
-        runconfig = json.load(f)
-    print('Runconfig:')
-    print(runconfig)
-
-    # Load data
-    if args.s3name is not None:
-        rawPop, metadata = load_s3_data_as_df(args.s3name)
-        dname = args.s3name
-    else:
-        rawPop, metadata = load_local_data_as_df(path.join(cwd, args.datapath))
-        dname = args.datapath.split('/')[-1]
-
-    print(f'Loaded data {dname}:')
-    print(rawPop.info())
-
-    # Make sure outdir exists
-    if not path.isdir(args.outdir):
-        mkdir(args.outdir)
-
-    seed(SEED)
+    runconfig = engine.runconfig
+    rawPop = engine.rawPop
+    metadata = engine.metadata
+    args = engine.args
 
     ########################
     #### GAME INPUTS #######
@@ -197,70 +162,72 @@ def main():
     rawAidx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawA'], replace=False).tolist()
     rawA = rawPop.loc[rawAidx, :]
 
-    # Build serializable model configs for parallel execution
-    all_model_configs = []
-    if 'generativeModels' in runconfig.keys():
-        for gm, paramsList in runconfig['generativeModels'].items():
-            for params in paramsList:
-                all_model_configs.append((gm, *params))
-
-    if 'sanitisationTechniques' in runconfig.keys():
-        for name, paramsList in runconfig['sanitisationTechniques'].items():
-            for params in paramsList:
-                all_model_configs.append((name, *params))
+    # Base targets and pools established
 
     ###################################
     #### ATTACK TRAINING #############
     ##################################
     print('\n---- Attack training ----')
 
-    attack_tasks = [
+    attack_gm_tasks = [
         (cfg, tid, targets.loc[[tid]], rawA, metadata, runconfig)
-        for tid in targetIDs
-        for cfg in all_model_configs
+        for tid in targetIDs for cfg in engine.gm_configs
     ]
-    attack_results = run_parallel_models(
-        linkage_attack_worker, attack_tasks, max_workers=args.workers,
-        desc="Attack training")
+    attack_san_tasks = [
+        (cfg, tid, targets.loc[[tid]], rawA, metadata, runconfig)
+        for tid in targetIDs for cfg in engine.san_configs
+    ]
+    
+    attack_results = engine.run_parallel_evaluation(
+        eval_gm_worker=linkage_attack_worker,
+        san_tasks=attack_san_tasks,
+        gm_tasks=attack_gm_tasks,
+        desc_prefix="attack training"
+    )
 
     attacks = {}
-    for tid, model_name, trained in attack_results:
+    cfg_to_model_name = {}
+    for tid, model_name, trained, cfg_key in attack_results:
         attacks.setdefault(tid, {})[model_name] = trained
+        cfg_to_model_name[cfg_key] = model_name
 
     ##################################
     ######### EVALUATION #############
     ##################################
-    # Build model_name lookup from configs
-    _model_names = {}
-    for cfg in all_model_configs:
-        m = create_model(cfg, metadata)
-        _model_names[_deep_tuple(cfg)] = m.__name__
-
-    resultsTargetPrivacy = {tid: {name: {} for name in _model_names.values()} for tid in targetIDs}
+    resultsTargetPrivacy = {tid: {} for tid in targetIDs}
 
     for nr in range(runconfig['nIter']):
         rIdx = choice(list(rawPopDropTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
         rawTout = rawPopDropTargets.loc[rIdx]
 
-        eval_tasks = [
+        eval_gm_tasks = [
             (cfg, rawTout, targets, targetIDs,
-             {tid: attacks[tid][_model_names[_deep_tuple(cfg)]] for tid in targetIDs},
+             {tid: attacks[tid][cfg_to_model_name[_deep_tuple(cfg)]] for tid in targetIDs},
              metadata, runconfig)
-            for cfg in all_model_configs
+            for cfg in engine.gm_configs
         ]
-        eval_results = run_parallel_models(
-            linkage_eval_worker, eval_tasks, max_workers=args.workers,
-            desc=f"Eval iter {nr+1}/{runconfig['nIter']}")
+        eval_san_tasks = [
+            (cfg, rawTout, targets, targetIDs,
+             {tid: attacks[tid][cfg_to_model_name[_deep_tuple(cfg)]] for tid in targetIDs},
+             metadata, runconfig)
+            for cfg in engine.san_configs
+        ]
+        
+        eval_results = engine.run_parallel_evaluation(
+            eval_gm_worker=linkage_eval_worker,
+            san_tasks=eval_san_tasks,
+            gm_tasks=eval_gm_tasks,
+            iter_idx=nr,
+            desc_prefix="eval iter"
+        )
 
         for model_name, per_target in eval_results:
             for tid, feature_results in per_target.items():
+                if model_name not in resultsTargetPrivacy[tid]:
+                    resultsTargetPrivacy[tid][model_name] = {}
                 resultsTargetPrivacy[tid][model_name][nr] = feature_results
 
-    outfile = f"ResultsMIA_{dname}"
-    LOGGER.info(f"Write results to {path.join(f'{args.outdir}', f'{outfile}')}")
-
-    with open(path.join(f'{args.outdir}', f'{outfile}.json'), 'w') as f:
-        json.dump(resultsTargetPrivacy, f, indent=2, default=json_numpy_serialzer)
+    engine.dump_results(resultsTargetPrivacy, prefix="ResultsMIA")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 from pandas import DataFrame
+import torch
 
 from utils.logging import LOGGER
+from utils.device_utils import validate_and_get_device
 
 from generative_models.generative_model import GenerativeModel
 from ctgan import CTGANSynthesizer
@@ -12,10 +14,21 @@ class CTGAN(GenerativeModel):
                  embedding_dim=128, gen_dim=(256, 256),
                  dis_dim=(256, 256), l2scale=1e-6,
                  batch_size=500, epochs=300,
+                 device=None,
                  multiprocess=False):
-
+        # Set device with device_utils
+        self.device, self.is_gpu = validate_and_get_device(device)
+        
         self.synthesiser = CTGANSynthesizer(embedding_dim, gen_dim, dis_dim,
                                             l2scale, batch_size, epochs)
+        # Try to set device on synthesiser if it supports it
+        try:
+            if hasattr(self.synthesiser, 'set_device'):
+                self.synthesiser.set_device(self.device)
+            elif hasattr(self.synthesiser, 'device'):
+                self.synthesiser.device = torch.device(self.device)
+        except Exception as e:
+            LOGGER.warning(f"Could not set device on CTGANSynthesizer: {e}")
 
         self.metadata = metadata
         self.datatype = DataFrame
@@ -26,6 +39,8 @@ class CTGAN(GenerativeModel):
         self.trained = False
 
         self.__name__ = 'CTGAN'
+        
+        LOGGER.debug(f"CTGAN initialized with device: {self.device} (GPU: {self.is_gpu})")
 
     def fit(self, data):
         """Train a generative adversarial network on tabular data.

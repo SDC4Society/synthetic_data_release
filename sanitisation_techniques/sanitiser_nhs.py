@@ -59,13 +59,13 @@ class SanitiserNHS(Sanitiser):
                     col_data = cut(col_data, bins=cdict['bins'], labels=cdict['categories'])
                     col_data = col_data.astype(str)
 
-                # Remove any records with rare categories
-                frequencies = col_data.value_counts()
-                drop_cats = frequencies[frequencies <= self.unique_threshold].index
-
-                for c in drop_cats:
-                    ridx = list(col_data[col_data == c].index)
-                    drop_records.extend(ridx)
+            # Remove any records with rare categories
+            frequencies = col_data.value_counts()
+            drop_cats = frequencies[frequencies <= self.unique_threshold].index
+            
+            if not drop_cats.empty:
+                ridx = col_data[col_data.isin(drop_cats)].index
+                drop_records.extend(ridx.tolist())
 
             san_data[col] = col_data.values
 
@@ -74,13 +74,9 @@ class SanitiserNHS(Sanitiser):
 
         # Enforce k-anonymity constraint
         if self.quids is not None:
-            anonymity_sets = san_data.groupby(self.quids).size()
-            groups = anonymity_sets[anonymity_sets < self.anonymity_set_size].index
-            for g in groups:
-                conditions = [f"`{k}` == '{v}'" for k,v in zip(self.quids, g)]
-                query = " and ".join(conditions)
-                didx = san_data.query(query).index
-                san_data = san_data.drop(didx)
+            # Efficiently filter out records that don't belong to a large enough anonymity set
+            group_sizes = san_data.groupby(self.quids).transform('size')
+            san_data = san_data[group_sizes >= self.anonymity_set_size]
 
         return san_data
 
