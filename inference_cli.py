@@ -4,6 +4,7 @@ Command-line interface for running privacy evaluation under an attribute inferen
 
 import json
 import os
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 from os import path
 from numpy.random import choice, seed

@@ -3,6 +3,7 @@ Command-line interface for running privacy evaluation with respect to the risk o
 """
 
 import os
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import json
