@@ -10,6 +10,7 @@ from sklearn.model_selection import ShuffleSplit
 from utils.datagen import convert_df_to_array
 from utils.utils import CustomProcess
 from utils.constants import *
+from utils.logging import LOGGER
 
 from attack_models.attack_model import PrivacyAttack
 
@@ -31,6 +32,14 @@ class MIAttackClassifier(PrivacyAttack):
         self.trained = False
 
         self.__name__ = f'{self.Distinguisher.__class__.__name__}{self.FeatureSet.__class__.__name__}'
+
+    def set_seed(self, seed: int | None):
+        """Set a seed for reproducibility"""
+        self.seed = seed
+        try:
+            self.Distinguisher.random_state = seed
+        except AttributeError:
+            LOGGER.debug(f'{self.PredictionModel.__class__.__name__} does not support/need random_state, or it uses a different name.')
 
     def train(self, synA, labels):
         """Train a membership inference attack on a labelled training set"""
@@ -226,11 +235,11 @@ class MIAttackClassifierMLP(MIAttackClassifier):
         super().__init__(MLPClassifier((200,), solver='lbfgs'), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
 
 
-def generate_mia_shadow_data(GenModel, target, rawA, sizeRaw, sizeSyn, numModels, numCopies):
+def generate_mia_shadow_data(GenModel, target, rawA, sizeRaw, sizeSyn, numModels, numCopies, seed= None):
     assert isinstance(rawA, GenModel.datatype), f"GM expects datatype {GenModel.datatype} but got {type(rawA)}"
     assert isinstance(target, type(rawA)), f"Mismatch of datatypes between target record and raw data"
 
-    kf = ShuffleSplit(n_splits=numModels, train_size=sizeRaw)
+    kf = ShuffleSplit(n_splits=numModels, train_size=sizeRaw, random_state=seed)
 
     if GenModel.multiprocess:
 
@@ -290,11 +299,11 @@ def worker_train_shadow(rawA, train_index, GenModel, target, sizeSyn, numCopies,
     labelsA.extend(labels)
 
 
-def generate_mia_anon_data(Sanitiser, target, rawA, sizeRaw, numSamples):
+def generate_mia_anon_data(Sanitiser, target, rawA, sizeRaw, numSamples, seed=None):
     assert isinstance(rawA, Sanitiser.datatype), f"GM expects datatype {Sanitiser.datatype} but got {type(rawA)}"
     assert isinstance(target, type(rawA)), f"Mismatch of datatypes between target record and raw data"
 
-    kf = ShuffleSplit(n_splits=numSamples, train_size=sizeRaw)
+    kf = ShuffleSplit(n_splits=numSamples, train_size=sizeRaw, random_state=seed)
 
     sanA, labelsA = [], []
     for train_index, _ in kf.split(rawA):
