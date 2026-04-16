@@ -6,6 +6,7 @@ from pandas import DataFrame
 from generative_models.generative_model import GenerativeModel
 from method.privsyn.run_privsyn import privsyn_main
 from utils.constants import CATEGORICAL, ORDINAL
+from utils.device_utils import validate_and_get_device
 from utils.logging import LOGGER
 
 from method.AIM.cdp2adp import cdp_rho
@@ -23,10 +24,11 @@ class _PrivSynPreprocessor:
 class PrivSyn(GenerativeModel):
     """A wrapper for the PrivSyn synthetic data mechanism."""
 
-    def __init__(self, metadata=None, epsilon=1.0, delta=1e-5):
+    def __init__(self, metadata=None, epsilon=1.0, delta=1e-5, device=None):
         self.metadata = metadata
         self.epsilon = epsilon
         self.delta = delta
+        self.device_str, self.is_gpu = validate_and_get_device(device)
 
         self.datatype = DataFrame
         self.generator = None
@@ -49,7 +51,12 @@ class PrivSyn(GenerativeModel):
         domain = self._build_domain(encoded_data)
         rho = cdp_rho(self.epsilon, self.delta)
 
-        args = argparse.Namespace(dataset='adult', epsilon=self.epsilon, delta=self.delta, device='cpu')
+        args = argparse.Namespace(
+            dataset='adult',
+            epsilon=self.epsilon,
+            delta=self.delta,
+            device=self.device_str,
+        )
         self.generator = privsyn_main(args, encoded_data, domain, rho)['privsyn_generator']
         self.trained = True
 

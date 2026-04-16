@@ -8,12 +8,13 @@
 |---|---|---|---|---|
 | Texas | `data/texas` | 100,000 | 18 | テキサス州入院患者記録 |
 | Adult | `data/adult` | 32,561 | 15 | UCI Adult（国勢調査所得予測） |
-| ML col3 best | `data/ml_col3_eff_rank_best` | 200,948 | 3 | MovieLensレーティング（有効ランク上位3ジャンル） |
-| ML col3 worst | `data/ml_col3_eff_rank_worst` | 200,948 | 3 | MovieLensレーティング（有効ランク下位3ジャンル） |
-| ML col19 best | `data/ml_col19_eff_rank_best` | 200,948 | 19 | MovieLensレーティング（有効ランク上位19ジャンル） |
-| ML col19 worst | `data/ml_col19_eff_rank_worst` | 200,948 | 19 | MovieLensレーティング（有効ランク下位19ジャンル） |
+| ML full | `data/movielens/ml32m_full` | 200,948 | 20 | MovieLens ml-32m（全ジャンル） |
+| ML ncols_10 best | `data/movielens/ncols_10/eff_rank_best` | 200,948 | 10 | MovieLens（有効ランク上位10ジャンル） |
+| ML ncols_10 worst | `data/movielens/ncols_10/eff_rank_worst` | 200,948 | 10 | MovieLens（有効ランク下位10ジャンル） |
 
 各データセットは `.csv`（データ本体）と `.json`（カラムメタデータ）のペアで構成される。CLIの `-D` オプションには拡張子なしのパスを指定する。
+
+MovieLens データセットの詳細（列構成・rarity 計算・前処理リポジトリへのリンク等）は `data/movielens/README.md` を参照。
 
 ---
 
@@ -53,10 +54,9 @@ uv run python linkage_cli.py -D data/adult -RC tests/linkage/runconfig.adult.def
 #### MovieLens（default: フルモデル構成）
 
 ```bash
-uv run python linkage_cli.py -D data/ml_col3_eff_rank_best -RC tests/linkage/runconfig.ml_col3_best.default.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col3_eff_rank_worst -RC tests/linkage/runconfig.ml_col3_worst.default.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col19_eff_rank_best -RC tests/linkage/runconfig.ml_col19_best.default.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col19_eff_rank_worst -RC tests/linkage/runconfig.ml_col19_worst.default.json -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ml32m_full              -RC tests/linkage/movielens/runconfig.ml32m_full.default.json              -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ncols_10/eff_rank_best  -RC tests/linkage/movielens/ncols_10/runconfig.eff_rank_best.default.json  -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ncols_10/eff_rank_worst -RC tests/linkage/movielens/ncols_10/runconfig.eff_rank_worst.default.json -O tests/linkage
 ```
 
 #### MovieLens（lite: 軽量構成）
@@ -64,11 +64,14 @@ uv run python linkage_cli.py -D data/ml_col19_eff_rank_worst -RC tests/linkage/r
 CTGAN, PATEGAN, IndependentHistogram を除外し、パラメータバリエーションを2つに削減した高速版。
 
 ```bash
-uv run python linkage_cli.py -D data/ml_col3_eff_rank_best -RC tests/linkage/runconfig.ml_col3_best.lite.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col3_eff_rank_worst -RC tests/linkage/runconfig.ml_col3_worst.lite.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col19_eff_rank_best -RC tests/linkage/runconfig.ml_col19_best.lite.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col19_eff_rank_worst -RC tests/linkage/runconfig.ml_col19_worst.lite.json -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ml32m_full              -RC tests/linkage/movielens/runconfig.ml32m_full.lite.json              -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ncols_10/eff_rank_best  -RC tests/linkage/movielens/ncols_10/runconfig.eff_rank_best.lite.json  -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ncols_10/eff_rank_worst -RC tests/linkage/movielens/ncols_10/runconfig.eff_rank_worst.lite.json -O tests/linkage
 ```
+
+#### MovieLens の Targets 仕様
+
+MovieLens 用 runconfig は `Targets` にデータセットごとの **rare user 5 人の固定 ID** を埋めてある（`rarity_count` が最大値のユーザー群からシード 42 でランダム抽出）。`nTargets=5` も合わせて指定しており、実際には **ランダム 5 + rare 固定 5 = 計 10 ターゲット** が評価される。rare ユーザー選定ロジックは `data/movielens/README.md` を参照。
 
 ### 出力
 
@@ -283,9 +286,8 @@ uv run python utility_cli.py -D data/adult -RC tests/utility/runconfig.adult.def
 ## 実行例: MovieLens（Linkageのみ）
 
 ```bash
-# lite版で全4データセット実行
-uv run python linkage_cli.py -D data/ml_col3_eff_rank_best -RC tests/linkage/runconfig.ml_col3_best.lite.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col3_eff_rank_worst -RC tests/linkage/runconfig.ml_col3_worst.lite.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col19_eff_rank_best -RC tests/linkage/runconfig.ml_col19_best.lite.json -O tests/linkage
-uv run python linkage_cli.py -D data/ml_col19_eff_rank_worst -RC tests/linkage/runconfig.ml_col19_worst.lite.json -O tests/linkage
+# lite版で3データセット（ml32m_full + ncols_10 best/worst）実行
+uv run python linkage_cli.py -D data/movielens/ml32m_full              -RC tests/linkage/movielens/runconfig.ml32m_full.lite.json              -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ncols_10/eff_rank_best  -RC tests/linkage/movielens/ncols_10/runconfig.eff_rank_best.lite.json  -O tests/linkage
+uv run python linkage_cli.py -D data/movielens/ncols_10/eff_rank_worst -RC tests/linkage/movielens/ncols_10/runconfig.eff_rank_worst.lite.json -O tests/linkage
 ```

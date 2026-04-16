@@ -3,16 +3,14 @@ from pandas import DataFrame
 from pandas.api.types import CategoricalDtype
 from numpy import ndarray, concatenate, stack, array, round, zeros, arange
 import pandas as pd
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
+from utils.classifier_fallback import get_svc, get_logistic_regression, get_random_forest_classifier, get_knn_classifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import ShuffleSplit
 
 from utils.datagen import convert_df_to_array
 from utils.utils import CustomProcess
 from utils.constants import *
+from utils.logging import LOGGER
 
 from attack_models.attack_model import PrivacyAttack
 
@@ -35,6 +33,14 @@ class MIAttackClassifier(PrivacyAttack):
 
         self.__name__ = f'{self.Distinguisher.__class__.__name__}{self.FeatureSet.__class__.__name__}'
 
+    def set_seed(self, seed: int | None):
+        """Set a seed for reproducibility"""
+        self.seed = seed
+        try:
+            self.Distinguisher.random_state = seed
+        except AttributeError:
+            LOGGER.debug(f'{self.PredictionModel.__class__.__name__} does not support/need random_state, or it uses a different name.')
+
     def train(self, synA, labels):
         """Train a membership inference attack on a labelled training set"""
 
@@ -46,7 +52,7 @@ class MIAttackClassifier(PrivacyAttack):
         if not isinstance(labels, ndarray):
             labels = array(labels)
 
-        self.Distinguisher.fit(synA, labels)
+        self.Distinguisher.fit(synA.astype('float32'), labels)
 
         self.trained = True
 
@@ -87,7 +93,7 @@ class MIAttackClassifier(PrivacyAttack):
         else:
             f = self._df_to_array(df).reshape(1, -1)
 
-        return round(self.Distinguisher.predict(f), 0).astype(int)[0]
+        return round(self.Distinguisher.predict(f.astype('float32')), 0).astype(int)[0]
 
 
     def get_confidence(self, synT, secret):
@@ -101,7 +107,7 @@ class MIAttackClassifier(PrivacyAttack):
             else:
                 synT = stack([s.flatten() for s in synT])
 
-        probs = self.Distinguisher.predict_proba(synT)
+        probs = self.Distinguisher.predict_proba(synT.astype('float32'))
 
         return [p[s] for p,s in zip(probs, secret)]
 
@@ -196,31 +202,31 @@ class MIAttackClassifier(PrivacyAttack):
 class MIAttackClassifierLinearSVC(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None):
-        super().__init__(SVC(kernel='linear', probability=True), metadata, FeatureSet)
+        super().__init__(get_svc(kernel='linear', probability=True), metadata, FeatureSet)
 
 
 class MIAttackClassifierSVC(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None):
-        super().__init__(SVC(probability=True), metadata, FeatureSet)
+        super().__init__(get_svc(probability=True), metadata, FeatureSet)
 
 
 class MIAttackClassifierLogReg(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None):
-        super().__init__(LogisticRegression(), metadata, FeatureSet)
+        super().__init__(get_logistic_regression(), metadata, FeatureSet)
 
 
 class MIAttackClassifierRandomForest(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(RandomForestClassifier(), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+        super().__init__(get_random_forest_classifier(), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
 
 
 class MIAttackClassifierKNN(MIAttackClassifier):
 
     def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(KNeighborsClassifier(n_neighbors=5), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+        super().__init__(get_knn_classifier(n_neighbors=5), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
 
 
 class MIAttackClassifierMLP(MIAttackClassifier):
@@ -229,11 +235,11 @@ class MIAttackClassifierMLP(MIAttackClassifier):
         super().__init__(MLPClassifier((200,), solver='lbfgs'), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
 
 
-def generate_mia_shadow_data(GenModel, target, rawA, sizeRaw, sizeSyn, numModels, numCopies):
+def generate_mia_shadow_data(GenModel, target, rawA, sizeRaw, sizeSyn, numModels, numCopies, seed= None):
     assert isinstance(rawA, GenModel.datatype), f"GM expects datatype {GenModel.datatype} but got {type(rawA)}"
     assert isinstance(target, type(rawA)), f"Mismatch of datatypes between target record and raw data"
 
-    kf = ShuffleSplit(n_splits=numModels, train_size=sizeRaw)
+    kf = ShuffleSplit(n_splits=numModels, train_size=sizeRaw, random_state=seed)
 
     if GenModel.multiprocess:
 
@@ -293,11 +299,11 @@ def worker_train_shadow(rawA, train_index, GenModel, target, sizeSyn, numCopies,
     labelsA.extend(labels)
 
 
-def generate_mia_anon_data(Sanitiser, target, rawA, sizeRaw, numSamples):
+def generate_mia_anon_data(Sanitiser, target, rawA, sizeRaw, numSamples, seed=None):
     assert isinstance(rawA, Sanitiser.datatype), f"GM expects datatype {Sanitiser.datatype} but got {type(rawA)}"
     assert isinstance(target, type(rawA)), f"Mismatch of datatypes between target record and raw data"
 
-    kf = ShuffleSplit(n_splits=numSamples, train_size=sizeRaw)
+    kf = ShuffleSplit(n_splits=numSamples, train_size=sizeRaw, random_state=seed)
 
     sanA, labelsA = [], []
     for train_index, _ in kf.split(rawA):

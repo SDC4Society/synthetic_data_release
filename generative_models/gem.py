@@ -10,6 +10,7 @@ from generative_models.generative_model import GenerativeModel
 from method.AIM.cdp2adp import cdp_rho
 from utils.constants import CATEGORICAL, ORDINAL
 from utils.logging import LOGGER
+from utils.device_utils import get_device, validate_and_get_device
 
 
 class GEM(GenerativeModel):
@@ -36,12 +37,10 @@ class GEM(GenerativeModel):
         self.alpha = alpha
         self.workload = workload
         self.workload_seed = workload_seed
-        if device is None:
-            if torch.cuda.is_available():
-                device = 'cuda:0'
-            else:
-                device = 'cpu'
-        self.device = device
+        
+        # Set device with device_utils
+        self.device, self.is_gpu = validate_and_get_device(device)
+        
         self.resample = resample
         self.verbose = verbose
 
@@ -52,6 +51,8 @@ class GEM(GenerativeModel):
         self.__name__ = 'GEM'
 
         self._reverse_maps = {}
+        
+        LOGGER.debug(f"GEM initialized with device: {self.device} (GPU: {self.is_gpu})")
 
     def fit(self, data):
         assert isinstance(data, self.datatype), (
@@ -70,6 +71,16 @@ class GEM(GenerativeModel):
         from method.GEM.Util.qm import QueryManager
         from method.GEM.Util.util_gem import randomKwayData
         from method.GEM.Util.util_general import get_eps0_simple
+        from method.GEM.mbi.torch_factor import Factor
+
+        # Set device for torch_factor
+        try:
+            torch.tensor([1.0], device=self.device)
+            Factor.set_device(self.device)
+        except RuntimeError as e:
+            LOGGER.warning(f"Device '{self.device}' not available: {e}. Falling back to CPU.")
+            self.device = 'cpu'
+            Factor.set_device('cpu')
 
         self.dataset = Dataset(encoded_data, domain)
 
