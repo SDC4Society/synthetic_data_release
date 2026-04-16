@@ -45,16 +45,6 @@ uv run python -c "import ctgan"
 uv run python -c "import cuml; print('GPU support ready!')"  # Only if you used --extra gpu
 ```
 
-## Docker Distribution (not recommended)
-
-For your convenience, Synthetic Data is also distributed as a Docker image containing Python 3.9 and CUDA 11.4.2.
-
-**Note:** This distribution includes CUDA binaries, before downloading the image, ensure to read [its EULA](https://docs.nvidia.com/cuda/eula/index.html) and to agree to its terms.
-
-```
-docker pull springepfl/synthetic-data:latest
-docker run -it --rm -v "$(pwd)/output:/output" -p 8888:8888 springepfl/synthetic-data
-```
 
 # Example runs
 
