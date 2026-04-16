@@ -7,7 +7,7 @@
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
-  "Targets": ["ID12729", "ID74198", "ID193699", "ID178198", "ID54486"],
+  "Targets": ["ID29505", "ID25644", "ID50839", "ID38905", "ID158954"],
   "generativeModels": {
     "IndependentHistogram": [[10], [25]],
     "BayesianNet": [[2, 1], [5, 1], [10, 1], [25, 1]],
