@@ -9,8 +9,7 @@
   "generativeModels": {
     "IndependentHistogram": [
       [10],
-      [25],
-      [50]
+      [25]
     ]
   },
   "sanitisationTechniques": {
