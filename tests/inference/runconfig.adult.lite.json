@@ -1,38 +1,42 @@
 {
   "sensitiveAttributes": {
-    "LENGTH_OF_STAY": "LinReg",
-    "RACE": "Classification"
+    "hours-per-week": "LinReg",
+    "race": "Classification"
   },
   "nIter": 15,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 10,
   "nTargets": 0,
-  "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
+  "Targets": ["ID37", "ID224", "ID5361", "ID1246", "ID19609"],
   "generativeModels": {
     "IndependentHistogram": [
       [10],
-      [25]
+      [25],
+      [45]
     ],
     "BayesianNet": [
       [2, 1],
       [5, 1],
       [10, 1],
-      [25, 1]
+      [25, 1],
+      [45, 1]
     ],
     "PrivBayes": [
-      [25, 1, 0.1],
-      [25, 1, 1.0],
-      [25, 1, 10.0],
-      [25, 1, 20.0],
-      [25, 1, 30.0]
-    ],
-    "CTGAN": [
-      []
+      [45, 1, 0.1],
+      [45, 1, 1.0],
+      [45, 1, 10.0],
+      [45, 1, 20.0],
+      [45, 1, 30.0]
     ],
     "PATEGAN": [
       [1],
       [10],
+      [20],
+      [30]
+    ],
+    "DP_MERF": [
+      [0.1],
       [20],
       [30]
     ]
@@ -45,7 +49,7 @@
         0.99,
         2,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["native-country", "sex", "race", "age"]
       ],
       [
         10,
@@ -53,7 +57,7 @@
         0.99,
         5,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["native-country", "sex", "race", "age"]
       ],
       [
         10,
@@ -61,7 +65,7 @@
         0.99,
         10,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["native-country", "sex", "race", "age"]
       ],
       [
         10,
@@ -69,7 +73,7 @@
         0.99,
         25,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["native-country", "sex", "race", "age"]
       ],
       [
         10,
@@ -77,33 +81,38 @@
         0.99,
         50,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["native-country", "sex", "race", "age"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["native-country", "sex", "race", "age"],
         []
       ],
       [
         5,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["native-country", "sex", "race", "age"],
         []
       ],
       [
         10,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["native-country", "sex", "race", "age"],
         []
       ],
       [
         25,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["native-country", "sex", "race", "age"],
         []
       ],
       [
         50,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["native-country", "sex", "race", "age"],
+        []
+      ],
+      [
+        100,
+        ["native-country", "sex", "race", "age"],
         []
       ]
     ]

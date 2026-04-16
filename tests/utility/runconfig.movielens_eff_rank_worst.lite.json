@@ -1,13 +1,11 @@
 {
   "nIter": 5,
-  "sizeRawA": 10000,
-  "nSynA": 10,
-  "nShadows": 10,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
   "Targets": ["ID29505", "ID25644", "ID50839", "ID38905", "ID158954"],
+  "TestRecords": ["ID26087", "ID57815", "ID171899", "ID23295", "ID13455"],
   "generativeModels": {
     "IndependentHistogram": [
       [10],
@@ -26,47 +24,16 @@
       [25, 1, 20.0],
       [25, 1, 30.0]
     ],
-    "CTGAN": [
-      []
-    ],
     "PATEGAN": [
       [1],
       [10],
       [20],
       [30]
     ],
-    "AIM": [
-      [0.1],
-      [1.0],
-      [10.0]
-    ],
     "DP_MERF": [
       [0.1],
       [20],
       [30]
-    ],
-    "GEM": [
-      [0.1],
-      [1.0]
-    ],
-    "PrivateGSD": [
-      [0.1],
-      [1.0]
-    ],
-    "RAPpp": [
-      [0.1],
-      [1.0]
-    ],
-    "PrivMRF": [
-      [0.1],
-      [1.0]
-    ],
-    "TabDDPM": [
-      []
-    ],
-    "PrivSyn": [
-      [0.1],
-      [1.0]
     ]
   },
   "sanitisationTechniques": {
@@ -138,6 +105,11 @@
         ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"],
         []
       ]
+    ]
+  },
+  "utilityTasks": {
+    "RandForestClass": [
+      ["Comedy"]
     ]
   }
 }

@@ -1,13 +1,11 @@
 {
-  "nIter": 15,
-  "sizeRawA": 10000,
-  "nSynA": 10,
-  "nShadows": 10,
+  "nIter": 5,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
-  "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
+  "Targets": ["ID64709", "ID29505", "ID29592", "ID159458", "ID109066"],
+  "TestRecords": ["ID26087", "ID57815", "ID171899", "ID23295", "ID13455"],
   "generativeModels": {
     "IndependentHistogram": [
       [10],
@@ -77,7 +75,7 @@
         0.99,
         2,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
       ],
       [
         10,
@@ -85,7 +83,7 @@
         0.99,
         5,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
       ],
       [
         10,
@@ -93,7 +91,7 @@
         0.99,
         10,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
       ],
       [
         10,
@@ -101,7 +99,7 @@
         0.99,
         25,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
       ],
       [
         10,
@@ -109,35 +107,40 @@
         0.99,
         50,
         [],
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
         []
       ],
       [
         5,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
         []
       ],
       [
         10,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
         []
       ],
       [
         25,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
         []
       ],
       [
         50,
-        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
         []
       ]
+    ]
+  },
+  "utilityTasks": {
+    "RandForestClass": [
+      ["Mystery"]
     ]
   }
 }

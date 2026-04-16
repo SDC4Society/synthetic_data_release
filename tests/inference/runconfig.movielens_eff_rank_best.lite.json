@@ -1,11 +1,14 @@
 {
+  "sensitiveAttributes": {
+    "Horror": "Classification",
+    "Mystery": "Classification"
+  },
   "nIter": 5,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
   "Targets": ["ID29505", "ID64709", "ID36222", "ID118019", "ID67108"],
-  "TestRecords": ["ID26087", "ID57815", "ID171899", "ID23295", "ID13455"],
   "generativeModels": {
     "IndependentHistogram": [
       [10],
@@ -24,47 +27,16 @@
       [25, 1, 20.0],
       [25, 1, 30.0]
     ],
-    "CTGAN": [
-      []
-    ],
     "PATEGAN": [
       [1],
       [10],
       [20],
       [30]
     ],
-    "AIM": [
-      [0.1],
-      [1.0],
-      [10.0]
-    ],
     "DP_MERF": [
       [0.1],
       [20],
       [30]
-    ],
-    "GEM": [
-      [0.1],
-      [1.0]
-    ],
-    "PrivateGSD": [
-      [0.1],
-      [1.0]
-    ],
-    "RAPpp": [
-      [0.1],
-      [1.0]
-    ],
-    "PrivMRF": [
-      [0.1],
-      [1.0]
-    ],
-    "TabDDPM": [
-      []
-    ],
-    "PrivSyn": [
-      [0.1],
-      [1.0]
     ]
   },
   "sanitisationTechniques": {
@@ -136,11 +108,6 @@
         ["(no genres listed)", "Animation", "Documentary", "Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "War", "Western"],
         []
       ]
-    ]
-  },
-  "utilityTasks": {
-    "RandForestClass": [
-      ["Mystery"]
     ]
   }
 }

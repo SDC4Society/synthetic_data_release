@@ -1,12 +1,11 @@
 {
-  "sensitiveAttributes": {
-    "hours-per-week": "LinReg",
-    "race": "Classification"
-  },
   "nIter": 15,
+  "sizeRawA": 10000,
+  "nSynA": 10,
+  "nShadows": 10,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
-  "nSynT": 10,
+  "nSynT": 5,
   "nTargets": 0,
   "Targets": ["ID37", "ID224", "ID5361", "ID1246", "ID19609"],
   "generativeModels": {
@@ -29,12 +28,14 @@
       [45, 1, 20.0],
       [45, 1, 30.0]
     ],
-    "CTGAN": [
-      []
-    ],
     "PATEGAN": [
       [1],
       [10],
+      [20],
+      [30]
+    ],
+    "DP_MERF": [
+      [0.1],
       [20],
       [30]
     ]

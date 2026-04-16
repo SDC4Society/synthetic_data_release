@@ -1,8 +1,9 @@
 {
+  "sensitiveAttributes": {
+    "Action": "Classification",
+    "Drama": "Classification"
+  },
   "nIter": 5,
-  "sizeRawA": 10000,
-  "nSynA": 10,
-  "nShadows": 10,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 5,
@@ -26,47 +27,16 @@
       [25, 1, 20.0],
       [25, 1, 30.0]
     ],
-    "CTGAN": [
-      []
-    ],
     "PATEGAN": [
       [1],
       [10],
       [20],
       [30]
     ],
-    "AIM": [
-      [0.1],
-      [1.0],
-      [10.0]
-    ],
     "DP_MERF": [
       [0.1],
       [20],
       [30]
-    ],
-    "GEM": [
-      [0.1],
-      [1.0]
-    ],
-    "PrivateGSD": [
-      [0.1],
-      [1.0]
-    ],
-    "RAPpp": [
-      [0.1],
-      [1.0]
-    ],
-    "PrivMRF": [
-      [0.1],
-      [1.0]
-    ],
-    "TabDDPM": [
-      []
-    ],
-    "PrivSyn": [
-      [0.1],
-      [1.0]
     ]
   },
   "sanitisationTechniques": {
