@@ -7,28 +7,115 @@
   "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
   "TestRecords": ["ID71120", "ID84282", "ID88763", "ID79216", "ID92777"],
   "generativeModels": {
-    "IndependentHistogram": [[10], [25]],
-    "BayesianNet": [[2, 1], [5, 1], [10, 1], [25, 1]],
-    "PrivBayes": [[25, 1, 0.1], [25, 1, 1.0], [25, 1, 10.0]],
-    "CTGAN": [[]],
-    "PATEGAN": [[1], [10]]
+    "IndependentHistogram": [
+      [10],
+      [25],
+      [50]
+    ],
+    "BayesianNet": [
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1],
+      [50, 1]
+    ],
+    "PrivBayes": [
+      [25, 1, 0.1],
+      [25, 1, 1.0],
+      [25, 1, 10.0],
+      [25, 1, 20.0],
+      [25, 1, 30.0],
+      [50, 1, 0.1],
+      [50, 1, 1.0],
+      [50, 1, 10.0],
+      [50, 1, 20.0],
+      [50, 1, 30.0]
+    ],
+    "CTGAN": [
+      []
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ]
   },
   "sanitisationTechniques": {
     "SanitiserNHS": [
-      [10, 1, 0.99, 2, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]],
-      [10, 1, 0.99, 5, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]],
-      [10, 1, 0.99, 10, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]],
-      [10, 1, 0.99, 25, [], ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]]
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ]
     ],
     "SanitiserMondrian": [
-      [2, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []],
-      [5, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []],
-      [10, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []],
-      [25, ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"], []]
+      [
+        2,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ],
+      [
+        5,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ],
+      [
+        10,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ],
+      [
+        25,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ],
+      [
+        50,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ]
     ]
   },
   "utilityTasks": {
-    "RandForestClass": [["RISK_MORTALITY"]]
+    "RandForestClass": [
+      ["RISK_MORTALITY"]
+    ]
   },
   "dataFilter": {
     "train": "DISCHARGE in ['2013Q1', '2013Q2', '2013Q3', '2013Q4']",
