@@ -103,7 +103,7 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
     try:
         model = create_model(model_config, metadata)
         model.set_seed(SEED)
-        attack_metadata = model.get_output_metadata(metadata)
+        attack_metadata = model.metadata
         utility_tasks = [create_utility_task(cfg, attack_metadata) for cfg in utility_task_configs]
         for ut in utility_tasks:
             ut.set_seed(SEED)

@@ -58,10 +58,10 @@ class SanitiserMondrian(Sanitiser):
     def __init__(self, metadata, k=5, quids=None, drop_cols=None):
         if not quids:
             raise ValueError("SanitiserMondrian requires at least one QID")
-        self.metadata = metadata
         self.k = int(k)
         self.quids = list(quids)
         self.drop_cols = list(drop_cols) if drop_cols else []
+        self.metadata = self._read_meta(metadata)
         self.datatype = DataFrame
         self.histogram_size = 10  # default for HistogramFeatureSet compatibility
 
@@ -114,9 +114,9 @@ class SanitiserMondrian(Sanitiser):
         anon.index = original_index[: len(anon)]
         return anon
 
-    def get_output_metadata(self, input_metadata):
+    def _read_meta(self, input_metadata):
         """Integer QIDs become Float after MEAN_MODE generalization."""
-        output = copy.deepcopy(input_metadata)
+        output = {"columns": [col for col in input_metadata["columns"] if col["name"] not in self.drop_cols]}
         for col in output["columns"]:
             if col["name"] in self.quids and col["type"] == INTEGER:
                 col["type"] = FLOAT
