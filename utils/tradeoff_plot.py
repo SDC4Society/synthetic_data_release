@@ -20,6 +20,7 @@ _MODEL_PATTERNS = [
     (r'^PateGanEps(\d+\.?\d*)$', 'PATEGAN', 'eps'),
     (r'^SanitiserNHSk(\d+\.?\d*)$', 'SanitiserNHS', 'k'),
     (r'^SanitiserMondrianK(\d+\.?\d*)$', 'SanitiserMondrian', 'k'),
+    (r'^SanitiserNHSMondrianK(\d+\.?\d*)$', 'SanitiserNHSMondrian', 'k'),
 ]
 
 _PARAM_SYMBOLS = {
@@ -28,6 +29,7 @@ _PARAM_SYMBOLS = {
     'PATEGAN': r'$\varepsilon$',
     'SanitiserNHS': r'$k$',
     'SanitiserMondrian': r'$k$',
+    'SanitiserNHSMondrian': r'$k$',
 }
 
 

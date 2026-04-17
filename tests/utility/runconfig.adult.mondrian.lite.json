@@ -1,0 +1,60 @@
+{
+  "nIter": 15,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 10,
+  "nTargets": 0,
+  "Targets": ["ID37", "ID224", "ID5361", "ID1246", "ID19609"],
+  "TestRecords": ["ID30000", "ID30001", "ID30002", "ID30003", "ID30004"],
+  "sanitisationTechniques": {
+    "SanitiserMondrian": [
+      [
+        2,
+        ["native-country", "sex", "race", "age"],
+        []
+      ],
+      [
+        25,
+        ["native-country", "sex", "race", "age"],
+        []
+      ],
+      [
+        100,
+        ["native-country", "sex", "race", "age"],
+        []
+      ]
+    ],
+    "SanitiserNHSMondrian": [
+      [
+        2,
+        ["native-country", "sex", "race", "age"],
+        [],
+        1,
+        0.95
+      ],
+      [
+        25,
+        ["native-country", "sex", "race", "age"],
+        [],
+        1,
+        0.95
+      ],
+      [
+        100,
+        ["native-country", "sex", "race", "age"],
+        [],
+        1,
+        0.95
+      ]
+    ]
+  },
+  "utilityTasks": {
+    "RandForestClass": [
+      ["label"]
+    ]
+  },
+  "dataFilter": {
+    "train": "age >= 0",
+    "test": "age >= 0"
+  }
+}
