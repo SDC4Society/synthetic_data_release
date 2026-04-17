@@ -1,4 +1,5 @@
 import os
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 import gc
 import json
 import logging
