@@ -1,6 +1,15 @@
 {
     "columns": [
         {
+            "name": "class",
+            "type": "Ordinal",
+            "size": 2,
+            "i2s": [
+                "0",
+                "1"
+            ]
+        },
+        {
             "name": "lepton_phi",
             "type": "Float",
             "min": -1.7425082921981812,

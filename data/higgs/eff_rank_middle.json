@@ -1,6 +1,15 @@
 {
     "columns": [
         {
+            "name": "class",
+            "type": "Ordinal",
+            "size": 2,
+            "i2s": [
+                "0",
+                "1"
+            ]
+        },
+        {
             "name": "lepton_eta",
             "type": "Float",
             "min": -2.434976100921631,
