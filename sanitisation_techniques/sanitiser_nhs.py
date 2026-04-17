@@ -41,7 +41,8 @@ class SanitiserNHS(Sanitiser):
         data = self._impute_missing_values(data)
         drop_records = []
 
-        for col, cdict in self.metadata.items():
+        for cdict in self.metadata["columns"]:
+            col = cdict["name"]
             coltype = cdict['type']
             col_data = data[col].copy()
 
@@ -54,9 +55,12 @@ class SanitiserNHS(Sanitiser):
                 col_data.loc[idx] = int(cap)
 
             elif coltype == CATEGORICAL or coltype == ORDINAL:
-                if is_numeric_dtype(col_data):
+                # if is_numeric_dtype(col_data): <-- Always False because self._impute_missing_values() changes dtype to 'object'
+                # 'bins' key is added to metedata of only QID numerical attributes (self._read_meta()).
+                # Therefore, the check below guarantees a correct behavior.
+                if 'bins' in cdict: 
                     # Bins numerical cols marked as quid into specified bins
-                    col_data = cut(col_data, bins=cdict['bins'], labels=cdict['categories'])
+                    col_data = cut(col_data, bins=cdict['bins'], labels=cdict['i2s'])
                     col_data = col_data.astype(str)
 
             # Remove any records with rare categories
@@ -88,7 +92,7 @@ class SanitiserNHS(Sanitiser):
         if drop_cols is None:
             drop_cols = []
 
-        metadict = {}
+        metalist = []
 
         for cdict in metadata['columns']:
             col = cdict['name']
@@ -100,31 +104,34 @@ class SanitiserNHS(Sanitiser):
                         cbins = cdict['bins']
                         cats = [f'({cbins[i]},{cbins[i+1]}]' for i in range(len(cbins)-1)]
 
-                        metadict[col] = {
+                        metadict = {
                             'type': CATEGORICAL,
-                            'categories': cats,
+                            'i2s': cats,
                             'bins': cbins,
-                            'size': len(cats)
+                            'size': len(cats),
                         }
 
                     else:
-                        metadict[col] = {
+                        metadict = {
                             'type': coltype,
                             'min': cdict['min'],
                             'max': cdict['max']
                         }
 
                 elif coltype == CATEGORICAL or coltype == ORDINAL:
-                    metadict[col] = {
+                    metadict = {
                         'type': coltype,
-                        'categories': cdict['i2s'],
+                        'i2s': cdict['i2s'],
                         'size': len(cdict['i2s'])
                     }
 
                 else:
                     raise ValueError(f'Unknown data type {coltype} for attribute {col}')
+                
+                metadict["name"] = col
+                metalist.append(metadict)
 
-        return metadict
+        return {"columns": metalist}
 
     def _impute_missing_values(self, df):
         df_impute = df.copy()
@@ -132,7 +139,8 @@ class SanitiserNHS(Sanitiser):
         cat_cols = []
         num_cols = []
 
-        for col, cdict in self.metadata.items():
+        for cdict in self.metadata["columns"]:
+            col = cdict["name"]
             if col in list(df_impute):
                 if cdict['type'] in [CATEGORICAL, ORDINAL]:
                     cat_cols.append(col)

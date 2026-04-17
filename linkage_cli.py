@@ -50,7 +50,7 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
         model = create_model(model_config, metadata)
         model.set_seed(SEED)
         model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
-        attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
+        attack_metadata = metadata if is_generative_model(model) else model.metadata
         trained_attacks = {}
 
         if is_generative_model(model):
@@ -74,12 +74,11 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
 
             for Feature in [NaiveFeatureSet(DataFrame),
                             HistogramFeatureSet(DataFrame, attack_metadata,
-                                               nbins=model.histogram_size, quids=model.quids),
-                            CorrelationsFeatureSet(DataFrame, attack_metadata, quids=model.quids),
+                                               nbins=model.histogram_size),
+                            CorrelationsFeatureSet(DataFrame, attack_metadata),
                             EnsembleFeatureSet(DataFrame, attack_metadata,
-                                              nbins=model.histogram_size,
-                                              quasi_id_cols=model.quids)]:
-                Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=model.quids)
+                                              nbins=model.histogram_size)]:
+                Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature)
                 Attack.set_seed(SEED)
                 Attack.train(sanA, labelsA)
                 trained_attacks[Feature.__name__] = Attack
