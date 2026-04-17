@@ -1,0 +1,112 @@
+{
+  "sensitiveAttributes": {
+    "class": "Classification"
+  },
+  "nIter": 5,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID9408457", "ID8412471", "ID8933116", "ID5807742", "ID9895831"],
+  "generativeModels": {
+    "CTGAN": [
+      []
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "AIM": [
+      [0.1],
+      [1.0],
+      [10.0]
+    ],
+    "DP_MERF": [
+      [0.1],
+      [20],
+      [30]
+    ],
+    "GEM": [
+      [0.1],
+      [1.0]
+    ]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+      ]
+    ],
+    "SanitiserMondrian": [
+      [
+        2,
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        []
+      ],
+      [
+        5,
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        []
+      ],
+      [
+        10,
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        []
+      ],
+      [
+        25,
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        []
+      ],
+      [
+        50,
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        []
+      ],
+      [
+        100,
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        []
+      ]
+    ]
+  }
+}
