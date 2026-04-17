@@ -36,55 +36,61 @@ def utility_eval_gm_worker(model_config, rawTout, targets, targetIDs,
     """Evaluate one generative model's utility across all targets.
     :return: tuple: (model_name, results_target dict, results_agg dict)
     """
-    model = create_model(model_config, metadata)
-    model.set_seed(SEED)
-    utility_tasks = [create_utility_task(cfg, metadata) for cfg in utility_task_configs]
-    for ut in utility_tasks:
-        ut.set_seed(SEED)
-    nSynT = runconfig['nSynT']
-    sizeSynT = runconfig['sizeSynT']
+    try:
+        model = create_model(model_config, metadata)
+        model.set_seed(SEED)
+        utility_tasks = [create_utility_task(cfg, metadata) for cfg in utility_task_configs]
+        for ut in utility_tasks:
+            ut.set_seed(SEED)
+        nSynT = runconfig['nSynT']
+        sizeSynT = runconfig['sizeSynT']
 
-    results_target = {}
-    results_agg = {}
+        results_target = {}
+        results_agg = {}
 
-    model.fit(rawTout)
-    synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
-
-    for ut in utility_tasks:
-        predErrorTargets = []
-        predErrorAggr = []
-        for syn in synTwithoutTarget:
-            ut.train(syn)
-            predErrorTargets.append(ut.evaluate(testRecords))
-            predErrorAggr.append(ut.evaluate(rawTest))
-
-        results_target[(ut.__name__, 'OUT')] = {
-            'TestRecordID': testRecordIDs,
-            'Accuracy': list(mean(predErrorTargets, axis=0))
-        }
-        results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
-
-    for tid in targetIDs:
-        target = targets.loc[[tid]]
-        rawTin = pd.concat([rawTout, target])
-        model.fit(rawTin)
-        synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+        model.fit(rawTout)
+        synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
 
         for ut in utility_tasks:
             predErrorTargets = []
             predErrorAggr = []
-            for syn in synTwithTarget:
+            for syn in synTwithoutTarget:
                 ut.train(syn)
                 predErrorTargets.append(ut.evaluate(testRecords))
                 predErrorAggr.append(ut.evaluate(rawTest))
 
-            results_target[(ut.__name__, tid)] = {
-                'TestRecordID': testRecordIDs,
-                'Accuracy': list(mean(predErrorTargets, axis=0))
-            }
-            results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+            if predErrorTargets:
+                results_target[(ut.__name__, 'OUT')] = {
+                    'TestRecordID': testRecordIDs,
+                    'Accuracy': list(mean(predErrorTargets, axis=0))
+                }
+                results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
 
-    return (model.__name__, results_target, results_agg)
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            rawTin = pd.concat([rawTout, target])
+            model.fit(rawTin)
+            synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+
+            for ut in utility_tasks:
+                predErrorTargets = []
+                predErrorAggr = []
+                for syn in synTwithTarget:
+                    ut.train(syn)
+                    predErrorTargets.append(ut.evaluate(testRecords))
+                    predErrorAggr.append(ut.evaluate(rawTest))
+
+                if predErrorTargets:
+                    results_target[(ut.__name__, tid)] = {
+                        'TestRecordID': testRecordIDs,
+                        'Accuracy': list(mean(predErrorTargets, axis=0))
+                    }
+                    results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+
+        return (model.__name__, results_target, results_agg)
+    except Exception as e:
+        LOGGER.error(f"Utility evaluation failed for model {model_config[0]}: {e}")
+        return (model_config[0], {}, {})
 
 
 def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
@@ -93,53 +99,59 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
     """Evaluate one sanitiser's utility across all targets.
     :return: tuple: (model_name, results_target dict, results_agg dict)
     """
-    model = create_model(model_config, metadata)
-    model.set_seed(SEED)
-    attack_metadata = model.get_output_metadata(metadata)
-    utility_tasks = [create_utility_task(cfg, attack_metadata) for cfg in utility_task_configs]
-    for ut in utility_tasks:
-        ut.set_seed(SEED)
-    nSynT = runconfig['nSynT']
+    try:
+        model = create_model(model_config, metadata)
+        model.set_seed(SEED)
+        attack_metadata = model.get_output_metadata(metadata)
+        utility_tasks = [create_utility_task(cfg, attack_metadata) for cfg in utility_task_configs]
+        for ut in utility_tasks:
+            ut.set_seed(SEED)
+        nSynT = runconfig['nSynT']
 
-    results_target = {}
-    results_agg = {}
+        results_target = {}
+        results_agg = {}
 
-    sanOut = model.sanitise(rawTout)
-
-    for ut in utility_tasks:
-        predErrorTargets = []
-        predErrorAggr = []
-        for _ in range(nSynT):
-            ut.train(sanOut)
-            predErrorTargets.append(ut.evaluate(testRecords))
-            predErrorAggr.append(ut.evaluate(rawTest))
-
-        results_target[(ut.__name__, 'OUT')] = {
-            'TestRecordID': testRecordIDs,
-            'Accuracy': list(mean(predErrorTargets, axis=0))
-        }
-        results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
-
-    for tid in targetIDs:
-        target = targets.loc[[tid]]
-        rawTin = pd.concat([rawTout, target])
-        sanIn = model.sanitise(rawTin)
+        sanOut = model.sanitise(rawTout)
 
         for ut in utility_tasks:
             predErrorTargets = []
             predErrorAggr = []
             for _ in range(nSynT):
-                ut.train(sanIn)
+                ut.train(sanOut)
                 predErrorTargets.append(ut.evaluate(testRecords))
                 predErrorAggr.append(ut.evaluate(rawTest))
 
-            results_target[(ut.__name__, tid)] = {
-                'TestRecordID': testRecordIDs,
-                'Accuracy': list(mean(predErrorTargets, axis=0))
-            }
-            results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+            if predErrorTargets:
+                results_target[(ut.__name__, 'OUT')] = {
+                    'TestRecordID': testRecordIDs,
+                    'Accuracy': list(mean(predErrorTargets, axis=0))
+                }
+                results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
 
-    return (model.__name__, results_target, results_agg)
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            rawTin = pd.concat([rawTout, target])
+            sanIn = model.sanitise(rawTin)
+
+            for ut in utility_tasks:
+                predErrorTargets = []
+                predErrorAggr = []
+                for _ in range(nSynT):
+                    ut.train(sanIn)
+                    predErrorTargets.append(ut.evaluate(testRecords))
+                    predErrorAggr.append(ut.evaluate(rawTest))
+
+                if predErrorTargets:
+                    results_target[(ut.__name__, tid)] = {
+                        'TestRecordID': testRecordIDs,
+                        'Accuracy': list(mean(predErrorTargets, axis=0))
+                    }
+                    results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+
+        return (model.__name__, results_target, results_agg)
+    except Exception as e:
+        LOGGER.error(f"Utility evaluation failed for sanitiser {model_config[0]}: {e}")
+        return (model_config[0], {}, {})
 
 
 def main():

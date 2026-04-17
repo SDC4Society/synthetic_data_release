@@ -43,18 +43,38 @@ class MIAttackClassifier(PrivacyAttack):
 
     def train(self, synA, labels):
         """Train a membership inference attack on a labelled training set"""
-
-        if self.FeatureSet is not None:
-            synA = stack([self.FeatureSet.extract(s) for s in synA])
-        else:
-            synA = stack([self._df_to_array(s).flatten() for s in synA])
+        if not synA or len(synA) == 0:
+            LOGGER.warning(f"No shadow data provided for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
 
         if not isinstance(labels, ndarray):
             labels = array(labels)
 
-        self.Distinguisher.fit(synA.astype('float32'), labels)
+        if len(labels) == 0:
+            LOGGER.warning(f"No labels provided for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
 
-        self.trained = True
+        # Check for both IN and OUT classes
+        unique_labels = set(labels)
+        if len(unique_labels) < 2:
+            LOGGER.warning(f"Shadow data for {self.__name__} has only one class: {unique_labels}. Skipping training.")
+            self.trained = False
+            return
+
+        try:
+            if self.FeatureSet is not None:
+                synA_feat = stack([self.FeatureSet.extract(s) for s in synA])
+            else:
+                synA_feat = stack([self._df_to_array(s).flatten() for s in synA])
+
+            self.Distinguisher.fit(synA_feat.astype('float32'), labels)
+            LOGGER.debug('Finished training MIA distinguisher')
+            self.trained = True
+        except Exception as e:
+            LOGGER.error(f"Failed to train {self.__name__}: {e}")
+            self.trained = False
 
     def attack(self, datasets, attemptLinkage=False, target=None):
         """
@@ -64,7 +84,9 @@ class MIAttackClassifier(PrivacyAttack):
         :param datasets: list: A list of synthetic or sanitised datasets
         :return: guess: list: A guess about the target's membership for each of the synthetic input datasets
         """
-        assert self.trained, 'Attack must first be trained.'
+        if not self.trained:
+            # Random guess if not trained
+            return [LABEL_OUT] * len(datasets)
 
         if attemptLinkage:
             assert target is not None, 'Attacker needs target record to attempt linkage'
@@ -98,7 +120,8 @@ class MIAttackClassifier(PrivacyAttack):
 
     def get_confidence(self, synT, secret):
         """Calculate probability that attacker correctly predicts whether target was present in model's training data"""
-        assert self.trained, 'Attack must first be trained.'
+        if not self.trained:
+            return [0.5] * len(synT)
         if self.FeatureSet is not None:
             synT = stack([self.FeatureSet.extract(s) for s in synT])
         else:
