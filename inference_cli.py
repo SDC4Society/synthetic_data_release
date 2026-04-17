@@ -120,6 +120,10 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
 
     sanOut = model.sanitise(rawTout)
 
+    if len(sanOut) == 0:
+        LOGGER.warning(f'Sanitised output is empty for {model.__name__}, skipping.')
+        return (model.__name__, results)
+
     for sa, Attack in attacks.items():
         Attack.set_seed(SEED)
         Attack.train(sanOut)
@@ -141,6 +145,10 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
         target = targets.loc[[tid]]
         rawTin = pd.concat([rawTout, target])
         sanIn = model.sanitise(rawTin)
+
+        if len(sanIn) == 0:
+            LOGGER.warning(f'Sanitised input is empty for {model.__name__} tid={tid}, skipping.')
+            continue
 
         for sa, Attack in attacks.items():
             targetAux = target.loc[[tid], Attack.knownAttributes]
