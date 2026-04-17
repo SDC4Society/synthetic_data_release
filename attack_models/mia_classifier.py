@@ -22,12 +22,12 @@ import multiprocessing as mp
 
 class MIAttackClassifier(PrivacyAttack):
     """"Parent class for membership inference attack on the output of a generative model using sklearn classifier"""
-    def __init__(self, Distinguisher, metadata, FeatureSet=None, quids=None):
+    def __init__(self, Distinguisher, metadata, FeatureSet=None):
 
         self.Distinguisher = Distinguisher
         self.FeatureSet = FeatureSet
 
-        self.metadata, self.categoricalAttributes, self.numericalAttributes = self._read_meta(metadata, quids)
+        self.metadata, self.categoricalAttributes, self.numericalAttributes = self._read_meta(metadata)
 
         self.trained = False
 
@@ -134,10 +134,7 @@ class MIAttackClassifier(PrivacyAttack):
 
         return [p[s] for p,s in zip(probs, secret)]
 
-    def _read_meta(self, metadata, quids):
-        if quids is None:
-            quids = []
-
+    def _read_meta(self, metadata):
         meta_dict = {}
         categoricalAttributes = []
         numericalAttributes = []
@@ -147,26 +144,13 @@ class MIAttackClassifier(PrivacyAttack):
             data_type = cdict['type']
 
             if data_type == FLOAT or data_type == INTEGER:
-                if attr_name in quids:
-                    cat_bins = cdict['bins']
-                    cat_labels = [f'({cat_bins[i]},{cat_bins[i+1]}]' for i in range(len(cat_bins)-1)]
+                meta_dict[attr_name] = {
+                    'type': data_type,
+                    'min': cdict['min'],
+                    'max': cdict['max']
+                }
 
-                    meta_dict[attr_name] = {
-                        'type': CATEGORICAL,
-                        'categories': cat_labels,
-                        'size': len(cat_labels)
-                    }
-
-                    categoricalAttributes.append(attr_name)
-
-                else:
-                    meta_dict[attr_name] = {
-                        'type': data_type,
-                        'min': cdict['min'],
-                        'max': cdict['max']
-                    }
-
-                    numericalAttributes.append(attr_name)
+                numericalAttributes.append(attr_name)
 
             elif data_type == CATEGORICAL or data_type == ORDINAL:
                 meta_dict[attr_name] = {
@@ -242,20 +226,20 @@ class MIAttackClassifierLogReg(MIAttackClassifier):
 
 class MIAttackClassifierRandomForest(MIAttackClassifier):
 
-    def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(get_random_forest_classifier(), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+    def __init__(self, metadata, FeatureSet=None):
+        super().__init__(get_random_forest_classifier(), metadata=metadata, FeatureSet=FeatureSet)
 
 
 class MIAttackClassifierKNN(MIAttackClassifier):
 
-    def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(get_knn_classifier(n_neighbors=5), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+    def __init__(self, metadata, FeatureSet=None):
+        super().__init__(get_knn_classifier(n_neighbors=5), metadata=metadata, FeatureSet=FeatureSet)
 
 
 class MIAttackClassifierMLP(MIAttackClassifier):
 
-    def __init__(self, metadata, FeatureSet=None, quids=None):
-        super().__init__(MLPClassifier((200,), solver='lbfgs'), metadata=metadata, FeatureSet=FeatureSet, quids=quids)
+    def __init__(self, metadata, FeatureSet=None):
+        super().__init__(MLPClassifier((200,), solver='lbfgs'), metadata=metadata, FeatureSet=FeatureSet)
 
 
 def generate_mia_shadow_data(GenModel, target, rawA, sizeRaw, sizeSyn, numModels, numCopies, seed= None):

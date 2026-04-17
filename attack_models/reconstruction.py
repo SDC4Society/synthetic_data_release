@@ -13,7 +13,7 @@ from utils.logging import LOGGER
 class AttributeInferenceAttack(PrivacyAttack):
     """A privacy attack that aims to reconstruct a sensitive attribute c given a partial target record T"""
 
-    def __init__(self, PredictionModel, sensitiveAttribute, metadata, quids=None):
+    def __init__(self, PredictionModel, sensitiveAttribute, metadata):
         """
         Parent class for simple regression attribute inference attack
 
@@ -26,7 +26,7 @@ class AttributeInferenceAttack(PrivacyAttack):
         self.PredictionModel = PredictionModel
         self.sensitiveAttribute = sensitiveAttribute
 
-        self.metadata, self.knownAttributes, self.categoricalAttributes, self.nfeatures = self._read_meta(metadata, quids)
+        self.metadata, self.knownAttributes, self.categoricalAttributes, self.nfeatures = self._read_meta(metadata)
 
         self.ImputerCat = SimpleImputer(strategy='most_frequent')
         self.ImputerNum = SimpleImputer(strategy='median')
@@ -67,10 +67,7 @@ class AttributeInferenceAttack(PrivacyAttack):
     def _make_guess(self, targetAux):
         raise NotImplementedError('Method must be overriden by a subclass')
 
-    def _read_meta(self, metadata, quids):
-        if quids is None:
-            quids = []
-
+    def _read_meta(self, metadata):
         meta_dict = {}
         knownAttributes = []
         categoricalAttributes = []
@@ -81,29 +78,13 @@ class AttributeInferenceAttack(PrivacyAttack):
             data_type = cdict['type']
 
             if data_type == FLOAT or data_type == INTEGER:
-                if attr_name in quids:
-                    cat_bins = cdict['bins']
-                    cat_labels = [f'({cat_bins[i]},{cat_bins[i+1]}]' for i in range(len(cat_bins)-1)]
+                meta_dict[attr_name] = {
+                    'type': data_type,
+                    'min': cdict['min'],
+                    'max': cdict['max']
+                }
 
-                    meta_dict[attr_name] = {
-                        'type': CATEGORICAL,
-                        'categories': cat_labels,
-                        'size': len(cat_labels)
-                    }
-
-                    nfeatures += len(cat_labels)
-
-                    if attr_name != self.sensitiveAttribute:
-                        categoricalAttributes.append(attr_name)
-
-                else:
-                    meta_dict[attr_name] = {
-                        'type': data_type,
-                        'min': cdict['min'],
-                        'max': cdict['max']
-                    }
-
-                    nfeatures += 1
+                nfeatures += 1
 
             elif data_type == CATEGORICAL or data_type == ORDINAL:
                 meta_dict[attr_name] = {
@@ -174,8 +155,8 @@ class AttributeInferenceAttack(PrivacyAttack):
 
 class LinRegAttack(AttributeInferenceAttack):
     """An AttributeInferenceAttack based on a simple Linear Regression model"""
-    def __init__(self, sensitiveAttribute, metadata, quids=None):
-        super().__init__(get_linear_regression(fit_intercept=False), sensitiveAttribute, metadata, quids)
+    def __init__(self, sensitiveAttribute, metadata):
+        super().__init__(get_linear_regression(fit_intercept=False), sensitiveAttribute, metadata)
 
         self.scaleFactor = None
         self.coefficients = None
@@ -264,8 +245,8 @@ class LinRegAttack(AttributeInferenceAttack):
 
 class RandForestAttack(AttributeInferenceAttack):
     """An AttributeInferenceAttack based on a simple Linear Regression model"""
-    def __init__(self, sensitiveAttribute, metadata, quids=None):
-        super().__init__(get_random_forest_classifier(), sensitiveAttribute, metadata, quids)
+    def __init__(self, sensitiveAttribute, metadata):
+        super().__init__(get_random_forest_classifier(), sensitiveAttribute, metadata)
 
         self.labels = {l:i for i, l in enumerate(self.metadata[self.sensitiveAttribute]['categories'])}
         self.labelsInv = {i:l for l, i in self.labels.items()}
