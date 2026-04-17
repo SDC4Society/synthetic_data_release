@@ -45,97 +45,105 @@ SEED = 42
 
 def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     """Train MIA attacks for one (target, model) pair."""
-    model = create_model(model_config, metadata)
-    model.set_seed(SEED)
-    model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
-    attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
-    trained_attacks = {}
+    try:
+        model = create_model(model_config, metadata)
+        model.set_seed(SEED)
+        model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
+        attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
+        trained_attacks = {}
 
-    if is_generative_model(model):
-        synA, labelsA = generate_mia_shadow_data(
-            model, target, rawA,
-            runconfig['sizeRawT'], runconfig['sizeSynT'],
-            runconfig['nShadows'], runconfig['nSynA'], SEED)
+        if is_generative_model(model):
+            synA, labelsA = generate_mia_shadow_data(
+                model, target, rawA,
+                runconfig['sizeRawT'], runconfig['sizeSynT'],
+                runconfig['nShadows'], runconfig['nSynA'], SEED)
 
-        for Feature in [NaiveFeatureSet(model.datatype),
-                        HistogramFeatureSet(model.datatype, metadata),
-                        CorrelationsFeatureSet(model.datatype, metadata)]:
-            Attack = MIAttackClassifierRandomForest(metadata, Feature)
-            Attack.set_seed(SEED)
-            Attack.train(synA, labelsA)
-            trained_attacks[Feature.__name__] = Attack
-    else:
-        sanA, labelsA = generate_mia_anon_data(
-            model, target, rawA,
-            runconfig['sizeRawT'],
-            runconfig['nShadows'] * runconfig['nSynA'], SEED)
+            for Feature in [NaiveFeatureSet(model.datatype),
+                            HistogramFeatureSet(model.datatype, metadata),
+                            CorrelationsFeatureSet(model.datatype, metadata)]:
+                Attack = MIAttackClassifierRandomForest(metadata, Feature)
+                Attack.set_seed(SEED)
+                Attack.train(synA, labelsA)
+                trained_attacks[Feature.__name__] = Attack
+        else:
+            sanA, labelsA = generate_mia_anon_data(
+                model, target, rawA,
+                runconfig['sizeRawT'],
+                runconfig['nShadows'] * runconfig['nSynA'], SEED)
 
-        for Feature in [NaiveFeatureSet(DataFrame),
-                        HistogramFeatureSet(DataFrame, attack_metadata,
-                                           nbins=model.histogram_size, quids=model.quids),
-                        CorrelationsFeatureSet(DataFrame, attack_metadata, quids=model.quids),
-                        EnsembleFeatureSet(DataFrame, attack_metadata,
-                                          nbins=model.histogram_size,
-                                          quasi_id_cols=model.quids)]:
-            Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=model.quids)
-            Attack.set_seed(SEED)
-            Attack.train(sanA, labelsA)
-            trained_attacks[Feature.__name__] = Attack
+            for Feature in [NaiveFeatureSet(DataFrame),
+                            HistogramFeatureSet(DataFrame, attack_metadata,
+                                               nbins=model.histogram_size, quids=model.quids),
+                            CorrelationsFeatureSet(DataFrame, attack_metadata, quids=model.quids),
+                            EnsembleFeatureSet(DataFrame, attack_metadata,
+                                              nbins=model.histogram_size,
+                                              quasi_id_cols=model.quids)]:
+                Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=model.quids)
+                Attack.set_seed(SEED)
+                Attack.train(sanA, labelsA)
+                trained_attacks[Feature.__name__] = Attack
 
-    return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
+        return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
+    except Exception as e:
+        LOGGER.error(f"Linkage attack training failed for model {model_config[0]} and target {tid}: {e}")
+        return (tid, model_config[0], {}, _deep_tuple(model_config))
 
 
 def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
                         attacks_for_model, metadata, runconfig):
     """Evaluate one model across all targets for one game iteration."""
-    model = create_model(model_config, metadata)
-    model.set_seed(SEED)
-    model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
-    nSynT = runconfig['nSynT']
-    sizeSynT = runconfig['sizeSynT']
-    per_target_results = {}
+    try:
+        model = create_model(model_config, metadata)
+        model.set_seed(SEED)
+        model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
+        nSynT = runconfig['nSynT']
+        sizeSynT = runconfig['sizeSynT']
+        per_target_results = {}
 
-    if is_generative_model(model):
-        model.fit(rawTout)
-        synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
-        synLabelsOut = [LABEL_OUT for _ in range(nSynT)]
+        if is_generative_model(model):
+            model.fit(rawTout)
+            synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+            synLabelsOut = [LABEL_OUT for _ in range(nSynT)]
 
-        for tid in targetIDs:
-            target = targets.loc[[tid]]
-            rawTin = pd.concat([rawTout, target])
-            model.fit(rawTin)
-            synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
-            synLabelsIn = [LABEL_IN for _ in range(nSynT)]
+            for tid in targetIDs:
+                target = targets.loc[[tid]]
+                rawTin = pd.concat([rawTout, target])
+                model.fit(rawTin)
+                synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+                synLabelsIn = [LABEL_IN for _ in range(nSynT)]
 
-            synT = synTwithoutTarget + synTwithTarget
-            synTlabels = synLabelsOut + synLabelsIn
+                synT = synTwithoutTarget + synTwithTarget
+                synTlabels = synLabelsOut + synLabelsIn
 
-            per_target_results[tid] = {}
-            for feature, Attack in attacks_for_model[tid].items():
-                attackerGuesses = Attack.attack(synT)
-                per_target_results[tid][feature] = {
-                    'Secret': synTlabels,
-                    'AttackerGuess': attackerGuesses
-                }
-    else:
-        sanOut = model.sanitise(rawTout)
-        for tid in targetIDs:
-            target = targets.loc[[tid]]
-            rawTin = pd.concat([rawTout, target])
-            sanIn = model.sanitise(rawTin)
+                per_target_results[tid] = {}
+                for feature, Attack in attacks_for_model[tid].items():
+                    attackerGuesses = Attack.attack(synT)
+                    per_target_results[tid][feature] = {
+                        'Secret': synTlabels,
+                        'AttackerGuess': attackerGuesses
+                    }
+        else:
+            sanOut = model.sanitise(rawTout)
+            for tid in targetIDs:
+                target = targets.loc[[tid]]
+                rawTin = pd.concat([rawTout, target])
+                sanIn = model.sanitise(rawTin)
 
-            sanT = [sanOut, sanIn]
-            sanTLabels = [LABEL_OUT, LABEL_IN]
+                sanT = [sanOut, sanIn]
+                sanTLabels = [LABEL_OUT, LABEL_IN]
 
-            per_target_results[tid] = {}
-            for feature, Attack in attacks_for_model[tid].items():
-                attackerGuesses = Attack.attack(sanT, attemptLinkage=True, target=target)
-                per_target_results[tid][feature] = {
-                    'Secret': sanTLabels,
-                    'AttackerGuess': attackerGuesses
-                }
+                per_target_results[tid] = {}
+                for feature, Attack in attacks_for_model[tid].items():
+                    attackerGuesses = Attack.attack(sanT, attemptLinkage=True, target=target)
+                    per_target_results[tid][feature] = {
+                        'Secret': sanTLabels,
+                        'AttackerGuess': attackerGuesses
+                    }
 
-    return (model.__name__, per_target_results)
+        return (model.__name__, per_target_results)
+    except Exception as e:
+        LOGGER.error(f"Linkage evaluation failed for model {model_config[0]}: {e}")
+        return (model_config[0], {})
 
 
 def main():

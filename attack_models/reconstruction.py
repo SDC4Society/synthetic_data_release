@@ -187,25 +187,43 @@ class LinRegAttack(AttributeInferenceAttack):
         Train a MLE attack to reconstruct an unknown sensitive value from a vector of known attributes
         :param data: type(DataFrame) A dataset of shape (n, k)
         """
-        features = self._encode_data(data.drop(self.sensitiveAttribute, axis=1))
-        labels = data[self.sensitiveAttribute].values
+        if data.empty:
+            LOGGER.warning(f"Training data is empty for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
 
-        n, k = features.shape
+        try:
+            features = self._encode_data(data.drop(self.sensitiveAttribute, axis=1))
+            labels = data[self.sensitiveAttribute].values
 
-        # Center independent variables for better regression performance
-        self.scaleFactor = mean(features, axis=0)
-        featuresScaled = features - self.scaleFactor
-        featuresScaled = concatenate([ones((n, 1), dtype='float32'), featuresScaled], axis=1) # append all ones for inclu intercept in beta vector
+            n, k = features.shape
+            if n == 0:
+                LOGGER.warning(f"No samples left for {self.__name__} after encoding. Skipping training.")
+                self.trained = False
+                return
 
-        # Get MLE for linear coefficients
-        self.PredictionModel.fit(featuresScaled, labels)
-        self.coefficients = self.PredictionModel.coef_
-        self.sigma = sum((labels - featuresScaled.dot(self.coefficients))**2)/(n-k)
+            # Center independent variables for better regression performance
+            self.scaleFactor = mean(features, axis=0)
+            featuresScaled = features - self.scaleFactor
+            featuresScaled = concatenate([ones((n, 1), dtype='float32'), featuresScaled], axis=1) # append all ones for inclu intercept in beta vector
 
-        LOGGER.debug('Finished training regression model')
-        self.trained = True
+            # Get MLE for linear coefficients
+            self.PredictionModel.fit(featuresScaled, labels)
+            self.coefficients = self.PredictionModel.coef_
+            
+            # Prevent division by zero if n <= k
+            denom = max(1, n - k)
+            self.sigma = sum((labels - featuresScaled.dot(self.coefficients))**2) / denom
+
+            LOGGER.debug('Finished training regression model')
+            self.trained = True
+        except Exception as e:
+            LOGGER.error(f"Failed to train {self.__name__}: {e}")
+            self.trained = False
 
     def _make_guess(self, targetAux):
+        if not self.trained:
+            return 0.0
         targetFeatures = self._encode_data(targetAux)
         targetFeaturesScaled = targetFeatures - self.scaleFactor
         targetFeaturesScaled = concatenate([ones((len(targetFeaturesScaled), 1), dtype='float32'), targetFeaturesScaled], axis=1)
@@ -259,20 +277,44 @@ class RandForestAttack(AttributeInferenceAttack):
         Train a Classifier to reconstruct an unknown sensitive label from a vector of known attributes
         :param data: type(DataFrame) A dataset of shape (n, k)
         """
-        features = self._encode_data(data.drop(self.sensitiveAttribute, axis=1))
-        labels = data[self.sensitiveAttribute].apply(lambda x: self.labels[x]).values
+        if data.empty:
+            LOGGER.warning(f"Training data is empty for {self.__name__}. Skipping training.")
+            self.trained = False
+            return
 
-        # Feature normalisation
-        self.scaleFactor = mean(features, axis=0)
-        featuresScaled = features - self.scaleFactor
+        # Check if we have at least 2 classes
+        unique_labels = data[self.sensitiveAttribute].unique()
+        if len(unique_labels) < 2:
+            LOGGER.warning(f"Training data for {self.__name__} has only one class: {unique_labels}. Skipping training.")
+            self.trained = False
+            return
 
-        # Get MLE for linear coefficients
-        self.PredictionModel.fit(featuresScaled, labels)
+        try:
+            features = self._encode_data(data.drop(self.sensitiveAttribute, axis=1))
+            labels = data[self.sensitiveAttribute].apply(lambda x: self.labels[x]).values
 
-        LOGGER.debug('Finished training regression model')
-        self.trained = True
+            if features.shape[0] == 0:
+                LOGGER.warning(f"No samples left for {self.__name__} after encoding. Skipping training.")
+                self.trained = False
+                return
+
+            # Feature normalisation
+            self.scaleFactor = mean(features, axis=0)
+            featuresScaled = features - self.scaleFactor
+
+            # Get MLE for linear coefficients
+            self.PredictionModel.fit(featuresScaled, labels)
+
+            LOGGER.debug('Finished training classification model')
+            self.trained = True
+        except Exception as e:
+            LOGGER.error(f"Failed to train {self.__name__}: {e}")
+            self.trained = False
 
     def _make_guess(self, targetAux):
+        if not self.trained:
+            # Return any valid category as fallback
+            return self.labelsInv[0]
         targetFeatures = self._encode_data(targetAux)
         targetFeaturesScaled = targetFeatures - self.scaleFactor
 
@@ -281,6 +323,8 @@ class RandForestAttack(AttributeInferenceAttack):
         return self.labelsInv[guess[0]]
 
     def _get_proba(self, targetFeaturesScaled, targetSensitive):
+        if not self.trained:
+            return 1.0 / len(self.labels)
         probs = self.PredictionModel.predict_proba(targetFeaturesScaled).flatten()
         target_label = self.labels[targetSensitive]
         classes = list(self.PredictionModel.classes_)
