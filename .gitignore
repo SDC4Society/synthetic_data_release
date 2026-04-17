@@ -18,6 +18,7 @@ notebooks_local/
 tests/*/runconfig.json
 Results*.json
 *.pdf
+/tests/*_test
 
 # Runtime-generated outputs
 .claude/
