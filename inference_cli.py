@@ -40,6 +40,7 @@ def inference_eval_gm_worker(model_config, rawTout, targets, targetIDs,
     :return: tuple: (model_name, {(tid, sa): result_dict})
     """
     model = create_model(model_config, metadata)
+    model.set_seed(SEED)
     nSynT = runconfig['nSynT']
     sizeSynT = runconfig['sizeSynT']
 
@@ -63,6 +64,7 @@ def inference_eval_gm_worker(model_config, rawTout, targets, targetIDs,
             }
 
         for syn in synTwithoutTarget:
+            Attack.set_seed(SEED)
             Attack.train(syn)
             for tid in targetIDs:
                 target = targets.loc[[tid]]
@@ -105,6 +107,7 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
     :return: tuple: (model_name, {(tid, sa): result_dict})
     """
     model = create_model(model_config, metadata)
+    model.set_seed(SEED)
     attack_metadata = model.get_output_metadata(metadata)
 
     attacks = {}
@@ -119,6 +122,7 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
     sanOut = model.sanitise(rawTout)
 
     for sa, Attack in attacks.items():
+        Attack.set_seed(SEED)
         Attack.train(sanOut)
         for tid in targetIDs:
             target = targets.loc[[tid]]

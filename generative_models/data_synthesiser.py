@@ -1,7 +1,7 @@
 """Generative models adapted from https://github.com/DataResponsibly/DataSynthesizer"""
 # Copyright <2018> <dataresponsibly.com>
 
-from numpy.random import seed, laplace, choice
+from numpy.random import default_rng
 from pandas import DataFrame, merge
 from itertools import product
 
@@ -39,7 +39,7 @@ class IndependentHistogram(GenerativeModel):
             self.trained = False
             self.DataDescriber = None
 
-        self.DataDescriber = DataDescriber(self.metadata, self.histogram_bins, self.infer_ranges)
+        self.DataDescriber = DataDescriber(self.metadata, self.histogram_bins, self.infer_ranges, self.seed)
         self.DataDescriber.describe(data)
         LOGGER.debug(f'Finished fitting IndependentHistogram')
         self.trained = True
@@ -116,8 +116,10 @@ class BayesianNet(GenerativeModel):
             self.bayesian_network = None
             self.conditional_probabilities = None
 
-        self.DataDescriber = DataDescriber(self.metadata, self.histogram_bins, self.infer_ranges)
+        self.DataDescriber = DataDescriber(self.metadata, self.histogram_bins, self.infer_ranges, self.seed)
         self.DataDescriber.describe(data)
+
+        self.rng = default_rng(self.seed)
 
         encoded_df = DataFrame(columns=self.DataDescriber.attr_names)
         for attr_name, column in self.DataDescriber.attr_dict.items():
@@ -154,7 +156,7 @@ class BayesianNet(GenerativeModel):
 
         bn_root_attr = self.bayesian_network[0][1][0]
         root_attr_dist = self.conditional_probabilities[bn_root_attr]
-        encoded_df[bn_root_attr] = choice(len(root_attr_dist), size=nsamples, p=root_attr_dist)
+        encoded_df[bn_root_attr] = self.rng.choice(len(root_attr_dist), size=nsamples, p=root_attr_dist)
 
         for child, parents in self.bayesian_network:
             child_conditional_distributions = self.conditional_probabilities[child]
@@ -170,12 +172,12 @@ class BayesianNet(GenerativeModel):
                 filter_condition = eval(filter_condition[:-1])
                 size = encoded_df[filter_condition].shape[0]
                 if size:
-                    encoded_df.loc[filter_condition, child] = choice(len(dist), size=size, p=dist)
+                    encoded_df.loc[filter_condition, child] = self.rng.choice(len(dist), size=size, p=dist)
 
             # Fill any nan values by sampling from marginal child distribution
             marginal_dist = self.DataDescriber.attr_dict[child].distribution_probabilities
             null_idx = encoded_df[child].isnull()
-            encoded_df.loc[null_idx, child] = choice(len(marginal_dist), size=null_idx.sum(), p=marginal_dist)
+            encoded_df.loc[null_idx, child] = self.rng.choice(len(marginal_dist), size=null_idx.sum(), p=marginal_dist)
 
         encoded_df[encoded_df.columns] = encoded_df[encoded_df.columns].astype(int)
 
@@ -191,13 +193,9 @@ class BayesianNet(GenerativeModel):
         """Construct a Bayesian Network (BN) using greedy algorithm."""
         dataset = encoded_df.astype(str, copy=False)
 
-        # Optional: Fix sed for reproducibility
-        if self.seed is not None:
-            seed(self.seed)
-
-        root_attribute = choice(dataset.columns)
+        root_attribute = self.rng.choice(dataset.columns)
         V = [root_attribute]
-        rest_attributes = set(dataset.columns)
+        rest_attributes = list(dataset.columns) # use list for consistent items order
         rest_attributes.remove(root_attribute)
         bayesian_net = []
         while rest_attributes:
@@ -320,15 +318,11 @@ class PrivBayes(BayesianNet):
         dataset = encoded_df.astype(str, copy=False)
         num_tuples, num_attributes = dataset.shape
 
-        # Optional: Fix seed for reproducibility
-        if self.seed is not None:
-            seed(self.seed)
-
         attr_to_is_binary = {attr: dataset[attr].unique().size <= 2 for attr in dataset}
 
-        root_attribute = choice(dataset.columns)
+        root_attribute = self.rng.choice(dataset.columns)
         V = [root_attribute]
-        rest_attributes = set(dataset.columns)
+        rest_attributes = list(dataset.columns) # use list for consistent items order
         rest_attributes.remove(root_attribute)
         bayesian_net = []
         while rest_attributes:
@@ -344,7 +338,7 @@ class PrivBayes(BayesianNet):
 
             sampling_distribution = exponential_mechanism(self.epsilon/2, mutual_info_list, parents_pair_list, attr_to_is_binary,
                                                           num_tuples, num_attributes)
-            idx = choice(list(range(len(mutual_info_list))), p=sampling_distribution)
+            idx = self.rng.choice(list(range(len(mutual_info_list))), p=sampling_distribution)
 
             bayesian_net.append(parents_pair_list[idx])
             adding_attribute = parents_pair_list[idx][0]
@@ -367,7 +361,7 @@ class PrivBayes(BayesianNet):
         full_counts.fillna(0, inplace=True)
 
         # Get Laplace noise sample
-        noise_sample = laplace(0, scale=self.laplace_noise_scale, size=full_counts.index.size)
+        noise_sample = self.rng.laplace(0, scale=self.laplace_noise_scale, size=full_counts.index.size)
         full_counts['count'] += noise_sample
         full_counts.loc[full_counts['count'] < 0, 'count'] = 0
 
@@ -375,10 +369,11 @@ class PrivBayes(BayesianNet):
 
 
 class DataDescriber(object):
-    def __init__(self, metadata, histogram_bins, infer_ranges=False):
+    def __init__(self, metadata, histogram_bins, infer_ranges=False, seed=None):
         self.metadata = metadata
         self.histogram_bins = histogram_bins
         self.infer_ranges = infer_ranges
+        self.seed=seed
 
         self.attr_dict = None
         self.attr_names = None
@@ -425,6 +420,7 @@ class DataDescriber(object):
             else:
                 raise Exception(f'The DataType of {col} is unknown.')
 
+            Attribute.set_seed(self.seed)
             attr_dict[col] = Attribute
 
         return attr_dict

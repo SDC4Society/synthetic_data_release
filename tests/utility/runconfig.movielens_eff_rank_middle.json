@@ -1,0 +1,146 @@
+{
+  "nIter": 5,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID64709", "ID29505", "ID29592", "ID159458", "ID109066"],
+  "TestRecords": ["ID26087", "ID57815", "ID171899", "ID23295", "ID13455"],
+  "generativeModels": {
+    "IndependentHistogram": [
+      [10],
+      [25]
+    ],
+    "BayesianNet": [
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1]
+    ],
+    "PrivBayes": [
+      [25, 1, 0.1],
+      [25, 1, 1.0],
+      [25, 1, 10.0],
+      [25, 1, 20.0],
+      [25, 1, 30.0]
+    ],
+    "CTGAN": [
+      []
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "AIM": [
+      [0.1],
+      [1.0],
+      [10.0]
+    ],
+    "DP_MERF": [
+      [0.1],
+      [20],
+      [30]
+    ],
+    "GEM": [
+      [0.1],
+      [1.0]
+    ],
+    "PrivateGSD": [
+      [0.1],
+      [1.0]
+    ],
+    "RAPpp": [
+      [0.1],
+      [1.0]
+    ],
+    "PrivMRF": [
+      [0.1],
+      [1.0]
+    ],
+    "TabDDPM": [
+      []
+    ],
+    "PrivSyn": [
+      [0.1],
+      [1.0]
+    ]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"]
+      ]
+    ],
+    "SanitiserMondrian": [
+      [
+        2,
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
+        []
+      ],
+      [
+        5,
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
+        []
+      ],
+      [
+        10,
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
+        []
+      ],
+      [
+        25,
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
+        []
+      ],
+      [
+        50,
+        ["(no genres listed)", "Action", "Adventure", "Animation", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "War"],
+        []
+      ]
+    ]
+  },
+  "utilityTasks": {
+    "RandForestClass": [
+      ["Mystery"]
+    ]
+  }
+}

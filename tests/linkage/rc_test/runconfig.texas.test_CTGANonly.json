@@ -7,13 +7,7 @@
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
-  "Targets": [
-    "ID26241",
-    "ID31432",
-    "ID27428",
-    "ID29265",
-    "ID14086"
-  ],
+  "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
   "generativeModels": {
     "CTGAN": [
       []
@@ -27,13 +21,7 @@
         0.99,
         2,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ],
       [
         10,
@@ -41,13 +29,7 @@
         0.99,
         5,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ],
       [
         10,
@@ -55,13 +37,7 @@
         0.99,
         10,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ],
       [
         10,
@@ -69,58 +45,41 @@
         0.99,
         25,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ],
       [
         5,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ],
       [
         10,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ],
       [
         25,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ],
+      [
+        50,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ]
     ]

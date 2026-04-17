@@ -47,6 +47,7 @@ SEED = 42
 def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     """Train MIA attacks for one (target, model) pair."""
     model = create_model(model_config, metadata)
+    model.set_seed(SEED)
     model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
     attack_metadata = metadata if is_generative_model(model) else model.get_output_metadata(metadata)
     trained_attacks = {}
@@ -55,19 +56,20 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
         synA, labelsA = generate_mia_shadow_data(
             model, target, rawA,
             runconfig['sizeRawT'], runconfig['sizeSynT'],
-            runconfig['nShadows'], runconfig['nSynA'])
+            runconfig['nShadows'], runconfig['nSynA'], SEED)
 
         for Feature in [NaiveFeatureSet(model.datatype),
                         HistogramFeatureSet(model.datatype, metadata),
                         CorrelationsFeatureSet(model.datatype, metadata)]:
             Attack = MIAttackClassifierRandomForest(metadata, Feature)
+            Attack.set_seed(SEED)
             Attack.train(synA, labelsA)
             trained_attacks[Feature.__name__] = Attack
     else:
         sanA, labelsA = generate_mia_anon_data(
             model, target, rawA,
             runconfig['sizeRawT'],
-            runconfig['nShadows'] * runconfig['nSynA'])
+            runconfig['nShadows'] * runconfig['nSynA'], SEED)
 
         for Feature in [NaiveFeatureSet(DataFrame),
                         HistogramFeatureSet(DataFrame, attack_metadata,
@@ -77,6 +79,7 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
                                           nbins=model.histogram_size,
                                           quasi_id_cols=model.quids)]:
             Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature, quids=model.quids)
+            Attack.set_seed(SEED)
             Attack.train(sanA, labelsA)
             trained_attacks[Feature.__name__] = Attack
 
@@ -87,6 +90,7 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
                         attacks_for_model, metadata, runconfig):
     """Evaluate one model across all targets for one game iteration."""
     model = create_model(model_config, metadata)
+    model.set_seed(SEED)
     model.multiprocess = False  # Pool ワーカー内では子プロセス生成不可
     nSynT = runconfig['nSynT']
     sizeSynT = runconfig['sizeSynT']

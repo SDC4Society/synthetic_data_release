@@ -25,3 +25,19 @@ exp/
 /privsyn/
 method/PrivMRF/PrivMRF/temp/
 tests/linkage/progress_monitor.log
+superpowers/
+CLAUDE.md
+GEMINI.md
+
+# AI-generated docs & internal memos
+docs/superpowers/
+memo/
+
+# Debug/log files
+*.log
+import_log.txt
+debug_imports.txt
+
+# Scratch/temp files
+scratch.py
+scratch/

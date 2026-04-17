@@ -82,6 +82,14 @@ class ClassificationTask(PredictiveModel):
 
         self.__name__ = f'{self.Distinguisher.__class__.__name__}{self.labelCol}'
 
+    def set_seed(self, seed: int | None):
+        """Set a seed for reproducibility"""
+        self.seed = seed
+        try:
+            self.Distinguisher.random_state = seed
+        except AttributeError:
+            LOGGER.debug(f'{self.Distinguisher.__class__.__name__} does not support/need random_state, or it uses a different name.')
+
     def train(self, data):
         if not isinstance(data, self.datatype):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
@@ -159,6 +167,14 @@ class RegressionTask(PredictiveModel):
         self.Regressor = Regressor
 
         self.__name__ = f'{self.Regressor.__class__.__name__}{self.labelCol}'
+
+    def set_seed(self, seed: int | None):
+        """Set a seed for reproducibility"""
+        self.seed = seed
+        try:
+            self.Regressor.random_state = seed
+        except AttributeError:
+            LOGGER.debug(f'{self.Regressor.__class__.__name__} does not support random_state, or it uses a different name.')
 
     def train(self, data):
         if not isinstance(data, self.datatype):
