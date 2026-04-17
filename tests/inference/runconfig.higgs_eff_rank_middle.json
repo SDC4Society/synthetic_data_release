@@ -1,0 +1,150 @@
+{
+  "sensitiveAttributes": {
+    "class": "Classification"
+  },
+  "nIter": 5,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID8947512", "ID2599539", "ID6333928", "ID6489819", "ID8676761"],
+  "generativeModels": {
+    "IndependentHistogram": [
+      [10],
+      [25],
+      [45]
+    ],
+    "BayesianNet": [
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1],
+      [45, 1]
+    ],
+    "PrivBayes": [
+      [45, 1, 0.1],
+      [45, 1, 1.0],
+      [45, 1, 10.0],
+      [45, 1, 20.0],
+      [45, 1, 30.0]
+    ],
+    "CTGAN": [
+      []
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "AIM": [
+      [0.1],
+      [1.0],
+      [10.0]
+    ],
+    "DP_MERF": [
+      [0.1],
+      [20],
+      [30]
+    ],
+    "GEM": [
+      [0.1],
+      [1.0]
+    ],
+    "PrivateGSD": [
+      [0.1],
+      [1.0]
+    ],
+    "RAPpp": [
+      [0.1],
+      [1.0]
+    ],
+    "PrivMRF": [
+      [0.1],
+      [1.0]
+    ],
+    "TabDDPM": [
+      []
+    ],
+    "PrivSyn": [
+      [0.1],
+      [1.0]
+    ]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+      ]
+    ],
+    "SanitiserMondrian": [
+      [
+        2,
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        []
+      ],
+      [
+        5,
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        []
+      ],
+      [
+        10,
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        []
+      ],
+      [
+        25,
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        []
+      ],
+      [
+        50,
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        []
+      ],
+      [
+        100,
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        []
+      ]
+    ]
+  }
+}
