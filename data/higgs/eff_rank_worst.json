@@ -1,6 +1,15 @@
 {
     "columns": [
         {
+            "name": "class",
+            "type": "Ordinal",
+            "size": 2,
+            "i2s": [
+                "0",
+                "1"
+            ]
+        },
+        {
             "name": "jet1_pt",
             "type": "Float",
             "min": 0.1375024318695068,

@@ -1,0 +1,151 @@
+{
+  "sensitiveAttributes": {
+    "class": "Classification",
+    "jet1_pt": "LinReg"
+  },
+  "nIter": 5,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID7017901", "ID8947512", "ID9747371", "ID10617361", "ID7281078"],
+  "generativeModels": {
+    "IndependentHistogram": [
+      [10],
+      [25],
+      [45]
+    ],
+    "BayesianNet": [
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1],
+      [45, 1]
+    ],
+    "PrivBayes": [
+      [45, 1, 0.1],
+      [45, 1, 1.0],
+      [45, 1, 10.0],
+      [45, 1, 20.0],
+      [45, 1, 30.0]
+    ],
+    "CTGAN": [
+      []
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "AIM": [
+      [0.1],
+      [1.0],
+      [10.0]
+    ],
+    "DP_MERF": [
+      [0.1],
+      [20],
+      [30]
+    ],
+    "GEM": [
+      [0.1],
+      [1.0]
+    ],
+    "PrivateGSD": [
+      [0.1],
+      [1.0]
+    ],
+    "RAPpp": [
+      [0.1],
+      [1.0]
+    ],
+    "PrivMRF": [
+      [0.1],
+      [1.0]
+    ],
+    "TabDDPM": [
+      []
+    ],
+    "PrivSyn": [
+      [0.1],
+      [1.0]
+    ]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+      ]
+    ],
+    "SanitiserMondrian": [
+      [
+        2,
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        []
+      ],
+      [
+        5,
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        []
+      ],
+      [
+        10,
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        []
+      ],
+      [
+        25,
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        []
+      ],
+      [
+        50,
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        []
+      ],
+      [
+        100,
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        []
+      ]
+    ]
+  }
+}
