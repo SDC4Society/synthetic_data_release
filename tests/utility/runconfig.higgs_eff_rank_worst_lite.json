@@ -39,7 +39,7 @@
         0.99,
         2,
         [],
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
       ],
       [
         10,
@@ -47,7 +47,7 @@
         0.99,
         5,
         [],
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
       ],
       [
         10,
@@ -55,7 +55,7 @@
         0.99,
         10,
         [],
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
       ],
       [
         10,
@@ -63,7 +63,7 @@
         0.99,
         25,
         [],
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
       ],
       [
         10,
@@ -71,45 +71,45 @@
         0.99,
         50,
         [],
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
         []
       ],
       [
         5,
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
         []
       ],
       [
         10,
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
         []
       ],
       [
         25,
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
         []
       ],
       [
         50,
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
         []
       ],
       [
         100,
-        ["jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
+        ["class", "jet1_pt", "jet2_pt", "jet3_pt", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"],
         []
       ]
     ]
   },
   "utilityTasks": {
     "RandForestClass": [
-      ["label"]
+      ["class"]
     ]
   }
 }

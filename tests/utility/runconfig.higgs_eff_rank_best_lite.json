@@ -39,7 +39,7 @@
         0.99,
         2,
         [],
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
       ],
       [
         10,
@@ -47,7 +47,7 @@
         0.99,
         5,
         [],
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
       ],
       [
         10,
@@ -55,7 +55,7 @@
         0.99,
         10,
         [],
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
       ],
       [
         10,
@@ -63,7 +63,7 @@
         0.99,
         25,
         [],
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
       ],
       [
         10,
@@ -71,45 +71,45 @@
         0.99,
         50,
         [],
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
         []
       ],
       [
         5,
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
         []
       ],
       [
         10,
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
         []
       ],
       [
         25,
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
         []
       ],
       [
         50,
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
         []
       ],
       [
         100,
-        ["lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
+        ["class", "lepton_phi", "missing_energy_phi", "jet1_eta", "jet2_eta", "jet2_phi", "jet3_eta", "jet3_phi", "jet4_eta", "jet4_phi", "m_wwbb"],
         []
       ]
     ]
   },
   "utilityTasks": {
     "RandForestClass": [
-      ["label"]
+      ["class"]
     ]
   }
 }

@@ -39,7 +39,7 @@
         0.99,
         2,
         [],
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
       ],
       [
         10,
@@ -47,7 +47,7 @@
         0.99,
         5,
         [],
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
       ],
       [
         10,
@@ -55,7 +55,7 @@
         0.99,
         10,
         [],
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
       ],
       [
         10,
@@ -63,7 +63,7 @@
         0.99,
         25,
         [],
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
       ],
       [
         10,
@@ -71,45 +71,45 @@
         0.99,
         50,
         [],
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
         []
       ],
       [
         5,
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
         []
       ],
       [
         10,
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
         []
       ],
       [
         25,
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
         []
       ],
       [
         50,
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
         []
       ],
       [
         100,
-        ["lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
+        ["class", "lepton_eta", "missing_energy_magnitude", "jet1_eta", "jet2_phi", "jet2_btag", "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb"],
         []
       ]
     ]
   },
   "utilityTasks": {
     "RandForestClass": [
-      ["label"]
+      ["class"]
     ]
   }
 }
