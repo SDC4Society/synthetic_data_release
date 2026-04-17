@@ -1,6 +1,7 @@
 {
   "sensitiveAttributes": {
-    "class": "Classification"
+    "class": "Classification",
+    "jet1_pt": "LinReg"
   },
   "nIter": 5,
   "sizeRawT": 1000,
