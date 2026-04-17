@@ -113,14 +113,14 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
     try:
         model = create_model(model_config, metadata)
         model.set_seed(SEED)
-        attack_metadata = model.get_output_metadata(metadata)
+        attack_metadata = model.metadata
 
         attacks = {}
         for sa, atype in sensitive_attrs.items():
             if atype == 'LinReg':
-                attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=model.quids)
+                attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=attack_metadata)
             elif atype == 'Classification':
-                attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=model.quids)
+                attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=attack_metadata)
 
         results = {}
 

@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from numpy import ndarray, array, linspace, all
+from numpy import ndarray, array, linspace, all, unique
 from pandas.api.types import CategoricalDtype
 
 from feature_sets.feature_set import FeatureSet
@@ -11,7 +11,7 @@ filterwarnings('ignore', message=r"Parsing", category=FutureWarning)
 
 
 class HistogramFeatureSet(FeatureSet):
-    def __init__(self, datatype, metadata, nbins=10, quids=None):
+    def __init__(self, datatype, metadata, nbins=10):
         assert datatype in [DataFrame], 'Unknown data type {}'.format(datatype)
         self.datatype = datatype
         self.nfeatures = 0
@@ -22,24 +22,14 @@ class HistogramFeatureSet(FeatureSet):
         self.histogram_bins = {}
         self.category_codes = {}
 
-        if quids is None:
-            quids = []
-
         for cdict in metadata['columns']:
             attr_name = cdict['name']
             dtype = cdict['type']
 
             if dtype == FLOAT or dtype == INTEGER:
-                if attr_name not in quids:
-                    self.num_attributes.append(attr_name)
-                    self.histogram_bins[attr_name] = linspace(cdict['min'], cdict['max'], nbins+1)
-                    self.nfeatures += nbins
-                else:
-                    self.cat_attributes.append(attr_name)
-                    cat_bins = cdict['bins']
-                    cat_labels = [f'({cat_bins[i]},{cat_bins[i+1]}]' for i in range(len(cat_bins)-1)]
-                    self.category_codes[attr_name] = cat_labels
-                    self.nfeatures += len(cat_labels)
+                self.num_attributes.append(attr_name)
+                self.histogram_bins[attr_name] = linspace(cdict['min'], cdict['max'], nbins+1)
+                self.nfeatures += nbins
 
             elif dtype == CATEGORICAL or dtype == ORDINAL:
                 self.cat_attributes.append(attr_name)
