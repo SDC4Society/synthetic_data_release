@@ -96,19 +96,12 @@ class BinnedCorrelationsFeatureSet(FeatureSet):
             dtype = cdict['type']
 
             if dtype == FLOAT or dtype == INTEGER:
-                if attr_name not in quids:
-                    self.num_attributes.append(attr_name)
-                    # if nbins > attr range, keep the attr as-is
-                    if nbins > cdict["max"]-cdict["min"] + 1:
-                        self.histogram_bins[attr_name] = []
-                    else:
-                        self.histogram_bins[attr_name] = linspace(cdict["min"], cdict["max"], nbins).tolist()
+                self.num_attributes.append(attr_name)
+                # if nbins > attr range, keep the attr as-is
+                if nbins > cdict["max"]-cdict["min"] + 1:
+                    self.histogram_bins[attr_name] = []
                 else:
-                    self.cat_attributes.append(attr_name)
-                    cat_bins = cdict['bins']
-                    cat_labels = [f'({cat_bins[i]},{cat_bins[i+1]}]' for i in range(len(cat_bins)-1)]
-                    self.category_codes[attr_name] = cat_labels
-                    self.nfeatures += len(cat_labels)
+                    self.histogram_bins[attr_name] = linspace(cdict["min"], cdict["max"], nbins).tolist()
 
             elif dtype == CATEGORICAL or dtype == ORDINAL:
                 self.cat_attributes.append(attr_name)
