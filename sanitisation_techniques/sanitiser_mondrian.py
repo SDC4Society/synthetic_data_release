@@ -58,10 +58,10 @@ class SanitiserMondrian(Sanitiser):
     def __init__(self, metadata, k=5, quids=None, drop_cols=None):
         if not quids:
             raise ValueError("SanitiserMondrian requires at least one QID")
-        self.metadata = metadata
         self.k = int(k)
         self.quids = list(quids)
         self.drop_cols = list(drop_cols) if drop_cols else []
+        self.metadata = self._read_meta(metadata)
         self.datatype = DataFrame
         self.histogram_size = 10  # default for HistogramFeatureSet compatibility
 
@@ -114,9 +114,9 @@ class SanitiserMondrian(Sanitiser):
         anon.index = original_index[: len(anon)]
         return anon
 
-    def get_output_metadata(self, input_metadata):
+    def _read_meta(self, input_metadata):
         """Integer QIDs become Float after MEAN_MODE generalization."""
-        output = copy.deepcopy(input_metadata)
+        output = {"columns": [col for col in input_metadata["columns"] if col["name"] not in self.drop_cols]}
         for col in output["columns"]:
             if col["name"] in self.quids and col["type"] == INTEGER:
                 col["type"] = FLOAT
@@ -160,3 +160,56 @@ class SanitiserMondrian(Sanitiser):
         if num_cols:
             df[num_cols] = self.ImputerNum.fit_transform(df[num_cols])
         return df
+
+class SanitiserNHSMondrian(SanitiserMondrian):
+
+    def __init__(self, metadata, k=5, quids=None, drop_cols=None, thresh_rare=0, max_quantile = 1):
+        super().__init__(metadata, k, quids, drop_cols)
+        self.unique_threshold = thresh_rare
+        self.max_quantile = max_quantile
+        
+        self.__name__ = f"SanitiserNHSMondrianK{self.k}"
+
+    def sanitise(self, data):
+        
+        work = data.drop(columns=self.drop_cols, errors="ignore").copy()
+        original_index = work.index
+        original_columns = list(work.columns)
+
+        missing = [q for q in self.quids if q not in work.columns]
+        if missing:
+            raise ValueError(f"QIDs not found in data: {missing}")
+
+        # Impute missing values
+        work = self._impute(work)
+
+        drop_records = []
+
+        for cdict in self.metadata["columns"]:
+            col = cdict["name"]
+            coltype = cdict['type']
+            col_data = work[col].copy()
+
+            if coltype == FLOAT or coltype == INTEGER:
+                col_data = col_data.astype(int)
+
+                # Cap numerical attributes
+                cap = col_data.quantile(self.max_quantile)
+                idx = col_data[col_data > cap].index
+                col_data.loc[idx] = int(cap)
+
+            # Remove any records with rare categories
+            # It seems this also removes any records with rare numerical values
+            frequencies = col_data.value_counts()
+            drop_cats = frequencies[frequencies <= self.unique_threshold].index
+            
+            if not drop_cats.empty:
+                ridx = col_data[col_data.isin(drop_cats)].index
+                drop_records.extend(ridx.tolist())
+
+            work[col] = col_data.values
+
+        drop_records = list(set(drop_records))
+        work = work.drop(drop_records)
+
+        return super().sanitise(work)

@@ -1,0 +1,112 @@
+{
+  "nIter": 5,
+  "sizeRawA": 10000,
+  "nSynA": 10,
+  "nShadows": 10,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID29505", "ID25644", "ID50839", "ID38905", "ID158954"],
+  "generativeModels": {
+    "IndependentHistogram": [
+      [10],
+      [25]
+    ],
+    "BayesianNet": [
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1]
+    ],
+    "PrivBayes": [
+      [25, 1, 0.1],
+      [25, 1, 1.0],
+      [25, 1, 10.0],
+      [25, 1, 20.0],
+      [25, 1, 30.0]
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "DP_MERF": [
+      [0.1],
+      [20],
+      [30]
+    ]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"]
+      ]
+    ],
+    "SanitiserMondrian": [
+      [
+        2,
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"],
+        []
+      ],
+      [
+        5,
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"],
+        []
+      ],
+      [
+        10,
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"],
+        []
+      ],
+      [
+        25,
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"],
+        []
+      ],
+      [
+        50,
+        ["Action", "Adventure", "Comedy", "Crime", "Drama", "Fantasy", "Mystery", "Romance", "Sci-Fi", "Thriller"],
+        []
+      ]
+    ]
+  }
+}

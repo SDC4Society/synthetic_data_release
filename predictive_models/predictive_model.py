@@ -99,13 +99,28 @@ class ClassificationTask(PredictiveModel):
             self.trained = False
             return
 
-        features = self.pipeline.fit_transform(data).astype('float32')
-        labels = data[self.labelCol].apply(lambda x: self.labels[x]).values
+        # Check if we have at least 2 classes
+        unique_labels = data[self.labelCol].unique()
+        if len(unique_labels) < 2:
+            LOGGER.warning(f"Training data for {self.__name__} has only one class: {unique_labels}. Skipping training.")
+            self.trained = False
+            return
 
-        self.Distinguisher.fit(features, labels)
+        try:
+            features = self.pipeline.fit_transform(data).astype('float32')
+            labels = data[self.labelCol].apply(lambda x: self.labels[x]).values
 
-        LOGGER.debug('Finished training MIA distinguisher')
-        self.trained = True
+            if features.shape[0] == 0:
+                LOGGER.warning(f"Training features for {self.__name__} are empty after preprocessing. Skipping training.")
+                self.trained = False
+                return
+
+            self.Distinguisher.fit(features, labels)
+            LOGGER.debug('Finished training classification model')
+            self.trained = True
+        except Exception as e:
+            LOGGER.error(f"Failed to train {self.__name__}: {e}")
+            self.trained = False
 
     def predict(self, data):
         if not isinstance(data, self.datatype):
@@ -185,13 +200,21 @@ class RegressionTask(PredictiveModel):
             self.trained = False
             return
 
-        features = self.pipeline.fit_transform(data).astype('float32')
-        labels = data[self.labelCol].values
+        try:
+            features = self.pipeline.fit_transform(data).astype('float32')
+            labels = data[self.labelCol].values
 
-        self.Regressor.fit(features, labels)
+            if features.shape[0] == 0:
+                LOGGER.warning(f"Training features for {self.__name__} are empty after preprocessing. Skipping training.")
+                self.trained = False
+                return
 
-        LOGGER.debug('Finished training regression model')
-        self.trained = True
+            self.Regressor.fit(features, labels)
+            LOGGER.debug('Finished training regression model')
+            self.trained = True
+        except Exception as e:
+            LOGGER.error(f"Failed to train {self.__name__}: {e}")
+            self.trained = False
 
     def predict(self, features):
         if not isinstance(features, self.datatype):

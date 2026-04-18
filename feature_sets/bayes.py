@@ -11,7 +11,7 @@ from feature_sets.independent_histograms import HistogramFeatureSet
 
 
 class CorrelationsFeatureSet(FeatureSet):
-    def __init__(self, datatype, metadata, quids=None):
+    def __init__(self, datatype, metadata):
         assert datatype in [DataFrame, ndarray], 'Unknown data type {}'.format(datatype)
         self.datatype = datatype
         self.nfeatures = 0
@@ -21,22 +21,12 @@ class CorrelationsFeatureSet(FeatureSet):
 
         self.category_codes = {}
 
-        if quids is None:
-            quids = []
-
         for cdict in metadata['columns']:
             attr_name = cdict['name']
             dtype = cdict['type']
 
             if dtype == FLOAT or dtype == INTEGER:
-                if attr_name not in quids:
-                    self.num_attributes.append(attr_name)
-                else:
-                    self.cat_attributes.append(attr_name)
-                    cat_bins = cdict['bins']
-                    cat_labels = [f'({cat_bins[i]},{cat_bins[i+1]}]' for i in range(len(cat_bins)-1)]
-                    self.category_codes[attr_name] = cat_labels
-                    self.nfeatures += len(cat_labels)
+                self.num_attributes.append(attr_name)
 
             elif dtype == CATEGORICAL or dtype == ORDINAL:
                 self.cat_attributes.append(attr_name)
@@ -179,12 +169,12 @@ class BinnedCorrelationsFeatureSet(FeatureSet):
         return features
 
 class BayesFeatureSet(FeatureSet):
-    def __init__(self, datatype, metadata, nbins=10, quids=None):
+    def __init__(self, datatype, metadata, nbins=10):
         assert datatype in [DataFrame, ndarray], 'Unknown data type {}'.format(datatype)
         self.datatype = datatype
 
-        self.histograms  = HistogramFeatureSet(datatype, metadata, nbins, quids)
-        self.correlations = CorrelationsFeatureSet(datatype, metadata, quids)
+        self.histograms  = HistogramFeatureSet(datatype, metadata, nbins)
+        self.correlations = CorrelationsFeatureSet(datatype, metadata)
 
     def extract(self, data):
         Hist = self.histograms.extract(data)

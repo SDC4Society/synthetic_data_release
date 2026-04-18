@@ -65,13 +65,13 @@ class NaiveFeatureSet(FeatureSet):
 
 class EnsembleFeatureSet(FeatureSet):
     """An ensemble of features that is not model specific"""
-    def __init__(self, datatype, metadata, nbins=10, quasi_id_cols=None):
+    def __init__(self, datatype, metadata, nbins=10):
         assert datatype in [DataFrame, ndarray], 'Unknown data type {}'.format(datatype)
         self.datatype = datatype
 
         self.naive = NaiveFeatureSet(datatype)
-        self.histograms  = HistogramFeatureSet(datatype, metadata, nbins=nbins, quids=quasi_id_cols)
-        self.correlations = CorrelationsFeatureSet(datatype, metadata, quids=quasi_id_cols)
+        self.histograms  = HistogramFeatureSet(datatype, metadata, nbins=nbins)
+        self.correlations = CorrelationsFeatureSet(datatype, metadata)
 
         self.__name__ = 'Ensemble'
 

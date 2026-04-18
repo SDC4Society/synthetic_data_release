@@ -4,6 +4,7 @@ Command-line interface for running privacy evaluation under an attribute inferen
 
 import json
 import os
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 from os import path
 from numpy.random import choice, seed
@@ -38,66 +39,70 @@ def inference_eval_gm_worker(model_config, rawTout, targets, targetIDs,
     """Evaluate one generative model for inference attack across all targets.
     :return: tuple: (model_name, {(tid, sa): result_dict})
     """
-    model = create_model(model_config, metadata)
-    model.set_seed(SEED)
-    nSynT = runconfig['nSynT']
-    sizeSynT = runconfig['sizeSynT']
+    try:
+        model = create_model(model_config, metadata)
+        model.set_seed(SEED)
+        nSynT = runconfig['nSynT']
+        sizeSynT = runconfig['sizeSynT']
 
-    attacks = {}
-    for sa, atype in sensitive_attrs.items():
-        if atype == 'LinReg':
-            attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=metadata)
-        elif atype == 'Classification':
-            attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=metadata)
+        attacks = {}
+        for sa, atype in sensitive_attrs.items():
+            if atype == 'LinReg':
+                attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=metadata)
+            elif atype == 'Classification':
+                attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=metadata)
 
-    results = {}
+        results = {}
 
-    model.fit(rawTout)
-    synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+        model.fit(rawTout)
+        synTwithoutTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
 
-    for sa, Attack in attacks.items():
-        for tid in targetIDs:
-            results[(tid, sa)] = {
-                'AttackerGuess': [], 'ProbCorrect': [],
-                'TargetPresence': [LABEL_OUT for _ in range(nSynT)]
-            }
-
-        for syn in synTwithoutTarget:
-            Attack.set_seed(SEED)
-            Attack.train(syn)
+        for sa, Attack in attacks.items():
             for tid in targetIDs:
-                target = targets.loc[[tid]]
+                results[(tid, sa)] = {
+                    'AttackerGuess': [], 'ProbCorrect': [],
+                    'TargetPresence': [LABEL_OUT for _ in range(nSynT)]
+                }
+
+            for syn in synTwithoutTarget:
+                Attack.set_seed(SEED)
+                Attack.train(syn)
+                for tid in targetIDs:
+                    target = targets.loc[[tid]]
+                    targetAux = target.loc[[tid], Attack.knownAttributes]
+                    targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+
+                    guess = Attack.attack(targetAux)
+                    pCorrect = Attack.get_likelihood(targetAux, targetSecret)
+
+                    results[(tid, sa)]['AttackerGuess'].append(guess)
+                    results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            rawTin = pd.concat([rawTout, target])
+
+            model.fit(rawTin)
+            synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
+
+            for sa, Attack in attacks.items():
                 targetAux = target.loc[[tid], Attack.knownAttributes]
                 targetSecret = target.loc[tid, Attack.sensitiveAttribute]
 
-                guess = Attack.attack(targetAux)
-                pCorrect = Attack.get_likelihood(targetAux, targetSecret)
+                for syn in synTwithTarget:
+                    Attack.train(syn)
 
-                results[(tid, sa)]['AttackerGuess'].append(guess)
-                results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+                    guess = Attack.attack(targetAux)
+                    pCorrect = Attack.get_likelihood(targetAux, targetSecret)
 
-    for tid in targetIDs:
-        target = targets.loc[[tid]]
-        rawTin = pd.concat([rawTout, target])
+                    results[(tid, sa)]['AttackerGuess'].append(guess)
+                    results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+                    results[(tid, sa)]['TargetPresence'].append(LABEL_IN)
 
-        model.fit(rawTin)
-        synTwithTarget = [model.generate_samples(sizeSynT) for _ in range(nSynT)]
-
-        for sa, Attack in attacks.items():
-            targetAux = target.loc[[tid], Attack.knownAttributes]
-            targetSecret = target.loc[tid, Attack.sensitiveAttribute]
-
-            for syn in synTwithTarget:
-                Attack.train(syn)
-
-                guess = Attack.attack(targetAux)
-                pCorrect = Attack.get_likelihood(targetAux, targetSecret)
-
-                results[(tid, sa)]['AttackerGuess'].append(guess)
-                results[(tid, sa)]['ProbCorrect'].append(pCorrect)
-                results[(tid, sa)]['TargetPresence'].append(LABEL_IN)
-
-    return (model.__name__, results)
+        return (model.__name__, results)
+    except Exception as e:
+        LOGGER.error(f"Inference evaluation failed for model {model_config[0]}: {e}")
+        return (model_config[0], {})
 
 
 def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
@@ -105,61 +110,61 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
     """Evaluate one sanitiser for inference attack across all targets.
     :return: tuple: (model_name, {(tid, sa): result_dict})
     """
-    model = create_model(model_config, metadata)
-    model.set_seed(SEED)
-    attack_metadata = model.get_output_metadata(metadata)
+    try:
+        model = create_model(model_config, metadata)
+        model.set_seed(SEED)
+        attack_metadata = model.metadata
 
-    # For Mondrian, must ignore QID settings so that FeaturesSet will not 
-    # cause error when accessing "bins" key for numerical QID attribute.
-    _quids = None if model_config[0] == "SanitiserMondrian" else model.quids
+        attacks = {}
+        for sa, atype in sensitive_attrs.items():
+            if atype == 'LinReg':
+                attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=attack_metadata)
+            elif atype == 'Classification':
+                attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=attack_metadata)
 
-    attacks = {}
-    for sa, atype in sensitive_attrs.items():
-        if atype == 'LinReg':
-            attacks[sa] = LinRegAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=_quids)
-        elif atype == 'Classification':
-            attacks[sa] = RandForestAttack(sensitiveAttribute=sa, metadata=attack_metadata, quids=_quids)
+        results = {}
 
-    results = {}
-
-    sanOut = model.sanitise(rawTout)
-
-    for sa, Attack in attacks.items():
-        Attack.set_seed(SEED)
-        Attack.train(sanOut)
-        for tid in targetIDs:
-            target = targets.loc[[tid]]
-            targetAux = target.loc[[tid], Attack.knownAttributes]
-            targetSecret = target.loc[tid, Attack.sensitiveAttribute]
-
-            guess = Attack.attack(targetAux, attemptLinkage=True, data=sanOut)
-            pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanOut)
-
-            results[(tid, sa)] = {
-                'AttackerGuess': [guess],
-                'ProbCorrect': [pCorrect],
-                'TargetPresence': [LABEL_OUT]
-            }
-
-    for tid in targetIDs:
-        target = targets.loc[[tid]]
-        rawTin = pd.concat([rawTout, target])
-        sanIn = model.sanitise(rawTin)
+        sanOut = model.sanitise(rawTout)
 
         for sa, Attack in attacks.items():
-            targetAux = target.loc[[tid], Attack.knownAttributes]
-            targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+            Attack.set_seed(SEED)
+            Attack.train(sanOut)
+            for tid in targetIDs:
+                target = targets.loc[[tid]]
+                targetAux = target.loc[[tid], Attack.knownAttributes]
+                targetSecret = target.loc[tid, Attack.sensitiveAttribute]
 
-            Attack.train(sanIn)
+                guess = Attack.attack(targetAux, attemptLinkage=True, data=sanOut)
+                pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanOut)
 
-            guess = Attack.attack(targetAux, attemptLinkage=True, data=sanIn)
-            pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanIn)
+                results[(tid, sa)] = {
+                    'AttackerGuess': [guess],
+                    'ProbCorrect': [pCorrect],
+                    'TargetPresence': [LABEL_OUT]
+                }
 
-            results[(tid, sa)]['AttackerGuess'].append(guess)
-            results[(tid, sa)]['ProbCorrect'].append(pCorrect)
-            results[(tid, sa)]['TargetPresence'].append(LABEL_IN)
+        for tid in targetIDs:
+            target = targets.loc[[tid]]
+            rawTin = pd.concat([rawTout, target])
+            sanIn = model.sanitise(rawTin)
 
-    return (model.__name__, results)
+            for sa, Attack in attacks.items():
+                targetAux = target.loc[[tid], Attack.knownAttributes]
+                targetSecret = target.loc[tid, Attack.sensitiveAttribute]
+
+                Attack.train(sanIn)
+
+                guess = Attack.attack(targetAux, attemptLinkage=True, data=sanIn)
+                pCorrect = Attack.get_likelihood(targetAux, targetSecret, attemptLinkage=True, data=sanIn)
+
+                results[(tid, sa)]['AttackerGuess'].append(guess)
+                results[(tid, sa)]['ProbCorrect'].append(pCorrect)
+                results[(tid, sa)]['TargetPresence'].append(LABEL_IN)
+
+        return (model.__name__, results)
+    except Exception as e:
+        LOGGER.error(f"Inference evaluation failed for sanitiser {model_config[0]}: {e}")
+        return (model_config[0], {})
 
 
 def main():

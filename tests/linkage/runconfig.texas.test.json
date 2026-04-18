@@ -7,126 +7,66 @@
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
-  "Targets": [
-    "ID26241",
-    "ID31432",
-    "ID27428",
-    "ID29265",
-    "ID14086"
-  ],
+  "Targets": ["ID26241", "ID31432", "ID27428", "ID29265", "ID14086"],
   "generativeModels": {
     "IndependentHistogram": [
-      [
-        10
-      ],
-      [
-        25
-      ]
+      [10],
+      [25]
     ],
     "BayesianNet": [
-      [
-        2,
-        1
-      ],
-      [
-        5,
-        1
-      ],
-      [
-        10,
-        1
-      ],
-      [
-        25,
-        1
-      ]
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1]
     ],
     "PrivBayes": [
-      [
-        25,
-        1,
-        0.1
-      ],
-      [
-        25,
-        1,
-        1.0
-      ],
-      [
-        25,
-        1,
-        10.0
-      ]
+      [25, 1, 0.1],
+      [25, 1, 1.0],
+      [25, 1, 10.0],
+      [25, 1, 20.0],
+      [25, 1, 30.0]
     ],
     "CTGAN": [
       []
     ],
     "PATEGAN": [
-      [
-        1
-      ],
-      [
-        10
-      ]
+      [1],
+      [10],
+      [20],
+      [30]
     ],
     "AIM": [
-      [
-        0.1
-      ],
-      [
-        1.0
-      ],
-      [
-        10.0
-      ]
+      [0.1],
+      [1.0],
+      [10.0]
     ],
     "DP_MERF": [
-      [
-        0.1
-      ]
+      [0.1],
+      [20],
+      [30]
     ],
     "GEM": [
-      [
-        0.1
-      ],
-      [
-        1.0
-      ]
+      [0.1],
+      [1.0]
     ],
     "PrivateGSD": [
-      [
-        0.1
-      ],
-      [
-        1.0
-      ]
+      [0.1],
+      [1.0]
     ],
     "RAPpp": [
-      [
-        0.1
-      ],
-      [
-        1.0
-      ]
+      [0.1],
+      [1.0]
     ],
     "PrivMRF": [
-      [
-        0.1
-      ],
-      [
-        1.0
-      ]
+      [0.1],
+      [1.0]
     ],
     "TabDDPM": [
       []
     ],
     "PrivSyn": [
-      [
-        0.1
-      ],
-      [
-        1.0
-      ]
+      [0.1],
+      [1.0]
     ]
   },
   "sanitisationTechniques": {
@@ -137,13 +77,7 @@
         0.99,
         2,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ],
       [
         10,
@@ -151,13 +85,7 @@
         0.99,
         5,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ],
       [
         10,
@@ -165,13 +93,7 @@
         0.99,
         10,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ],
       [
         10,
@@ -179,58 +101,41 @@
         0.99,
         25,
         [],
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ]
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"]
       ]
     ],
     "SanitiserMondrian": [
       [
         2,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ],
       [
         5,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ],
       [
         10,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ],
       [
         25,
-        [
-          "PAT_STATE",
-          "SEX_CODE",
-          "RACE",
-          "ETHNICITY",
-          "PAT_AGE"
-        ],
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
+        []
+      ],
+      [
+        50,
+        ["PAT_STATE", "SEX_CODE", "RACE", "ETHNICITY", "PAT_AGE"],
         []
       ]
     ]

@@ -18,6 +18,7 @@ MODEL_REGISTRY = {
     "PATEGAN": "generative_models.pate_gan.PATEGAN",
     "SanitiserNHS": "sanitisation_techniques.sanitiser_nhs.SanitiserNHS",
     "SanitiserMondrian": "sanitisation_techniques.sanitiser_mondrian.SanitiserMondrian",
+    "SanitiserNHSMondrian": "sanitisation_techniques.sanitiser_mondrian.SanitiserNHSMondrian",
     "AIM": "generative_models.aim.AIM",
     "DP_MERF": "generative_models.dp_merf.DP_MERF",
     "GEM": "generative_models.gem.GEM",
@@ -35,7 +36,7 @@ UTILITY_TASK_REGISTRY = {
 }
 
 
-SANITISER_MODELS = {'SanitiserNHS', 'SanitiserMondrian'}
+SANITISER_MODELS = {'SanitiserNHS', 'SanitiserMondrian', 'SanitiserNHSMondrian'}
 GPU_MODELS = {'CTGAN', 'PATEGAN', 'AIM', 'GEM', 'TabDDPM', 'DP_MERF', 'PrivateGSD', 'PrivMRF', 'PrivSyn'}
 
 
