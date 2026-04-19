@@ -136,8 +136,8 @@ class ClassificationTask(PredictiveModel):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
         if not self.trained:
-            # Return list of zeros (worst accuracy)
-            return [0] * len(data)
+            from math import nan
+            return [nan] * len(data)
 
         features = self.pipeline.transform(data).astype('float32')
         labelsTrue = data[self.labelCol].apply(lambda x: self.labels[x]).values
@@ -230,8 +230,8 @@ class RegressionTask(PredictiveModel):
             raise ValueError(f"Model expects input as {self.datatype} but got {type(data)}")
 
         if not self.trained:
-            # Return high error values
-            return [1e6] * len(data)
+            from math import nan
+            return [nan] * len(data)
 
         features = self.pipeline.transform(data).astype('float32')
         labelsTrue = data[self.labelCol].values

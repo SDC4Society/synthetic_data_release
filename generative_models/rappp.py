@@ -27,7 +27,7 @@ class RAPpp(GenerativeModel):
         self.datatype = DataFrame
         self.generator = None
         self.trained = False
-        self.__name__ = 'RAPpp'
+        self.__name__ = f'RAPppEps{self.epsilon}'
 
         self._reverse_maps = {}
 

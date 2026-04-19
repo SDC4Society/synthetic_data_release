@@ -167,12 +167,9 @@ def run_parallel_models(worker_fn, tasks, max_workers=None, desc="Models"):
     # Use joblib.Parallel instead of multiprocessing.Pool
     # Loky backend automatically uses memmapping for arrays > 1MB, solving the IPC bottleneck
     with tqdm(total=len(tasks), desc=desc) as pbar:
-        generator = joblib.Parallel(n_jobs=max_workers, backend='loky', return_as='generator')(
+        results = joblib.Parallel(n_jobs=max_workers, backend='loky')(
             joblib.delayed(worker_fn)(*task) for task in tasks
         )
-        results = []
-        for res in generator:
-            results.append(res)
-            pbar.update(1)
+        pbar.update(len(results))
             
     return results
