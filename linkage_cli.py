@@ -60,41 +60,41 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
             nbins_features = runconfig["featureSetBins"]
 
 
-            if is_generative_model(model):
-                synA, labelsA = generate_mia_shadow_data(
-                    model, target, rawA,
-                    runconfig['sizeRawT'], runconfig['sizeSynT'],
-                    runconfig['nShadows'], runconfig['nSynA'], SEED)
+        if is_generative_model(model):
+            synA, labelsA = generate_mia_shadow_data(
+                model, target, rawA,
+                runconfig['sizeRawT'], runconfig['sizeSynT'],
+                runconfig['nShadows'], runconfig['nSynA'], SEED)
 
-                for Feature in [NaiveFeatureSet(model.datatype),
-                                HistogramFeatureSet(model.datatype, metadata, 
-                                                nbins=nbins_features),
-                                BinnedCorrelationsFeatureSet(model.datatype, metadata, 
-                                                        nbins=nbins_features),
-                            ]:
-                    Attack = MIAttackClassifierRandomForest(metadata, Feature)
-                    Attack.set_seed(SEED)
-                    Attack.train(synA, labelsA)
-                    trained_attacks[Feature.__name__] = Attack
-            else:
-                sanA, labelsA = generate_mia_anon_data(
-                    model, target, rawA,
-                    runconfig['sizeRawT'],
-                    runconfig['nShadows'] * runconfig['nSynA'], SEED)
-
-            for Feature in [NaiveFeatureSet(DataFrame),
-                            HistogramFeatureSet(DataFrame, attack_metadata,
+            for Feature in [NaiveFeatureSet(model.datatype),
+                            HistogramFeatureSet(model.datatype, metadata, 
                                             nbins=nbins_features),
-                            BinnedCorrelationsFeatureSet(DataFrame, attack_metadata, 
-                                                        nbins=nbins_features),
-                            EnsembleFeatureSet(DataFrame, attack_metadata,
-                                            nbins=nbins_features)]:
-                Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature)
+                            BinnedCorrelationsFeatureSet(model.datatype, metadata, 
+                                                    nbins=nbins_features),
+                        ]:
+                Attack = MIAttackClassifierRandomForest(metadata, Feature)
                 Attack.set_seed(SEED)
-                Attack.train(sanA, labelsA)
+                Attack.train(synA, labelsA)
                 trained_attacks[Feature.__name__] = Attack
+        else:
+            sanA, labelsA = generate_mia_anon_data(
+                model, target, rawA,
+                runconfig['sizeRawT'],
+                runconfig['nShadows'] * runconfig['nSynA'], SEED)
 
-            return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
+        for Feature in [NaiveFeatureSet(DataFrame),
+                        HistogramFeatureSet(DataFrame, attack_metadata,
+                                        nbins=nbins_features),
+                        BinnedCorrelationsFeatureSet(DataFrame, attack_metadata, 
+                                                    nbins=nbins_features),
+                        EnsembleFeatureSet(DataFrame, attack_metadata,
+                                        nbins=nbins_features)]:
+            Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature)
+            Attack.set_seed(SEED)
+            Attack.train(sanA, labelsA)
+            trained_attacks[Feature.__name__] = Attack
+
+        return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
     except Exception as e:
         LOGGER.error(f"Linkage attack training failed for model {model_config[0]} and target {tid}: {e}")
         return (tid, model_config[0], {}, _deep_tuple(model_config))
