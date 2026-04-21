@@ -41,26 +41,13 @@ With `ncols_20` (= all genres) the best / middle / worst selections all collapse
 
 ### `*.json`
 
-Metadata for the data loader. All columns are `Ordinal` with `size=11` and `i2s=["0",...,"10"]`. Loaded together with the CSV by `utils/datagen.load_local_data_as_df()`.
+Metadata for the data loader. All columns are `Ordinal` with `size=11` and `i2s=["0",...,"10"]`. 
 
 ---
 
 ## MIA target selection
 
-MIA target records are selected with the notebook [notebooks/select_mia_target_movielens.ipynb](../../notebooks/select_mia_target_movielens.ipynb). The notebook emits IDs in `ID<row_index>` form, which can be pasted directly into the `Targets` field of the evaluation runconfig.
-
-The criterion follows the MIA paper (§4.3) — *"records that either have rare categorical attribute values or numerical values outside the attribute's 95% quantile"*. Because every column here is a small-domain `Ordinal`, the p95 branch does not apply and only frequency-based rarity is used.
-
-Pipeline:
-
-1. **Rarity scoring** — for each column, values with frequency `< 1%` are flagged as rare and scored as `1 / frequency` (rarer = higher). Non-rare values score 0.
-2. **Score normalization** — each column's scores are normalized to `[0, 1]` by dividing by the column's maximum. A small raw-score term is added as a tiebreaker so that, among records with equal normalized scores, the one with stronger raw rarity wins.
-3. **Top-N selection** — records are ranked by total normalized score across columns. `N_TARGETS` (default 5) records are selected, with ties broken by the number of outlier columns (more outlier columns = higher priority).
-
-Key parameters at the top of the notebook:
-
-- `RARE_THRESHOLD` (default `0.01`) — frequency cutoff for flagging a value as rare
-- `N_TARGETS` (default `5`) — number of target records to emit
+MIA target records are selected with the notebook [notebooks/select_mia_target_movielens.ipynb](../../notebooks/select_mia_target_movielens.ipynb). 
 
 ---
 
