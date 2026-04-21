@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"Private Synthetic Data for Multitask Learning and Marginal Queries" (RAP++)
+by S. Aydore, W. Brown, D. Desfontaines, E. Evans, K. Kenthapadi, M. Nasr, and others, published in Advances in Neural Information Processing Systems (NeurIPS), 2022
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/amazon-science/dp-synthetic-data-rap
+"""
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
