@@ -93,7 +93,7 @@ Please refer to the respective `LICENSE.*` files in the root directory and the i
 | `method/RAP/` | CC BY-NC 4.0 | `LICENSE. CC_BY-NC_4.0` |
 | `method/AIM/` | Apache License 2.0 | `LICENSE.APACHEV2` |
 | `method/PrivMRF/` | Apache License 2.0 | `LICENSE.APACHEV2` |
-| `CTGAN` (Forked dependency) | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `CTGAN` (Forked dependency) | MIT License | `LICENSE.MIT` |
 | `k_anonymization` (Forked dependency) | Clear BSD License | `LICENSE.CLEAR_BSD` |
 | `method/DP_MERF/` | MIT License | `LICENSE.MIT` |
 | `method/TabDDPM/` | MIT License | `LICENSE.MIT` |

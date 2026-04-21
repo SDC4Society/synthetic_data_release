@@ -100,7 +100,7 @@ uv run python utility_cli.py -D data/texas -RC tests/utility/runconfig.json -O t
 | `method/RAP/` | CC BY-NC 4.0 | `LICENSE. CC_BY-NC_4.0` |
 | `method/AIM/` | Apache License 2.0 | `LICENSE.APACHEV2` |
 | `method/PrivMRF/` | Apache License 2.0 | `LICENSE.APACHEV2` |
-| `CTGAN` (フォークした依存関係) | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `CTGAN` (フォークした依存関係) | MIT License | `LICENSE.MIT` |
 | `k_anonymization` (フォークした依存関係) | Clear BSD License | `LICENSE.CLEAR_BSD` |
 | `method/DP_MERF/` | MIT License | `LICENSE.MIT` |
 | `method/TabDDPM/` | MIT License | `LICENSE.MIT` |
