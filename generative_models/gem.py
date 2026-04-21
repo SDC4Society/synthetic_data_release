@@ -1,7 +1,7 @@
 """
 A generative model training algorithm based on
-"Generative Exponential Mechanism: A General Framework for Private Synthetic Data Generation"
-by Z. Liu, Y. Wang, B. Ji, G. Miklau, X. Li, published in International Conference on Machine Learning (ICML), 2021
+"Iterative Methods for Private Synthetic Data: Unifying Framework and New Methods"
+by T. Liu, G. Vietri, Z. S. Wu, published in Advances in Neural Information Processing Systems (NeurIPS), 2021
 Adapted from: https://github.com/vrtoddy/tab_bench
 original repository: https://github.com/terranceliu/iterative-dp
 """
