@@ -49,7 +49,7 @@ class AIM(GenerativeModel):
         self.mechanism = None
         self.dataset = None
         self.trained = False
-        self.__name__ = 'AIM'
+        self.__name__ = f'AIMEps{self.epsilon}'
 
         self._reverse_maps = {}
         

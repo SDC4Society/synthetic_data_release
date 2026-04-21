@@ -105,6 +105,9 @@ def main():
     logging.info("✅ ALL EVALUATIONS COMPLETED")
     logging.info("====================================")
 
+    from utils.report_validation import check_report_key_consistency
+    check_report_key_consistency(args.outdir)
+
 
 def _clear_cuda():
     try:

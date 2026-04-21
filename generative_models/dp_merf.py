@@ -118,7 +118,7 @@ class DP_MERF(GenerativeModel):
         self._original_columns = []
         self._original_label_column = None
         self.trained = False
-        self.__name__ = 'DP_MERF'
+        self.__name__ = f'DP_MERFEps{self.epsilon}'
 
     def fit(self, data):
         assert isinstance(data, self.datatype), (

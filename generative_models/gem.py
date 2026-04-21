@@ -56,7 +56,7 @@ class GEM(GenerativeModel):
         self.mechanism = None
         self.dataset = None
         self.trained = False
-        self.__name__ = 'GEM'
+        self.__name__ = f'GEMEps{self.epsilon}'
 
         self._reverse_maps = {}
         
