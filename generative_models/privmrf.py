@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"Data Synthesis via Differentially Private Markov Random Fields"
+by K. Cai, X. Lei, J. Wei, X. Xiao, published in Proceedings of the VLDB Endowment (PVLDB), 2021
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/caicre/PrivMRF
+"""
+
 import numpy as np
 from pandas import DataFrame
 

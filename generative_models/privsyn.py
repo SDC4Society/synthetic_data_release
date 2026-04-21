@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"PrivSyn: Differentially Private Data Synthesis"
+by Z. Zhang, T. Wang, N. Li, J. Honorio, M. Backes, S. He, J. Chen, Y. Zhang, published in 30th USENIX Security Symposium, 2021
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/ruizhang-p/PrivSyn
+"""
+
 import argparse
 
 import numpy as np
