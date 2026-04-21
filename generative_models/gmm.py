@@ -1,3 +1,9 @@
+"""
+A generative model training algorithm based on
+Gaussian Mixture Models (GMM)
+Adapted from: https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html
+"""
+
 from os import path
 from sklearn.mixture import GaussianMixture
 from generative_models.generative_model import GenerativeModel

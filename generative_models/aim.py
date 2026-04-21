@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"AIM: An Adaptive and Iterative Mechanism for Differentially Private Synthetic Data"
+by R. McKenna, B. Mullins, D. Sheldon, G. Miklau, published in Proceedings of the VLDB Endowment (PVLDB), 2022
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/ryan112358/private-pgm
+"""
+
 from itertools import combinations
 
 import numpy as np

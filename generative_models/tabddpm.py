@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"TabDDPM: Modelling Tabular Data with Diffusion Models"
+by A. Kotelnikov, D. Baranchuk, I. Rubachev, A. Babenko, published in International Conference on Machine Learning (ICML), 2023
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/yandex-research/tab-ddpm
+"""
+
 import tempfile
 import tomllib
 from dataclasses import dataclass
