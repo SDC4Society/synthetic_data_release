@@ -2,6 +2,7 @@
 from pandas import DataFrame, cut
 from sklearn.impute import SimpleImputer
 from pandas.api.types import is_numeric_dtype
+import numpy as np
 
 from utils.constants import *
 from sanitisation_techniques.sanitiser import Sanitiser
@@ -14,10 +15,9 @@ class SanitiserNHS(Sanitiser):
                  max_quantile = 1, anonymity_set_size=1,
                  drop_cols=None, quids=None):
 
+        self.histogram_size = nbins
         self.metadata = self._read_meta(metadata, drop_cols, quids)
         self.datatype = DataFrame
-
-        self.histogram_size = nbins
         self.unique_threshold = thresh_rare
         self.quids = quids
         self.max_quantile = max_quantile
@@ -101,7 +101,12 @@ class SanitiserNHS(Sanitiser):
             if col not in drop_cols:
                 if coltype == FLOAT or coltype == INTEGER:
                     if col in quids:
-                        cbins = cdict['bins']
+                        if 'bins' in cdict:
+                            cbins = cdict['bins']
+                        else:
+                            # Automatically calculate bins using nbins between min and max
+                            cbins = np.linspace(cdict['min'], cdict['max'], self.histogram_size + 1).tolist()
+                        
                         cats = [f'({cbins[i]},{cbins[i+1]}]' for i in range(len(cbins)-1)]
 
                         metadict = {
