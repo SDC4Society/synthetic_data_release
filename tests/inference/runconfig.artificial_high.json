@@ -1,0 +1,130 @@
+{
+  "sensitiveAttributes": {
+    "attr_0": "Classification",
+    "attr_5": "Classification"
+  },
+  "nIter": 5,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID3603", "ID19202", "ID4393", "ID2047", "ID17790"],
+  "generativeModels": {
+    "IndependentHistogram": [
+      [10],
+      [25]
+    ],
+    "BayesianNet": [
+      [2, 1],
+      [5, 1],
+      [10, 1],
+      [25, 1]
+    ],
+    "PrivBayes": [
+      [45, 1, 0.1],
+      [45, 1, 1.0],
+      [45, 1, 10.0],
+      [45, 1, 20.0],
+      [45, 1, 30.0]
+    ],
+    "CTGAN": [
+      []
+    ],
+    "PATEGAN": [
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "DP_MERF": [
+      [0.1],
+      [1],
+      [10],
+      [20],
+      [30]
+    ],
+    "RAPpp": [
+      [0.1],
+      [1.0],
+      [10],
+      [20],
+      [30]
+    ]
+  },
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [
+        10,
+        1,
+        0.99,
+        2,
+        [],
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        5,
+        [],
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        10,
+        [],
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        25,
+        [],
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"]
+      ],
+      [
+        10,
+        1,
+        0.99,
+        50,
+        [],
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"]
+      ]
+    ],
+    "SanitiserMondrian": [
+      [
+        2,
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
+        []
+      ],
+      [
+        5,
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
+        []
+      ],
+      [
+        10,
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
+        []
+      ],
+      [
+        25,
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
+        []
+      ],
+      [
+        50,
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
+        []
+      ],
+      [
+        100,
+        ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
+        []
+      ]
+    ]
+  }
+}

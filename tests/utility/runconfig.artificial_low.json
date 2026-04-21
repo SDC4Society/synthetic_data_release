@@ -1,14 +1,11 @@
 {
-  "sensitiveAttributes": {
-    "attr_0": "Classification",
-    "attr_5": "Classification"
-  },
   "nIter": 5,
   "sizeRawT": 1000,
   "sizeSynT": 1000,
   "nSynT": 5,
   "nTargets": 0,
-  "Targets": ["ID100", "ID500", "ID1000", "ID5000", "ID10000"],
+  "Targets": ["ID1488", "ID7093", "ID11328", "ID12153", "ID16030"],
+  "TestRecords": ["ID15000", "ID15001", "ID15002", "ID15003", "ID15004"],
   "generativeModels": {
     "IndependentHistogram": [
       [10],
@@ -125,6 +122,11 @@
         ["attr_0", "attr_1", "attr_2", "attr_3", "attr_4", "attr_5", "attr_6", "attr_7", "attr_8", "attr_9"],
         []
       ]
+    ]
+  },
+  "utilityTasks": {
+    "RandForestClass": [
+      ["attr_0"]
     ]
   }
 }
