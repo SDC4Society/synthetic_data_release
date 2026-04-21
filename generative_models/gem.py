@@ -182,3 +182,15 @@ class GEM(GenerativeModel):
         from method.GEM.mbi.domain import Domain
 
         return Domain(data.columns, [int(data[column].nunique()) for column in data.columns])
+
+    def __del__(self):
+        """Cleanup resources when the model object is destroyed."""
+        if hasattr(self, 'mechanism'):
+            del self.mechanism
+        if hasattr(self, 'dataset'):
+            del self.dataset
+        import gc
+        gc.collect()
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

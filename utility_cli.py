@@ -13,7 +13,7 @@ import pandas as pd
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from sklearn.model_selection import train_test_split
-from utils.parallel import create_model, create_utility_task
+from utils.parallel import create_model, create_utility_task, cleanup_resources
 from utils.evaluation_framework import EvaluationEngine
 
 def _deep_tuple(obj):
@@ -92,6 +92,10 @@ def utility_eval_gm_worker(model_config, rawTout, targets, targetIDs,
     except Exception as e:
         LOGGER.error(f"Utility evaluation failed for model {model_config[0]}: {e}")
         return (model_config[0], {}, {})
+    finally:
+        if 'model' in locals():
+            del model
+        cleanup_resources()
 
 
 def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
@@ -153,6 +157,10 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
     except Exception as e:
         LOGGER.error(f"Utility evaluation failed for sanitiser {model_config[0]}: {e}")
         return (model_config[0], {}, {})
+    finally:
+        if 'model' in locals():
+            del model
+        cleanup_resources()
 
 
 def main():

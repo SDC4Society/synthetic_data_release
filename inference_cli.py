@@ -13,7 +13,7 @@ import pandas as pd
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
-from utils.parallel import create_model, is_generative_model, is_generative_model_config
+from utils.parallel import create_model, is_generative_model, is_generative_model_config, cleanup_resources
 from utils.evaluation_framework import EvaluationEngine
 
 from attack_models.reconstruction import LinRegAttack, RandForestAttack
@@ -103,6 +103,10 @@ def inference_eval_gm_worker(model_config, rawTout, targets, targetIDs,
     except Exception as e:
         LOGGER.error(f"Inference evaluation failed for model {model_config[0]}: {e}")
         return (model_config[0], {})
+    finally:
+        if 'model' in locals():
+            del model
+        cleanup_resources()
 
 
 def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
@@ -165,6 +169,10 @@ def inference_eval_san_worker(model_config, rawTout, targets, targetIDs,
     except Exception as e:
         LOGGER.error(f"Inference evaluation failed for sanitiser {model_config[0]}: {e}")
         return (model_config[0], {})
+    finally:
+        if 'model' in locals():
+            del model
+        cleanup_resources()
 
 
 def main():
