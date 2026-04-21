@@ -53,9 +53,15 @@ MIA target records are selected with the notebook [notebooks/select_mia_target_m
 
 ## Statistics summary
 
-| Dataset | Rows | Cols |
-|---|---|---|
-| `ml32m_full`              | 200,948 | 20 |
-| `ncols_10/eff_rank_best`  | 200,948 | 10 |
-| `ncols_10/eff_rank_middle`| 200,948 | 10 |
-| `ncols_10/eff_rank_worst` | 200,948 | 10 |
+| Dataset | Rows | Cols | Effective rank |
+|---|---|---|---|
+| `ml32m_full`               | 200,948 | 20 | —      |
+| `ncols_10/eff_rank_best`   | 200,948 | 10 | 7.3518 |
+| `ncols_10/eff_rank_middle` | 200,948 | 10 | 5.9141 |
+| `ncols_10/eff_rank_worst`  | 200,948 | 10 | 4.4764 |
+
+### Selected genres in the `ncols_10` variants
+
+- `eff_rank_best`: `(no genres listed)`, `Animation`, `Documentary`, `Film-Noir`, `Horror`, `IMAX`, `Musical`, `Mystery`, `War`, `Western`
+- `eff_rank_middle`: `(no genres listed)`, `Action`, `Adventure`, `Animation`, `Documentary`, `Drama`, `Fantasy`, `Horror`, `Mystery`, `War`
+- `eff_rank_worst`: `Action`, `Adventure`, `Comedy`, `Crime`, `Drama`, `Fantasy`, `Mystery`, `Romance`, `Sci-Fi`, `Thriller`
