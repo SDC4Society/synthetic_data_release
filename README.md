@@ -81,3 +81,30 @@ Almost all models (`AIM`, `GEM`, `TabDDPM`, `DP_MERF`, `CTGAN`, `PATEGAN`, `Priv
 
 ## Analyzing Results
 The JSON files produced can be parsed within notebooks using the helper functions `load_results_linkage`, `load_results_inference`, and `load_results_utility` provided inside `utils/analyse_results.py` to plot ROC curves, utilities, and advantage differences.
+
+## License and Third-Party Software
+
+This repository consists of original code and several third-party algorithms. 
+Please refer to the respective `LICENSE.*` files in the root directory and the individual `LICENSE` files within each `method/` directory for full details.
+
+| Component / Directory | Applied License | Root License File |
+| :--- | :--- | :--- |
+| **Main Repository** (Original Code) | BSD-3-Clause | `LICENSE` |
+| `method/RAP/` | CC BY-NC 4.0 | `LICENSE. CC_BY-NC_4.0` |
+| `method/AIM/` | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `method/PrivMRF/` | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `CTGAN` (Forked dependency) | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `k_anonymization` (Forked dependency) | Clear BSD License | `LICENSE.CLEAR_BSD` |
+| `method/DP_MERF/` | MIT License | `LICENSE.MIT` |
+| `method/TabDDPM/` | MIT License | `LICENSE.MIT` |
+| `DataSynthesizer` (Adapted) | MIT License | `LICENSE.MIT` |
+
+> [!WARNING]
+> ### Non-Commercial Restriction
+> The `method/RAP/` component is strictly **Non-Commercial**, licensed under **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**. 
+> Commercial use of this repository may require the removal of the `method/RAP/` directory to remain compliant.
+
+
+
+## Acknowledge 
+Part of the code is from [DP Tabular Data Synthesis Benchmark](https://github.com/KaiChen9909/tab_bench), [AIM](https://github.com/ryan112358/private-pgm), [DP-MERF](https://github.com/ParkLabML/DP-MERF), [GEM](https://github.com/terranceliu/iterative-dp?tab=readme-ov-file), [Private-GSD](https://github.com/giusevtr/private_gsd), [PrivMRF](https://github.com/caicre/PrivMRF), [PrivSyn](https://github.com/agl-c/deid2_dpsyn), [RAP++](https://github.com/amazon-science/relaxed-adaptive-projection), [TabDDPM](https://github.com/yandex-research/tab-ddpm). We sincerely thank them for their contribution to the community.
