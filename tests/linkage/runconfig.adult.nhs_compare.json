@@ -1,0 +1,25 @@
+{
+  "nIter": 15,
+  "sizeRawA": 10000,
+  "nSynA": 10,
+  "nShadows": 10,
+  "sizeRawT": 1000,
+  "sizeSynT": 1000,
+  "nSynT": 5,
+  "nTargets": 0,
+  "Targets": ["ID37", "ID224", "ID5361", "ID1246", "ID19609"],
+  "sanitisationTechniques": {
+    "SanitiserNHS": [
+      [10, 1, 0.99, 2, [], ["native-country", "sex", "race", "age"]],
+      [10, 1, 0.99, 5, [], ["native-country", "sex", "race", "age"]],
+      [10, 1, 0.99, 25, [], ["native-country", "sex", "race", "age"]],
+      [10, 1, 0.99, 50, [], ["native-country", "sex", "race", "age"]]
+    ],
+    "SanitiserNHSLegacy": [
+      [10, 1, 0.99, 2, [], ["native-country", "sex", "race", "age"]],
+      [10, 1, 0.99, 5, [], ["native-country", "sex", "race", "age"]],
+      [10, 1, 0.99, 25, [], ["native-country", "sex", "race", "age"]],
+      [10, 1, 0.99, 50, [], ["native-country", "sex", "race", "age"]]
+    ]
+  }
+}

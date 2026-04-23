@@ -17,6 +17,7 @@ MODEL_REGISTRY = {
     "CTGAN": "generative_models.ctgan.CTGAN",
     "PATEGAN": "generative_models.pate_gan.PATEGAN",
     "SanitiserNHS": "sanitisation_techniques.sanitiser_nhs.SanitiserNHS",
+    "SanitiserNHSLegacy": "sanitisation_techniques.sanitiser_nhs.SanitiserNHSLegacy",
     "SanitiserMondrian": "sanitisation_techniques.sanitiser_mondrian.SanitiserMondrian",
     "SanitiserNHSMondrian": "sanitisation_techniques.sanitiser_mondrian.SanitiserNHSMondrian",
     "AIM": "generative_models.aim.AIM",
