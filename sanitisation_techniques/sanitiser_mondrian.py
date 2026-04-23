@@ -198,14 +198,15 @@ class SanitiserNHSMondrian(SanitiserMondrian):
                 idx = col_data[col_data > cap].index
                 col_data.loc[idx] = int(cap)
 
-            # Remove any records with rare categories
-            # It seems this also removes any records with rare numerical values
-            frequencies = col_data.value_counts()
-            drop_cats = frequencies[frequencies <= self.unique_threshold].index
-            
-            if not drop_cats.empty:
-                ridx = col_data[col_data.isin(drop_cats)].index
-                drop_records.extend(ridx.tolist())
+            elif coltype == CATEGORICAL or coltype == ORDINAL:
+                # Remove any records with rare categories
+                # It seems this also removes any records with rare numerical values
+                frequencies = col_data.value_counts()
+                drop_cats = frequencies[frequencies <= self.unique_threshold].index
+                
+                if not drop_cats.empty:
+                    ridx = col_data[col_data.isin(drop_cats)].index
+                    drop_records.extend(ridx.tolist())
 
             work[col] = col_data.values
 

@@ -63,13 +63,13 @@ class SanitiserNHS(Sanitiser):
                     col_data = cut(col_data, bins=cdict['bins'], labels=cdict['i2s'])
                     col_data = col_data.astype(str)
 
-            # Remove any records with rare categories
-            frequencies = col_data.value_counts()
-            drop_cats = frequencies[frequencies <= self.unique_threshold].index
-            
-            if not drop_cats.empty:
-                ridx = col_data[col_data.isin(drop_cats)].index
-                drop_records.extend(ridx.tolist())
+                # Remove any records with rare categories
+                frequencies = col_data.value_counts()
+                drop_cats = frequencies[frequencies <= self.unique_threshold].index
+                
+                if not drop_cats.empty:
+                    ridx = col_data[col_data.isin(drop_cats)].index
+                    drop_records.extend(ridx.tolist())
 
             san_data[col] = col_data.values
 
