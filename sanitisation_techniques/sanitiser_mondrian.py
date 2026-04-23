@@ -173,8 +173,6 @@ class SanitiserNHSMondrian(SanitiserMondrian):
     def sanitise(self, data):
         
         work = data.drop(columns=self.drop_cols, errors="ignore").copy()
-        original_index = work.index
-        original_columns = list(work.columns)
 
         missing = [q for q in self.quids if q not in work.columns]
         if missing:
@@ -200,7 +198,6 @@ class SanitiserNHSMondrian(SanitiserMondrian):
 
             elif coltype == CATEGORICAL or coltype == ORDINAL:
                 # Remove any records with rare categories
-                # It seems this also removes any records with rare numerical values
                 frequencies = col_data.value_counts()
                 drop_cats = frequencies[frequencies <= self.unique_threshold].index
                 
