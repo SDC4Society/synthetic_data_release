@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"Generating Private Synthetic Data with Genetic Algorithms"
+by T. Liu, J. Tang, G. Vietri, Z. S. Wu, published in International Conference on Machine Learning (ICML), 2023
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/giusevtr/private_gsd
+"""
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame

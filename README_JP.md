@@ -88,3 +88,28 @@ uv run python utility_cli.py -D data/texas -RC tests/utility/runconfig.json -O t
 ## 結果の解析
 
 出力される JSON ファイルは、`utils/analyse_results.py` 内のヘルパー関数 `load_results_linkage`、`load_results_inference`、`load_results_utility` を使ってノートブック上で解析できます。ROC 曲線、ユーティリティ、およびアドバンテージ差分をプロットするのに便利です。
+
+## ライセンスとサードパーティ製ソフトウェア
+
+本リポジトリはオリジナルのコードに加え、複数のサードパーティ製アルゴリズムを含んでいます。
+詳細については、ルートディレクトリにある各 `LICENSE.*` ファイル、および `method/` 以下の各ディレクトリ内の `LICENSE` ファイルを参照してください。
+
+| コンポーネント / ディレクトリ | 適用ライセンス | ルートのライセンスファイル |
+| :--- | :--- | :--- |
+| **メインリポジトリ** (オリジナルコード) | BSD-3-Clause | `LICENSE` |
+| `method/RAP/` | CC BY-NC 4.0 | `LICENSE. CC_BY-NC_4.0` |
+| `method/AIM/` | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `method/PrivMRF/` | Apache License 2.0 | `LICENSE.APACHEV2` |
+| `CTGAN` (フォークした依存関係) | MIT License | `LICENSE.MIT` |
+| `k_anonymization` (フォークした依存関係) | Clear BSD License | `LICENSE.CLEAR_BSD` |
+| `method/DP_MERF/` | MIT License | `LICENSE.MIT` |
+| `method/TabDDPM/` | MIT License | `LICENSE.MIT` |
+| `DataSynthesizer` (適応利用) | MIT License | `LICENSE.MIT` |
+
+> [!WARNING]
+> ### 非営利目的の制限
+> `method/RAP/` コンポーネントは厳密に **非営利目的** に限定されており、**クリエイティブ・コモンズ 表示-非営利 4.0 国際 (CC BY-NC 4.0)** の下でライセンスされています。
+> このリポジトリを商用利用する場合、コンプライアンスを維持するために `method/RAP/` ディレクトリを削除する必要がある場合があります。
+
+## 謝辞
+コードの一部は以下のリポジトリを利用・適応しています： [DP Tabular Data Synthesis Benchmark](https://github.com/KaiChen9909/tab_bench), [AIM](https://github.com/ryan112358/private-pgm), [DP-MERF](https://github.com/ParkLabML/DP-MERF), [GEM](https://github.com/terranceliu/iterative-dp?tab=readme-ov-file), [Private-GSD](https://github.com/giusevtr/private_gsd), [PrivMRF](https://github.com/caicre/PrivMRF), [PrivSyn](https://github.com/agl-c/deid2_dpsyn), [RAP++](https://github.com/amazon-science/relaxed-adaptive-projection), [TabDDPM](https://github.com/yandex-research/tab-ddpm)。コミュニティへの貢献に心より感謝申し上げます。

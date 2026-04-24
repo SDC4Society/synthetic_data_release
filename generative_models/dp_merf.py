@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"DP-MERF: Differentially Private Mean Embeddings with Random Features for Practical Privacy-Preserving Data Generation"
+by F. Harder, M. Bauer, M. Park, published in Proceedings of the 24th International Conference on Artificial Intelligence and Statistics (AISTATS), 2021
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/ParkLabML/DP-MERF
+"""
+
 import os
 import tempfile
 from types import SimpleNamespace
@@ -110,7 +118,7 @@ class DP_MERF(GenerativeModel):
         self._original_columns = []
         self._original_label_column = None
         self.trained = False
-        self.__name__ = 'DP_MERF'
+        self.__name__ = f'DP_MERFEps{self.epsilon}'
 
     def fit(self, data):
         assert isinstance(data, self.datatype), (

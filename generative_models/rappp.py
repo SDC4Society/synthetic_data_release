@@ -1,3 +1,11 @@
+"""
+A generative model training algorithm based on
+"Private Synthetic Data for Multitask Learning and Marginal Queries" (RAP++)
+by G. Vietri, C. Archambeau, S. Aydore, W. Brown, M. Kearns, A. Roth, A. Siva, S. Tang, Z. S. Wu, published in Advances in Neural Information Processing Systems (NeurIPS), 2022
+Adapted from: https://github.com/vrtoddy/tab_bench
+original repository: https://github.com/amazon-science/dp-synthetic-data-rap
+"""
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
@@ -27,7 +35,7 @@ class RAPpp(GenerativeModel):
         self.datatype = DataFrame
         self.generator = None
         self.trained = False
-        self.__name__ = 'RAPpp'
+        self.__name__ = f'RAPppEps{self.epsilon}'
 
         self._reverse_maps = {}
 

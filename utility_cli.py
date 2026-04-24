@@ -7,7 +7,8 @@ import os
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
 from os import path
-from numpy import mean
+import numpy as np
+from numpy import nanmean as mean
 from numpy.random import choice, seed
 import pandas as pd
 from utils.utils import json_numpy_serialzer
@@ -61,11 +62,15 @@ def utility_eval_gm_worker(model_config, rawTout, targets, targetIDs,
                 predErrorAggr.append(ut.evaluate(rawTest))
 
             if predErrorTargets:
+                _arr_t = np.array(predErrorTargets, dtype=float)
+                _arr_a = np.array(predErrorAggr, dtype=float)
+                _fail_t = int(np.isnan(_arr_t).all(axis=1).sum()) if _arr_t.ndim == 2 else int(np.isnan(_arr_t).sum())
                 results_target[(ut.__name__, 'OUT')] = {
                     'TestRecordID': testRecordIDs,
-                    'Accuracy': list(mean(predErrorTargets, axis=0))
+                    'Accuracy': list(mean(_arr_t, axis=0)),
+                    'Failures': _fail_t
                 }
-                results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
+                results_agg.setdefault(ut.__name__, []).append(('OUT', mean(_arr_a), int(np.isnan(_arr_a).sum())))
 
         for tid in targetIDs:
             target = targets.loc[[tid]]
@@ -82,11 +87,15 @@ def utility_eval_gm_worker(model_config, rawTout, targets, targetIDs,
                     predErrorAggr.append(ut.evaluate(rawTest))
 
                 if predErrorTargets:
+                    _arr_t = np.array(predErrorTargets, dtype=float)
+                    _arr_a = np.array(predErrorAggr, dtype=float)
+                    _fail_t = int(np.isnan(_arr_t).all(axis=1).sum()) if _arr_t.ndim == 2 else int(np.isnan(_arr_t).sum())
                     results_target[(ut.__name__, tid)] = {
                         'TestRecordID': testRecordIDs,
-                        'Accuracy': list(mean(predErrorTargets, axis=0))
+                        'Accuracy': list(mean(_arr_t, axis=0)),
+                        'Failures': _fail_t
                     }
-                    results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+                    results_agg.setdefault(ut.__name__, []).append((tid, mean(_arr_a), int(np.isnan(_arr_a).sum())))
 
         return (model.__name__, results_target, results_agg)
     except Exception as e:
@@ -127,11 +136,15 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
                 predErrorAggr.append(ut.evaluate(rawTest))
 
             if predErrorTargets:
+                _arr_t = np.array(predErrorTargets, dtype=float)
+                _arr_a = np.array(predErrorAggr, dtype=float)
+                _fail_t = int(np.isnan(_arr_t).all(axis=1).sum()) if _arr_t.ndim == 2 else int(np.isnan(_arr_t).sum())
                 results_target[(ut.__name__, 'OUT')] = {
                     'TestRecordID': testRecordIDs,
-                    'Accuracy': list(mean(predErrorTargets, axis=0))
+                    'Accuracy': list(mean(_arr_t, axis=0)),
+                    'Failures': _fail_t
                 }
-                results_agg.setdefault(ut.__name__, []).append(('OUT', mean(predErrorAggr)))
+                results_agg.setdefault(ut.__name__, []).append(('OUT', mean(_arr_a), int(np.isnan(_arr_a).sum())))
 
         for tid in targetIDs:
             target = targets.loc[[tid]]
@@ -147,11 +160,15 @@ def utility_eval_san_worker(model_config, rawTout, targets, targetIDs,
                     predErrorAggr.append(ut.evaluate(rawTest))
 
                 if predErrorTargets:
+                    _arr_t = np.array(predErrorTargets, dtype=float)
+                    _arr_a = np.array(predErrorAggr, dtype=float)
+                    _fail_t = int(np.isnan(_arr_t).all(axis=1).sum()) if _arr_t.ndim == 2 else int(np.isnan(_arr_t).sum())
                     results_target[(ut.__name__, tid)] = {
                         'TestRecordID': testRecordIDs,
-                        'Accuracy': list(mean(predErrorTargets, axis=0))
+                        'Accuracy': list(mean(_arr_t, axis=0)),
+                        'Failures': _fail_t
                     }
-                    results_agg.setdefault(ut.__name__, []).append((tid, mean(predErrorAggr)))
+                    results_agg.setdefault(ut.__name__, []).append((tid, mean(_arr_a), int(np.isnan(_arr_a).sum())))
 
         return (model.__name__, results_target, results_agg)
     except Exception as e:
@@ -234,7 +251,7 @@ def main():
         ut_names.append(ut.__name__)
 
     resultsTargetUtility = {ut_name: {'Raw': {}} for ut_name in ut_names}
-    resultsAggUtility = {ut_name: {'Raw': {'TargetID': [], 'Accuracy': []}} for ut_name in ut_names}
+    resultsAggUtility = {ut_name: {'Raw': {'TargetID': [], 'Accuracy': [], 'Failures': []}} for ut_name in ut_names}
 
     for nr in range(runconfig['nIter']):
         rIdx = choice(list(rawTrainWoTargets.index), size=runconfig['sizeRawT'], replace=False).tolist()
@@ -258,12 +275,18 @@ def main():
                 predErrorTargets.append(ut.evaluate(testRecords))
                 predErrorAggr.append(ut.evaluate(rawTest))
 
+            _arr_targets = np.array(predErrorTargets, dtype=float)
+            _arr_aggr = np.array(predErrorAggr, dtype=float)
+            _failures_targets = int(np.isnan(_arr_targets).all(axis=1).sum()) if _arr_targets.ndim == 2 else int(np.isnan(_arr_targets).sum())
+            _failures_aggr = int(np.isnan(_arr_aggr).sum())
             resultsTargetUtility[ut.__name__]['Raw'][nr]['OUT'] = {
                 'TestRecordID': testRecordIDs,
-                'Accuracy': list(mean(predErrorTargets, axis=0))
+                'Accuracy': list(mean(_arr_targets, axis=0)),
+                'Failures': _failures_targets
             }
             resultsAggUtility[ut.__name__]['Raw']['TargetID'].append('OUT')
-            resultsAggUtility[ut.__name__]['Raw']['Accuracy'].append(mean(predErrorAggr))
+            resultsAggUtility[ut.__name__]['Raw']['Accuracy'].append(mean(_arr_aggr))
+            resultsAggUtility[ut.__name__]['Raw']['Failures'].append(_failures_aggr)
 
         for tid in targetIDs:
             target = targets.loc[[tid]]
@@ -280,12 +303,18 @@ def main():
                     predErrorTargets.append(ut.evaluate(testRecords))
                     predErrorAggr.append(ut.evaluate(rawTest))
 
+                _arr_targets = np.array(predErrorTargets, dtype=float)
+                _arr_aggr = np.array(predErrorAggr, dtype=float)
+                _failures_targets = int(np.isnan(_arr_targets).all(axis=1).sum()) if _arr_targets.ndim == 2 else int(np.isnan(_arr_targets).sum())
+                _failures_aggr = int(np.isnan(_arr_aggr).sum())
                 resultsTargetUtility[ut.__name__]['Raw'][nr][tid] = {
                     'TestRecordID': testRecordIDs,
-                    'Accuracy': list(mean(predErrorTargets, axis=0))
+                    'Accuracy': list(mean(_arr_targets, axis=0)),
+                    'Failures': _failures_targets
                 }
                 resultsAggUtility[ut.__name__]['Raw']['TargetID'].append(tid)
-                resultsAggUtility[ut.__name__]['Raw']['Accuracy'].append(mean(predErrorAggr))
+                resultsAggUtility[ut.__name__]['Raw']['Accuracy'].append(mean(_arr_aggr))
+                resultsAggUtility[ut.__name__]['Raw']['Failures'].append(_failures_aggr)
 
         LOGGER.info('Finished: Utility evaluation on Raw.')
 
@@ -326,10 +355,11 @@ def main():
                 if ut_name not in resultsAggUtility:
                     resultsAggUtility[ut_name] = {}
                 if model_name not in resultsAggUtility[ut_name]:
-                    resultsAggUtility[ut_name][model_name] = {'TargetID': [], 'Accuracy': []}
-                for tid_or_out, accuracy in entries:
+                    resultsAggUtility[ut_name][model_name] = {'TargetID': [], 'Accuracy': [], 'Failures': []}
+                for tid_or_out, accuracy, failures in entries:
                     resultsAggUtility[ut_name][model_name]['TargetID'].append(tid_or_out)
                     resultsAggUtility[ut_name][model_name]['Accuracy'].append(accuracy)
+                    resultsAggUtility[ut_name][model_name]['Failures'].append(failures)
 
     engine.dump_results(resultsTargetUtility, prefix="ResultsUtilTargets")
     engine.dump_results(resultsAggUtility, prefix="ResultsUtilAgg")
