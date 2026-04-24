@@ -19,6 +19,7 @@ _MODEL_PATTERNS = [
     (r'^PrivBayesEps(\d+\.?\d*)$', 'PrivBayes', 'eps'),
     (r'^PateGanEps(\d+\.?\d*)$', 'PATEGAN', 'eps'),
     (r'^SanitiserNHSk(\d+\.?\d*)$', 'SanitiserNHS', 'k'),
+    (r'^SanitiserNHSLegacyk(\d+\.?\d*)$', 'SanitiserNHSLegacy', 'k'),
     (r'^SanitiserMondrianK(\d+\.?\d*)$', 'SanitiserMondrian', 'k'),
     (r'^SanitiserNHSMondrianK(\d+\.?\d*)$', 'SanitiserNHSMondrian', 'k'),
 ]
@@ -28,6 +29,7 @@ _PARAM_SYMBOLS = {
     'PrivBayes': r'$\varepsilon$',
     'PATEGAN': r'$\varepsilon$',
     'SanitiserNHS': r'$k$',
+    'SanitiserNHSLegacy': r'$k$',
     'SanitiserMondrian': r'$k$',
     'SanitiserNHSMondrian': r'$k$',
 }
