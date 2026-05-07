@@ -28,7 +28,7 @@ from utils.evaluation_framework import EvaluationEngine
 
 from feature_sets.independent_histograms import HistogramFeatureSet
 from feature_sets.model_agnostic import NaiveFeatureSet, EnsembleFeatureSet
-from feature_sets.bayes import CorrelationsFeatureSet
+from feature_sets.bayes import CorrelationsFeatureSet, BinnedCorrelationsFeatureSet
 
 from attack_models.mia_classifier import (MIAttackClassifierRandomForest,
                                           generate_mia_shadow_data,
@@ -53,6 +53,13 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
         attack_metadata = metadata if is_generative_model(model) else model.metadata
         trained_attacks = {}
 
+        if "featureSetBins" not in runconfig:
+            print("WARNING: featureSetBins not found in configuration file, default to 10.")
+            nbins_features = 10
+        else:      
+            nbins_features = runconfig["featureSetBins"]
+
+
         if is_generative_model(model):
             synA, labelsA = generate_mia_shadow_data(
                 model, target, rawA,
@@ -60,8 +67,11 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
                 runconfig['nShadows'], runconfig['nSynA'], SEED)
 
             for Feature in [NaiveFeatureSet(model.datatype),
-                            HistogramFeatureSet(model.datatype, metadata),
-                            CorrelationsFeatureSet(model.datatype, metadata)]:
+                            HistogramFeatureSet(model.datatype, metadata, 
+                                            nbins=nbins_features),
+                            BinnedCorrelationsFeatureSet(model.datatype, metadata, 
+                                                    nbins=nbins_features),
+                        ]:
                 Attack = MIAttackClassifierRandomForest(metadata, Feature)
                 Attack.set_seed(SEED)
                 Attack.train(synA, labelsA)
@@ -72,16 +82,17 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
                 runconfig['sizeRawT'],
                 runconfig['nShadows'] * runconfig['nSynA'], SEED)
 
-            for Feature in [NaiveFeatureSet(DataFrame),
-                            HistogramFeatureSet(DataFrame, attack_metadata,
-                                               nbins=model.histogram_size),
-                            CorrelationsFeatureSet(DataFrame, attack_metadata),
-                            EnsembleFeatureSet(DataFrame, attack_metadata,
-                                              nbins=model.histogram_size)]:
-                Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature)
-                Attack.set_seed(SEED)
-                Attack.train(sanA, labelsA)
-                trained_attacks[Feature.__name__] = Attack
+        for Feature in [NaiveFeatureSet(DataFrame),
+                        HistogramFeatureSet(DataFrame, attack_metadata,
+                                        nbins=nbins_features),
+                        BinnedCorrelationsFeatureSet(DataFrame, attack_metadata, 
+                                                    nbins=nbins_features),
+                        EnsembleFeatureSet(DataFrame, attack_metadata,
+                                        nbins=nbins_features)]:
+            Attack = MIAttackClassifierRandomForest(metadata=attack_metadata, FeatureSet=Feature)
+            Attack.set_seed(SEED)
+            Attack.train(sanA, labelsA)
+            trained_attacks[Feature.__name__] = Attack
 
         return (tid, model.__name__, trained_attacks, _deep_tuple(model_config))
     except Exception as e:
