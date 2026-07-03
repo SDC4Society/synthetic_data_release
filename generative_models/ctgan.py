@@ -62,3 +62,10 @@ class CTGAN(GenerativeModel):
         synthetic_data = self.synthesiser.sample(nsamples)
 
         return synthetic_data
+
+    def __del__(self):
+        """Cleanup resources when the model object is destroyed."""
+        if hasattr(self, 'synthesiser'):
+            del self.synthesiser
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

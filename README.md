@@ -90,7 +90,7 @@ Please refer to the respective `LICENSE.*` files in the root directory and the i
 | Component / Directory | Applied License | Root License File |
 | :--- | :--- | :--- |
 | **Main Repository** (Original Code) | BSD-3-Clause | `LICENSE` |
-| `method/RAP/` | CC BY-NC 4.0 | `LICENSE. CC_BY-NC_4.0` |
+| `method/RAP/` | CC BY-NC 4.0 | `LICENSE.CC_BY-NC_4.0` |
 | `method/AIM/` | Apache License 2.0 | `LICENSE.APACHEV2` |
 | `method/PrivMRF/` | Apache License 2.0 | `LICENSE.APACHEV2` |
 | `CTGAN` (Forked dependency) | MIT License | `LICENSE.MIT` |

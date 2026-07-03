@@ -101,7 +101,13 @@ class PATEGAN(GenerativeModel):
                 self._generator()
                 # Discriminator
                 self._discriminator()
-                self.sess = tf.Session(graph=self.graph)
+                
+                # Configure TensorFlow session
+                config = tf.ConfigProto()
+                if self.device == 'gpu':
+                    config.gpu_options.allow_growth = True
+                
+                self.sess = tf.Session(graph=self.graph, config=config)
 
         self.multiprocess = multiprocess
 
@@ -193,10 +199,17 @@ class PATEGAN(GenerativeModel):
 
         # Clean up
         if self.trained:
+            if hasattr(self, 'sess') and self.sess is not None:
+                self.sess.close()
             with self._graph_ctx():
                 self._generator()
                 self._discriminator()
-            self.sess = tf.Session(graph=self.graph)
+            
+            config = tf.ConfigProto()
+            if self.device == 'gpu':
+                config.gpu_options.allow_growth = True
+            
+            self.sess = tf.Session(graph=self.graph, config=config)
             self.trained = False
 
         LOGGER.debug(f'Start fitting {self.__class__.__name__} to data of shape {data.shape}...')
@@ -298,6 +311,18 @@ class PATEGAN(GenerativeModel):
         out = (tf.matmul(D_h2, self.D_W3) + self.D_b3)
 
         return out
+
+    def close(self):
+        """Close the TensorFlow session and free resources."""
+        if hasattr(self, 'sess') and self.sess is not None:
+            try:
+                self.sess.close()
+            except Exception:
+                pass
+            self.sess = None
+
+    def __del__(self):
+        self.close()
 
     def _xavier_init(self,size):
         in_dim = size[0]

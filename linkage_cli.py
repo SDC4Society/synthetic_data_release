@@ -23,7 +23,7 @@ import pandas as pd
 from utils.utils import json_numpy_serialzer
 from utils.logging import LOGGER
 from utils.constants import *
-from utils.parallel import create_model, is_generative_model, is_generative_model_config
+from utils.parallel import create_model, is_generative_model, is_generative_model_config, cleanup_resources
 from utils.evaluation_framework import EvaluationEngine
 
 from feature_sets.independent_histograms import HistogramFeatureSet
@@ -87,6 +87,10 @@ def linkage_attack_worker(model_config, tid, target, rawA, metadata, runconfig):
     except Exception as e:
         LOGGER.error(f"Linkage attack training failed for model {model_config[0]} and target {tid}: {e}")
         return (tid, model_config[0], {}, _deep_tuple(model_config))
+    finally:
+        if 'model' in locals():
+            del model
+        cleanup_resources()
 
 
 def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
@@ -144,6 +148,10 @@ def linkage_eval_worker(model_config, rawTout, targets, targetIDs,
     except Exception as e:
         LOGGER.error(f"Linkage evaluation failed for model {model_config[0]}: {e}")
         return (model_config[0], {})
+    finally:
+        if 'model' in locals():
+            del model
+        cleanup_resources()
 
 
 def main():

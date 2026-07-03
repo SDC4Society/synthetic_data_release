@@ -133,3 +133,12 @@ class AIM(GenerativeModel):
         workload = list(combinations(domain, self.degree))
         workload = [cl for cl in workload if domain.size(cl) <= self.max_cells]
         return [(cl, 1.0) for cl in workload]
+
+    def __del__(self):
+        """Cleanup resources when the model object is destroyed."""
+        if hasattr(self, 'mechanism'):
+            del self.mechanism
+        if hasattr(self, 'dataset'):
+            del self.dataset
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
