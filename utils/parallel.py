@@ -1,13 +1,28 @@
 """Parallel execution utilities for model evaluation"""
 import importlib
 import os
+import gc
 import warnings
 from multiprocessing import cpu_count
 import joblib
 from numpy.random import seed
 from tqdm import tqdm
 
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
+
 from generative_models.generative_model import GenerativeModel
+
+
+def cleanup_resources():
+    """Aggressively clear memory and GPU caches to prevent OOM."""
+    gc.collect()
+    if TORCH_AVAILABLE and torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 MODEL_REGISTRY = {
